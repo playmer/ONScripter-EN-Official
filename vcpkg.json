@@ -1,0 +1,20 @@
+{
+    "name": "onscripter-en",
+    "version-string": "0.1.0-dev",
+    "dependencies": [
+        "bzip2",
+        "freetype",
+        "ijg-libjpeg",
+        "libmad",
+        "libogg",
+        "libpng",
+        "libvorbis",
+        "lua",
+        "sdl2",
+        "sdl2-image",
+        "sdl2-mixer",
+        "sdl2-ttf",
+        "smpeg2",
+        "zlib"
+    ]
+}

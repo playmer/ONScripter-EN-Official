@@ -40,6 +40,7 @@
         ( ((x) & 0xe0) == 0xe0 || ((x) & 0xe0) == 0x80 )
 
 #ifdef WIN32
+#include <windows.h>
 //Mion: support for non-ASCII (SJIS) filenames
 #include <wchar.h>
 #endif

@@ -38,6 +38,42 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+
+
+
+
+
+
+
+
+#Theoretical CD Rom library
+add_library(SDLHelper_CD)
+
+target_sources(SDLHelper_CD 
+PUBLIC
+    SDLHelper_CD/SDL_cdrom.h
+    SDLHelper_CD/cdrom/SDL_syscdrom.h
+    SDLHelper_CD/cdrom/SDL_cdrom.c
+)
+
+target_include_directories(SDLHelper_CD PUBLIC SDLHelper_CD/)
+
+target_link_libraries(SDLHelper_CD
+    PRIVATE
+    $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+)
+
+if (MSVC)
+    target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_WIN32)
+
+    target_sources(SDLHelper_CD 
+    PUBLIC
+        SDLHelper_CD/cdrom/win32/SDL_syscdrom.c
+    )
+endif()
+
+
+
 if (MSVC)
     add_compile_options(/MP)
 endif()
@@ -75,6 +111,7 @@ target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_image::SDL
 target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
 target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
 
+target_link_libraries(onscripter_en PRIVATE SDLHelper_CD)
 
 
 
@@ -103,6 +140,8 @@ PRIVATE
     #embed.cpp
     Encoding.cpp
     Encoding.h
+    FFMpegWrapper.cpp
+    FFMpegWrapper.h
     FontInfo.cpp
     FontInfo.h
     graphics_altivec.cpp

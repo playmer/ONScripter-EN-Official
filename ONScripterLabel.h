@@ -50,6 +50,7 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
+#include "SDL_cdrom.h"
 
 #ifdef MP3_MAD
 #include "MadWrapper.h"
@@ -99,7 +100,7 @@
 
 #define NUM_GLYPH_CACHE 30
 
-#define KEYPRESS_NULL ((SDLKey)(SDLK_LAST+1)) // "null" for keypress variables
+#define KEYPRESS_NULL ((SDL_Keycode)(SDLK_AUDIOFASTFORWARD+1)) // "null" for keypress variables
 
 class ONScripterLabel : public ScriptParser
 {
@@ -425,12 +426,13 @@ protected:
     bool file_exists(const char *fileName);
     char* create_filepath(DirPaths archive_path, const char* filename);
 
-    SDL_keysym transKey(SDL_keysym key, bool isdown);
+    SDL_Keysym transKey(SDL_Keysym key, bool isdown);
     void variableEditMode( SDL_KeyboardEvent *event );
     bool keyDownEvent( SDL_KeyboardEvent *event );
     void keyUpEvent( SDL_KeyboardEvent *event );
     bool keyPressEvent( SDL_KeyboardEvent *event );
     bool mousePressEvent( SDL_MouseButtonEvent *event );
+    bool mouseWheelEvent( SDL_MouseWheelEvent* event);
     bool mouseMoveEvent( SDL_MouseMotionEvent *event );
     void animEvent();
     void timerEvent();
@@ -443,6 +445,15 @@ protected:
     void trapHandler();
     void initSDL();
     void openAudio(int freq=DEFAULT_AUDIO_RATE, Uint16 format=MIX_DEFAULT_FORMAT, int channels=MIX_DEFAULT_CHANNELS);
+
+    void SetWindowCaption(const char* title, const char* icon);
+    void WarpMouse(int x, int y);
+    SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen);
+    void UpdateScreen(SDL_Rect dst_rect);
+    static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
+
+    SDL_Renderer* m_renderer;
+    SDL_Window* m_window;
 
 private:
     enum {
@@ -564,7 +575,7 @@ private:
     bool btndown_flag;
     bool transbtn_flag;
 
-    SDLKey last_keypress;
+    SDL_Keycode last_keypress;
 
     void quit(bool no_error=false);
 

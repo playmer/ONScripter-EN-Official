@@ -420,16 +420,26 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
 
 void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
 {
+  // need to replicate SMPEG_scaleXY and SMPEG_move with the following parameters:
+  //  smpeg_scale_x
+  //  smpeg_scale_y
+  //  smpeg_move_x
+  //  smpeg_move_y
+  
+  
   // display to screen_surface
   #error "Unfinished"
 }
 
-void ONScripterLabel::SetWindowCaption(const char* title, const char* icon)
+void ONScripterLabel::SetWindowCaption(const char* title, const char* icon_name)
 {
-  //SDL_SetWindowTitle(m_window, title);
-  //SDL_SetWindowIcon(m_window, GetIcon(icon));
+  SDL_SetWindowTitle(m_window, title);
 
-  #error "Not implemented Yet"
+  SDL_Surface* icon = IMG_Load(icon_name);
+  if (icon != NULL) {
+    SDL_SetWindowIcon(m_window, icon);
+    SDL_FreeSurface(icon);
+  }
 }
 
 void ONScripterLabel::WarpMouse(int x, int y)

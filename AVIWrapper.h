@@ -24,6 +24,8 @@
 #ifndef __AVI_WRAPPER_H__
 #define __AVI_WRAPPER_H__
 
+#if 0
+
 #include <SDL.h>
 #include <SDL_thread.h>
 #include <avifile.h>
@@ -70,5 +72,7 @@ private:
     int64_t time_start;
     double frame_start;
 };
+
+#endif 
 
 #endif // __AVI_WRAPPER_H__

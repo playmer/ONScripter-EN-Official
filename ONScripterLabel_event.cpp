@@ -610,76 +610,76 @@ bool ONScripterLabel::mouseMoveEvent( SDL_MouseMotionEvent *event )
 bool ONScripterLabel::mouseWheelEvent(SDL_MouseWheelEvent* event)
 // returns true if should break out of the event loop
 {
-  if (variable_edit_mode) return false;
+    if (variable_edit_mode) return false;
 
-  if (event_mode & WAIT_BUTTON_MODE)
-    last_keypress = KEYPRESS_NULL;
+    if (event_mode & WAIT_BUTTON_MODE)
+        last_keypress = KEYPRESS_NULL;
 
-  //any mousepress clears automode, on the release
-  if (automode_flag) {
-    if (event->type == SDL_MOUSEBUTTONUP) {
-      automode_flag = false;
-      if (getskipoff_flag && (event_mode & WAIT_BUTTON_MODE)) {
-        current_button_state.set(-61);
-        volatile_button_state.set(-61);
+    //any mousepress clears automode, on the release
+    if (automode_flag) {
+        if (event->type == SDL_MOUSEBUTTONUP) {
+            automode_flag = false;
+            if (getskipoff_flag && (event_mode & WAIT_BUTTON_MODE)) {
+                current_button_state.set(-61);
+                volatile_button_state.set(-61);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // FIXME: Probably abstract all this stuff into a function to call in this and mousePressEvent
+    //trap that mouseclick!
+    //if ( ((event->button == SDL_BUTTON_RIGHT) && (trap_mode & TRAP_RIGHT_CLICK)) ||
+    //     ((event->button == SDL_BUTTON_LEFT)  && (trap_mode & TRAP_LEFT_CLICK)) ){
+    //    trapHandler();
+    //    return true;
+    //}
+
+    current_button_state.reset();
+    current_button_state.x = event->x;
+    current_button_state.y = event->y;
+    current_button_state.down_flag = false;
+    if (getskipoff_flag && (skip_mode & SKIP_NORMAL) &&
+        (event_mode & WAIT_BUTTON_MODE)) {
+        skip_mode &= ~SKIP_NORMAL;
+        current_button_state.set(-60);
+        volatile_button_state.set(-60);
         return true;
-      }
     }
-    return false;
-  }
 
-  // FIXME: Probably abstract all this stuff into a function to call in this and mousePressEvent
-  //trap that mouseclick!
-  //if ( ((event->button == SDL_BUTTON_RIGHT) && (trap_mode & TRAP_RIGHT_CLICK)) ||
-  //     ((event->button == SDL_BUTTON_LEFT)  && (trap_mode & TRAP_LEFT_CLICK)) ){
-  //    trapHandler();
-  //    return true;
-  //}
-
-  current_button_state.reset();
-  current_button_state.x = event->x;
-  current_button_state.y = event->y;
-  current_button_state.down_flag = false;
-  if (getskipoff_flag && (skip_mode & SKIP_NORMAL) &&
-    (event_mode & WAIT_BUTTON_MODE)) {
     skip_mode &= ~SKIP_NORMAL;
-    current_button_state.set(-60);
-    volatile_button_state.set(-60);
-    return true;
-  }
 
-  skip_mode &= ~SKIP_NORMAL;
-
-  if ((event->y > 0 /*SDL_BUTTON_WHEELUP*/) &&
-    ((event_mode & WAIT_TEXT_MODE) ||
-      (usewheel_flag && (event_mode & WAIT_BUTTON_MODE)) ||
-      (system_menu_mode == SYSTEM_LOOKBACK))) {
-    current_button_state.set(-2);
-    if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
-  }
-  else if ((event->y < 0/*SDL_BUTTON_WHEELDOWN*/) &&
-    ((enable_wheeldown_advance_flag && (event_mode & WAIT_TEXT_MODE)) ||
-      (usewheel_flag && (event_mode & WAIT_BUTTON_MODE)) ||
-      (system_menu_mode == SYSTEM_LOOKBACK))) {
-    if (event_mode & WAIT_TEXT_MODE) {
-      current_button_state.set(0);
+    if ((event->y > 0 /*SDL_BUTTON_WHEELUP*/) &&
+        ((event_mode & WAIT_TEXT_MODE) ||
+          (usewheel_flag && (event_mode & WAIT_BUTTON_MODE)) ||
+          (system_menu_mode == SYSTEM_LOOKBACK))) {
+        current_button_state.set(-2);
+        if (event_mode & WAIT_TEXT_MODE) system_menu_mode = SYSTEM_LOOKBACK;
     }
-    else {
-      current_button_state.set(-3);
+    else if ((event->y < 0/*SDL_BUTTON_WHEELDOWN*/) &&
+        ((enable_wheeldown_advance_flag && (event_mode & WAIT_TEXT_MODE)) ||
+          (usewheel_flag && (event_mode & WAIT_BUTTON_MODE)) ||
+          (system_menu_mode == SYSTEM_LOOKBACK))) {
+        if (event_mode & WAIT_TEXT_MODE) {
+            current_button_state.set(0);
+        }
+        else {
+            current_button_state.set(-3);
+        }
     }
-  }
-  else return false;
+    else return false;
 
-  if (current_button_state.valid_flag)
-    volatile_button_state.set(current_button_state.button);
+    if (current_button_state.valid_flag)
+        volatile_button_state.set(current_button_state.button);
 
-  if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE)) {
-    if (system_menu_mode == SYSTEM_NULL) playClickVoice();
-    stopCursorAnimation(clickstr_state);
-    return true;
-  }
-  else
-    return false;
+    if (event_mode & (WAIT_INPUT_MODE | WAIT_BUTTON_MODE)) {
+        if (system_menu_mode == SYSTEM_NULL) playClickVoice();
+        stopCursorAnimation(clickstr_state);
+        return true;
+    }
+    else
+        return false;
 }
 
 bool ONScripterLabel::mousePressEvent( SDL_MouseButtonEvent *event )

@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * 
- *  AVIWrapper.h - avifile library wrapper class to play AVI video & audio stream
+ *  FFMpegWrapper.h - avifile library wrapper class to play AVI video & audio stream
  *
  *  Copyright (c) 2001-2008 Ogapee. All rights reserved.
  *
@@ -21,51 +21,93 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __AVI_WRAPPER_H__
-#define __AVI_WRAPPER_H__
+#ifndef __FFMPEG_WRAPPER_H__
+#define __FFMPEG_WRAPPER_H__
+
+#include <vector>
 
 #include <SDL.h>
 #include <SDL_thread.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 
-class AVIWrapper
+class FFMpegWrapper
 {
 public:
     enum { AVI_STOP = 0,
            AVI_PLAYING = 1
     };
-    AVIWrapper();
-    ~AVIWrapper();
+    FFMpegWrapper() = default;
+    ~FFMpegWrapper();
 
-    int init( char *filename, bool debug_flag );
-    int initAV( SDL_Surface *surface, bool audio_open_flag );
+    int initialize(SDL_Renderer* renderer, const char* filename, bool audio_open_flag, bool debug_flag);
+
     int play( bool click_flag );
 
-    void audioCallback( void *userdata, Uint8 *stream, int len );
-    int playVideo( void *userdata );
+private:
+    void display_frame();
+    void queue_audio();
+    static void mixer_callback(void* userdata, Uint8* stream, int length);
 
-    unsigned int getWidth(){ return width; };
-    unsigned int getHeight(){ return height; };
+    static void CleanupFormatContext(AVFormatContext** format_context)
+    {
+      avformat_close_input(format_context);
+      avformat_free_context(*format_context);
+    }
 
-private:    
-    double getAudioTime();
-    int drawFrame( avm::CImage *image );
+    template <typename T, void (tFunc)(T**)>
+    struct AVWrapper
+    {
+        AVWrapper() = default;
+        ~AVWrapper()
+        {
+            if (value)
+              tFunc(&value);
 
-    SDL_Overlay *screen_overlay;
-    SDL_Rect screen_rect;
-    unsigned int width;
-    unsigned int height;
+            value = NULL;
+        }
 
-    IAviReadFile *i_avi;
-    IAviReadStream *v_stream;
-    IAviReadStream *a_stream;
-    int remaining_count;
-    char *remaining_buffer;
+        operator T*()
+        {
+          return value;
+        }
 
-    bool debug_flag;
-    int status;
-    SDL_Thread *thread_id;
-    int64_t time_start;
-    double frame_start;
+        T* operator->()
+        {
+            return value;
+        }
+
+        T* get()
+        {
+            return value;
+        }
+
+        T** operator&()
+        {
+            return &value;
+        }
+
+        T* value = NULL;
+    };
+
+    AVWrapper<AVFormatContext, CleanupFormatContext> format_context;
+    int video_id = -1;
+    int audio_id = -1;
+    double fpsrendering = 0.0;
+    AVWrapper<AVCodecContext, avcodec_free_context> m_video_context;
+    AVWrapper<AVCodecContext, avcodec_free_context> m_audio_context;
+    AVWrapper<AVFrame, av_frame_free> m_video_frame;
+    AVWrapper<AVFrame, av_frame_free> m_audio_frame;
+    AVWrapper<AVPacket, av_packet_free> m_packet;
+
+    std::vector<uint8_t> audio_data;
+    SDL_mutex* audio_data_mutex;
+
+    SDL_Renderer* m_renderer = NULL;
+    SDL_Texture* m_texture = NULL;
+
+    int video_width;
+    int video_height;
 };
 
-#endif // __AVI_WRAPPER_H__
+#endif // __FFMPEG_WRAPPER_H__

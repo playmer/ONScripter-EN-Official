@@ -454,6 +454,10 @@ protected:
 
     SDL_Renderer* m_renderer;
     SDL_Window* m_window;
+    int smpeg_scale_x;
+    int smpeg_scale_y;
+    int smpeg_move_x;
+    int smpeg_move_y;
 
 private:
     enum {

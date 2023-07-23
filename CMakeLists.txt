@@ -22,6 +22,7 @@ option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
+find_package(FFMPEG REQUIRED)
 find_package(Freetype REQUIRED)
 find_library(libmad_path libmad)
 message(STATUS libmad: ${libmad_path})
@@ -85,7 +86,7 @@ if (ONS_USE_LUA)
     find_package(Lua REQUIRED)
     target_include_directories(onscripter_en PRIVATE ${LUA_INCLUDE_DIR})
     target_link_libraries(onscripter_en PRIVATE ${LUA_LIBRARIES})
-    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA -DUSE_AVIFILE)
 
     target_sources(onscripter_en
     PRIVATE
@@ -97,7 +98,10 @@ endif()
 target_link_libraries(onscripter_en PRIVATE BZip2::BZip2)
 target_link_libraries(onscripter_en PRIVATE ZLIB::ZLIB)
 target_link_libraries(onscripter_en PRIVATE PNG::PNG)
-target_link_libraries(onscripter_en PRIVATE Freetype::Freetype) # since CMake 3.10
+target_include_directories(onscripter_en PRIVATE ${FFMPEG_INCLUDE_DIRS})
+target_link_directories(onscripter_en PRIVATE ${FFMPEG_LIBRARY_DIRS})
+target_link_libraries(onscripter_en PRIVATE ${FFMPEG_LIBRARIES})
+target_link_libraries(onscripter_en PRIVATE Freetype::Freetype)
 target_link_libraries(onscripter_en PRIVATE Ogg::ogg)
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbis)
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbisfile)
@@ -112,7 +116,6 @@ target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL
 target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
 
 target_link_libraries(onscripter_en PRIVATE SDLHelper_CD)
-
 
 
 

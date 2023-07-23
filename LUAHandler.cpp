@@ -350,11 +350,11 @@ void LUAHandler::init(ONScripterLabel *onsl, ScriptHandler *sh)
     this->onsl = onsl;
     this->sh = sh;
     
-    state = lua_open();
+    state = luaL_newstate();
     luaL_openlibs(state);
 
-    lua_pushvalue(state, LUA_GLOBALSINDEX);
-    luaL_register(state, NULL, lua_lut);
+    lua_pushvalue(state, lua_rawgeti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS));
+    luaL_setfuncs(state, lua_lut, 0);
     
     lua_pushlightuserdata(state, this);
     lua_setglobal(state, ONS_LUA_HANDLER_PTR);

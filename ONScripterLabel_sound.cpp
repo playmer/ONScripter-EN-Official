@@ -740,7 +740,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
             different_spec = false;
         }
         SMPEG_enablevideo( mpeg_sample, 1 );
-        SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
+        SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, NULL );
         if (use_pos) {
             SMPEG_scaleXY( mpeg_sample, width, height );
             SMPEG_move( mpeg_sample, xpos, ypos );
@@ -833,14 +833,14 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
                         done_flag = movie_click_flag;
                     else if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_f ){
 #ifndef PSP
-                        if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
+                        if ( SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP) < 0 ){
                             SMPEG_pause( mpeg_sample );
                             SDL_FreeSurface(screen_surface);
                             if ( fullscreen_mode )
-                                screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, false );
                             else
-                                screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
-                            SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
+                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, true );
+                            SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, NULL );
                             SMPEG_play( mpeg_sample );
                         }
 #endif

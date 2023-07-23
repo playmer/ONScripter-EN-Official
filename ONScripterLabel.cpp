@@ -44,6 +44,8 @@
 #include <cstdio>
 #include <fstream>
 
+#include "SDLHelper_CD/SDL_cdrom.h"
+
 #ifdef MACOSX
 #include "cocoa_alertbox.h"
 #include "cocoa_directories.h"
@@ -61,6 +63,7 @@
 
 
 #ifdef WIN32
+#define NOMINMAX
 #include <windows.h>
 #include "SDL_syswm.h"
 #include "winres.h"
@@ -357,6 +360,104 @@ static void SDL_Quit_Wrapper()
     SDL_Quit();
 }
 
+
+static int onscripter_putenv(const char* _var)
+{
+  char* ptr = NULL;
+  char* var = SDL_strdup(_var);
+  if (var == NULL) {
+    return -1;  /* we don't set errno. */
+  }
+
+  ptr = SDL_strchr(var, '=');
+  if (ptr == NULL) {
+    SDL_free(var);
+    return -1;
+  }
+
+  *ptr = '\0';  /* split the string into name and value. */
+  SDL_setenv(var, ptr + 1, 1);
+  SDL_free(var);
+  return 0;
+}
+
+void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
+{
+  SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+  SDL_RenderClear(m_renderer);
+
+  bool doIt = false;
+  if (doIt)
+    SDL_SaveBMP(accumulation_surface, "Test.bmp");
+
+  auto texture = SDL_CreateTextureFromSurface(m_renderer, accumulation_surface);
+
+  Uint32 format;
+  int imageResolutionX, imageResolutionY, access;
+  SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
+
+  int windowResolutionX, windowResolutionY;
+  SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+
+  float scaleHeight = windowResolutionY / (float)imageResolutionY;
+  float scaleWidth = windowResolutionX / (float)imageResolutionX;
+  float scale = std::min(scaleHeight, scaleWidth);
+
+  SDL_Rect dstRect;
+  dstRect.w = scale * imageResolutionX;
+  dstRect.h = scale * imageResolutionY;
+  dstRect.x = (windowResolutionX - dstRect.w) / 2;
+  dstRect.y = (windowResolutionY - dstRect.h) / 2;
+
+  SDL_RenderCopy(m_renderer, texture, NULL /*&dst_rect*/, &dstRect);
+  SDL_RenderPresent(m_renderer);
+  SDL_DestroyTexture(texture);
+}
+
+
+void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
+{
+  // display to screen_surface
+  #error "Unfinished"
+}
+
+void ONScripterLabel::SetWindowCaption(const char* title, const char* icon)
+{
+  //SDL_SetWindowTitle(m_window, title);
+  //SDL_SetWindowIcon(m_window, GetIcon(icon));
+
+  #error "Not implemented Yet"
+}
+
+void ONScripterLabel::WarpMouse(int x, int y)
+{
+  //printf("x: %d, y: %d\n", x, y);
+  int windowResolutionX, windowResolutionY;
+  SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+
+  float scaleHeight = windowResolutionY / (float)screen_surface->h;
+  float scaleWidth = windowResolutionX / (float)screen_surface->w;
+  float scale = std::min(scaleHeight, scaleWidth);
+
+  SDL_Rect dstRect = {};
+  dstRect.w = scale * screen_surface->w;
+  dstRect.h = scale * screen_surface->h;
+  dstRect.x = (windowResolutionX - dstRect.w) / 2;
+  dstRect.y = (windowResolutionY - dstRect.h) / 2;
+
+  x = (x * scale) + dstRect.x;
+  y = (y * scale) + dstRect.y;
+
+  SDL_WarpMouseInWindow(m_window, x, y);
+}
+
+SDL_Surface* ONScripterLabel::SetVideoMode(int width, int height, int bpp, bool fullscreen)
+{
+  SDL_SetWindowSize(m_window, width, height);
+  SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+  return screen_surface;
+}
+
 void ONScripterLabel::initSDL()
 {
     /* ---------------------------------------- */
@@ -368,10 +469,12 @@ void ONScripterLabel::initSDL()
     }
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
-    if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){
+    if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_EVERYTHING ) < 0 ){
         errorAndExit("Couldn't initialize CD-ROM", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
+
+    SDL_CDROMInit();
 
 #if 0
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
@@ -382,7 +485,7 @@ void ONScripterLabel::initSDL()
     SDL_ShowCursor(SDL_DISABLE);
 #endif
 
-    SDL_EnableUNICODE(1);
+    //SDL_EnableUNICODE(1);
 
     /* ---------------------------------------- */
     /* Initialize SDL */
@@ -405,8 +508,8 @@ void ONScripterLabel::initSDL()
         if (wicon) {
             SDL_SysWMinfo info;
             SDL_VERSION(&info.version);
-            SDL_GetWMInfo(&info);
-            SendMessage(info.window, WM_SETICON, ICON_BIG, (LPARAM)wicon);
+            SDL_GetWindowWMInfo(m_window, &info);
+            SendMessage(info.info.win.window, WM_SETICON, ICON_BIG, (LPARAM)wicon);
         }
 #else
         //backport from ponscripter
@@ -451,7 +554,7 @@ void ONScripterLabel::initSDL()
             SDL_FreeSurface(tmp);
         }
 #endif //MACOSX || WIN32
-        SDL_WM_SetIcon(icon, NULL);
+        SDL_SetWindowIcon(m_window, icon);
     }
     if (icon)
         SDL_FreeSurface(icon);
@@ -494,10 +597,11 @@ void ONScripterLabel::initSDL()
     scr_stretch_x = 1.0;
     scr_stretch_y = 1.0;
 #endif
-    if (scaled_flag) {
-        const SDL_VideoInfo* info = SDL_GetVideoInfo();
-        int native_width = info->current_w;
-        int native_height = info->current_h;
+      if (scaled_flag) {
+        SDL_DisplayMode DM;
+        SDL_GetDesktopDisplayMode(0, &DM);
+        int native_width = DM.w;
+        int native_height = DM.h;
         
         // Resize up to fill screen
 #ifndef RCA_SCALE
@@ -556,7 +660,7 @@ void ONScripterLabel::initSDL()
         }
     }
 #endif
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+    screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, fullscreen_mode );
 
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
@@ -565,7 +669,7 @@ void ONScripterLabel::initSDL()
         screen_ratio1 /= 2;
         screen_width  /= 2;
         screen_height /= 2;
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
 #endif
 
@@ -583,13 +687,12 @@ void ONScripterLabel::initSDL()
 
     setStr(&wm_title_string, DEFAULT_WM_TITLE);
     setStr(&wm_icon_string, DEFAULT_WM_ICON);
-    SDL_WM_SetCaption( wm_title_string, wm_icon_string );
+    SetWindowCaption( wm_title_string, wm_icon_string );
 
 #ifdef WIN32
     //check the audio driver setting
-    char audiodriver[16];
-    SDL_AudioDriverName(audiodriver,16);
-    //fprintf(stderr,"audio driver: %s\n", audiodriver);
+    const char* audiodriver = SDL_GetCurrentAudioDriver();
+    fprintf(stderr,"audio driver: %s\n", audiodriver);
     if ((audiobuffer_size < 8192) &&
         (strcmp(audiodriver, "waveout") == 0)){
         audiobuffer_size = 8192; //minimum buffer size for waveout
@@ -842,7 +945,7 @@ void ONScripterLabel::setAudiodriver(const char *driver)
         snprintf(buf, 128, "SDL_AUDIODRIVER=%s", driver);
     else
         strncpy(buf, "SDL_AUDIODRIVER=", 128);
-    SDL_putenv(buf);
+    onscripter_putenv(buf);
 }
 
 void ONScripterLabel::setAudioBufferSize(int kbyte_size)
@@ -1169,11 +1272,11 @@ int ONScripterLabel::init()
     effect_src_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
     effect_dst_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
     effect_tmp_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
-    SDL_SetAlpha( accumulation_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( backup_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( effect_tmp_surface, 0, SDL_ALPHA_OPAQUE );
+    SDL_SetSurfaceBlendMode( accumulation_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( backup_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( effect_src_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( effect_dst_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( effect_tmp_surface, SDL_BLENDMODE_NONE );
 
     num_loaded_images = 10; // to suppress temporal increase at the start-up
 
@@ -1764,11 +1867,13 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode, bool update
                 SDL_BlitSurface( accumulation_surface, &tmp_rects[i], screen_surface, &tmp_rects[i] );
             }
         }
-        if (updaterect) SDL_UpdateRects( screen_surface, 4, tmp_rects );
+
+        #error "Consider movie playing?"
+        if (updaterect) UpdateScreen(rect);
     } else { 
         refreshSurface( accumulation_surface, &rect, refresh_mode );
         SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
-        if (updaterect) SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
+        if (updaterect) UpdateScreen(rect);
     }
 }
 
@@ -1969,7 +2074,7 @@ void ONScripterLabel::executeLabel()
         //check for quit event before running each command, for safety
         //(this won't prevent all window lockups, but should give some
         // greater chance of the user being able to quit when one happens)
-        if ( SDL_PumpEvents(), SDL_PeepEvents( NULL, 1, SDL_PEEKEVENT, SDL_QUITMASK) )
+        if ( SDL_PumpEvents(), SDL_PeepEvents( NULL, 1, SDL_PEEKEVENT, SDL_QUIT, SDL_QUIT) )
             endCommand();
 
         int ret = ScriptParser::parseLine();

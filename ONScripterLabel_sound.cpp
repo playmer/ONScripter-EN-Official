@@ -41,9 +41,10 @@
 #include <signal.h>
 #endif
 
-#ifdef USE_AVIFILE
-#include "AVIWrapper.h"
-#endif
+//#ifdef USE_AVIFILE
+//#include "AVIWrapper.h"
+//#endif
+#include "FFMpegWrapper.h"
 
 struct WAVE_HEADER{
     char chunk_riff[4];
@@ -367,7 +368,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
             }
         }
 
-        mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( buffer + id3v2_size, length - id3v2_size ), NULL, 0 );
+        mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( buffer + id3v2_size, length - id3v2_size ), NULL, 1, 0 );
 
         if (playMP3() == 0){
             music_buffer = buffer;
@@ -696,7 +697,8 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
         return 0;
     }
 
-    SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( movie_buffer, length ), NULL, 0 );
+    SMPEG_Info mpeg_info;
+    SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( movie_buffer, length ), NULL, 1, 0 );
     char *errstr = SMPEG_error( mpeg_sample );
     if (errstr){
         
@@ -742,16 +744,19 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
         SMPEG_enablevideo( mpeg_sample, 1 );
         SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, NULL );
         if (use_pos) {
-            SMPEG_scaleXY( mpeg_sample, width, height );
-            SMPEG_move( mpeg_sample, xpos, ypos );
+            smpeg_scale_x = width;
+            smpeg_scale_y = height;
+            smpeg_move_x = xpos;
+            smpeg_move_y = ypos;
         }
         else if (nomovieupscale_flag && (info.width < screen_width) &&
                  (info.height < screen_height)) {
             //"no-movie-upscale" set, so use its native
             //width/height & center within the screen
-            SMPEG_scaleXY( mpeg_sample, info.width, info.height );
-            SMPEG_move( mpeg_sample, (screen_width - info.width) / 2,
-                       (screen_height - info.height) / 2 );
+            smpeg_scale_x = info.width;
+            smpeg_scale_y = info.height;
+            smpeg_move_x = (screen_width - info.width) / 2;
+            smpeg_move_y = (screen_height - info.height) / 2;
         }
 #ifdef RCA_SCALE
         //center the movie on the screen, using standard aspect ratio
@@ -885,6 +890,28 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 int ONScripterLabel::playAVI( const char *filename, bool click_flag )
 {
 #ifdef USE_AVIFILE
+    // FIXME: "We should be handling pulling files from archives"
+    //char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
+    //sprintf( absolute_filename, "%s%s", archive_path, filename );
+    //for ( unsigned int i=0 ; i<strlen( absolute_filename ) ; i++ )
+    //    if ( absolute_filename[i] == '/' ||
+    //         absolute_filename[i] == '\\' )
+    //        absolute_filename[i] = DELIMITER;
+
+    if ( audio_open_flag ) Mix_CloseAudio();
+
+    FFMpegWrapper avi;
+    if ( avi.initialize(m_renderer, filename, audio_open_flag, false) == 0 ){
+        if (avi.play( click_flag )) return 1;
+    }
+    //delete[] absolute_filename;
+
+    if ( audio_open_flag ){
+        Mix_CloseAudio();
+        openAudio();
+    }
+
+#if 0
     char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
     sprintf( absolute_filename, "%s%s", archive_path, filename );
     for ( unsigned int i=0 ; i<strlen( absolute_filename ) ; i++ )
@@ -906,6 +933,7 @@ int ONScripterLabel::playAVI( const char *filename, bool click_flag )
         Mix_CloseAudio();
         openAudio();
     }
+#endif
 #else
     errorAndCont( "avi: avi video playback is disabled." );
 #endif

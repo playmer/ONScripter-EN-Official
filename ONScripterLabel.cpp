@@ -488,6 +488,7 @@ void ONScripterLabel::initSDL()
     }
 
     SDL_CDROMInit();
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 
 #if 0
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)

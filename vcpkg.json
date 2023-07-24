@@ -4,19 +4,20 @@
     "dependencies": [
         "bzip2",
         {
-
             "name": "ffmpeg",
             "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ]
         },
         "freetype",
-        "ijg-libjpeg",
         "libmad",
         "libogg",
         "libpng",
         "libvorbis",
         "lua",
         "sdl2",
-        "sdl2-image",
+        {
+            "name": "sdl2-image",
+            "features": [ "libjpeg-turbo" ]
+        },
         "sdl2-mixer",
         "sdl2-ttf",
         "smpeg2",

@@ -19,14 +19,15 @@ project(onscripter_en C CXX)
 
 option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 
+
 find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(Freetype REQUIRED)
-find_library(libmad_path libmad)
-message(STATUS libmad: ${libmad_path})
+find_library(LIBMAD_LIBRARY mad REQUIRED)
 find_package(Ogg CONFIG REQUIRED)
+find_library(SMPEG2_LIBRARY smpeg2 REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
@@ -64,7 +65,7 @@ target_link_libraries(SDLHelper_CD
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
 )
 
-if (MSVC)
+if (WIN32)
     target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_WIN32)
 
     target_sources(SDLHelper_CD 
@@ -75,6 +76,7 @@ endif()
 
 
 
+# onscripter-en
 if (MSVC)
     add_compile_options(/MP)
 endif()
@@ -102,7 +104,9 @@ target_include_directories(onscripter_en PRIVATE ${FFMPEG_INCLUDE_DIRS})
 target_link_directories(onscripter_en PRIVATE ${FFMPEG_LIBRARY_DIRS})
 target_link_libraries(onscripter_en PRIVATE ${FFMPEG_LIBRARIES})
 target_link_libraries(onscripter_en PRIVATE Freetype::Freetype)
+target_link_libraries(onscripter_en PRIVATE ${LIBMAD_LIBRARY})
 target_link_libraries(onscripter_en PRIVATE Ogg::ogg)
+target_link_libraries(onscripter_en PRIVATE ${SMPEG2_LIBRARY})
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbis)
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbisfile)
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbisenc)
@@ -114,8 +118,10 @@ target_link_libraries(onscripter_en
 target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>)
 target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
 target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
-
 target_link_libraries(onscripter_en PRIVATE SDLHelper_CD)
+
+
+message(STATUS FFMPEG_LIBRARIES: ${FFMPEG_LIBRARIES})
 
 
 
@@ -194,10 +200,15 @@ PRIVATE
     ScriptParser.cpp
     ScriptParser.h
     ScriptParser_command.cpp
-    SDL_win32_main.c
+    #SDL_win32_main.c
     sjis2utf16.cpp
     version.h
     winres.h
 )
+
+
+if (WIN32)
+    target_link_libraries(onscripter_en PRIVATE winmm)
+endif()
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT onscripter_en)

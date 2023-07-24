@@ -255,8 +255,11 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, Fontinfo *info, SDL_C
         dst_rect.y = xy[1] + minx;
     }
     else {
-        dst_rect.x = xy[0] + minx;
-        dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
+        //dst_rect.x = xy[0] + minx;
+        //dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
+
+        dst_rect.x = xy[0];// +minx;
+        dst_rect.y = xy[1];// +fontAscent;// +maxy + miny;
     }
 
     if ( shadow_flag ){

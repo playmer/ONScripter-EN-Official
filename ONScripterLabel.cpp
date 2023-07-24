@@ -425,7 +425,7 @@ void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
   
   
   // display to screen_surface
-  #error "Unfinished"
+  //#error "Unfinished"
 }
 
 void ONScripterLabel::SetWindowCaption(const char* title, const char* icon_name)
@@ -494,6 +494,8 @@ void ONScripterLabel::initSDL()
 #if defined(PSP) || defined(IPODLINUX)
     SDL_ShowCursor(SDL_DISABLE);
 #endif
+
+    SDL_CreateWindowAndRenderer(800, 600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI, &m_window, &m_renderer);
 
     //SDL_EnableUNICODE(1);
 
@@ -670,6 +672,7 @@ void ONScripterLabel::initSDL()
         }
     }
 #endif
+    screen_surface = AnimationInfo::allocSurface(screen_width, screen_height);
     screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, fullscreen_mode );
 
     /* ---------------------------------------- */
@@ -1878,7 +1881,7 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode, bool update
             }
         }
 
-        #error "Consider movie playing?"
+        //#error "Consider movie playing?"
         if (updaterect) UpdateScreen(rect);
     } else { 
         refreshSurface( accumulation_surface, &rect, refresh_mode );

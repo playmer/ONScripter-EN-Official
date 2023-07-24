@@ -28,8 +28,11 @@
 
 #include <SDL.h>
 #include <SDL_thread.h>
+extern "C"
+{
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+}
 
 class FFMpegWrapper
 {

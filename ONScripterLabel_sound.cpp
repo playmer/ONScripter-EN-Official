@@ -426,8 +426,8 @@ void ONScripterLabel::playCDAudio()
         if (ret == SOUND_MP3) return;
 
         sprintf( filename, "cd\\track%2.2d.ogg", current_cd_track );
-        ret = playSound( filename, SOUND_OGG_STREAMING, cd_play_loop_flag );
-        if (ret == SOUND_OGG_STREAMING) return;
+        ret = playSound( filename, SOUND_OGG, cd_play_loop_flag );
+        if (ret == SOUND_OGG) return;
 
         sprintf( filename, "cd\\track%2.2d.wav", current_cd_track );
         ret = playSound( filename, SOUND_WAVE, cd_play_loop_flag, MIX_BGM_CHANNEL );

@@ -84,11 +84,14 @@ endif()
 
 add_executable(onscripter_en)
 
+# I suppose these should be options like Lua.
+target_compile_definitions(onscripter_en PRIVATE -DUSE_AVIFILE -DUSE_OGG_VORBIS)
+
 if (ONS_USE_LUA)
     find_package(Lua REQUIRED)
     target_include_directories(onscripter_en PRIVATE ${LUA_INCLUDE_DIR})
     target_link_libraries(onscripter_en PRIVATE ${LUA_LIBRARIES})
-    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA -DUSE_AVIFILE)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA -DUSE_AVIFILE -DUSE_OGG_VORBIS)
 
     target_sources(onscripter_en
     PRIVATE

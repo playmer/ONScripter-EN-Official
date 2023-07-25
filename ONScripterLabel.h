@@ -43,6 +43,8 @@
 #ifndef __ONSCRIPTER_LABEL_H__
 #define __ONSCRIPTER_LABEL_H__
 
+#include <algorithm>
+
 #include "DirPaths.h"
 #include "ScriptParser.h"
 #include "DirtyRect.h"
@@ -451,6 +453,50 @@ protected:
     SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen);
     void UpdateScreen(SDL_Rect dst_rect);
     static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
+
+    template <typename SDLEvent>
+    bool TranslateMouse(SDLEvent& event)
+    {
+      const int x = event.x;
+      const int y = event.y;
+      int windowResolutionX, windowResolutionY;
+      SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+
+      float scaleHeight = windowResolutionY / (float)screen_surface->h;
+      float scaleWidth = windowResolutionX / (float)screen_surface->w;
+      float scale = std::min(scaleHeight, scaleWidth);
+
+      SDL_Rect dstRect = {};
+      dstRect.w = scale * screen_surface->w;
+      dstRect.h = scale * screen_surface->h;
+      dstRect.x = (windowResolutionX - dstRect.w) / 2;
+      dstRect.y = (windowResolutionY - dstRect.h) / 2;
+
+      int new_x = (x / scale) - (dstRect.x / scale);
+      int new_y = (y / scale) - (dstRect.y / scale);
+
+      if (new_x < 0 || new_x > screen_surface->w || new_y < 0 || new_y > screen_surface->h)
+      {
+        // clip the mouse to the window
+        if (new_x < 0)
+          event.x = 0;
+
+        if (new_x > screen_surface->w)
+          event.x = screen_surface->w;
+
+        if (new_y < 0)
+          event.y = 0;
+
+        if (new_y > screen_surface->h)
+          event.y = screen_surface->h;
+
+        return false;
+      }
+
+      event.x = new_x;
+      event.y = new_y;
+      return true;
+    }
 
     SDL_Renderer* m_renderer;
     SDL_Window* m_window;

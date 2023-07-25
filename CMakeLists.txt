@@ -19,15 +19,40 @@ project(onscripter_en C CXX)
 
 option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 
+find_library(LIBMAD_LIBRARY mad.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+find_library(LIBMAD_DEBUG_LIBRARY mad.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+
+add_library(libmad STATIC IMPORTED [GLOBAL])
+# set the location that we are going to import the library from
+set_target_properties(
+    libmad 
+    PROPERTIES
+        IMPORTED_LOCATION_DEBUG ${LIBMAD_DEBUG_LIBRARY}
+        IMPORTED_LOCATION ${LIBMAD_LIBRARY}
+)
+
+find_library(SMPEG2_LIBRARY smpeg2.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+find_file(SMPEG2_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+find_library(SMPEG2_DEBUG_LIBRARY smpeg2.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+find_file(SMPEG2_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+
+add_library(smpeg2 STATIC IMPORTED [GLOBAL])
+# set the location that we are going to import the library from
+set_target_properties(
+    smpeg2 
+    PROPERTIES
+        IMPORTED_IMPLIB_DEBUG ${SMPEG2_SHARED_DEBUG_LIBRARY}
+        IMPORTED_LOCATION_DEBUG ${SMPEG2_DEBUG_LIBRARY}
+        IMPORTED_IMPLIB_RELEASE ${SMPEG2_SHARED_LIBRARY}
+        IMPORTED_LOCATION_RELEASE ${SMPEG2_LIBRARY}
+)
 
 find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(Freetype REQUIRED)
-find_library(LIBMAD_LIBRARY mad REQUIRED)
 find_package(Ogg CONFIG REQUIRED)
-find_library(SMPEG2_LIBRARY smpeg2 REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
@@ -107,9 +132,9 @@ target_include_directories(onscripter_en PRIVATE ${FFMPEG_INCLUDE_DIRS})
 target_link_directories(onscripter_en PRIVATE ${FFMPEG_LIBRARY_DIRS})
 target_link_libraries(onscripter_en PRIVATE ${FFMPEG_LIBRARIES})
 target_link_libraries(onscripter_en PRIVATE Freetype::Freetype)
-target_link_libraries(onscripter_en PRIVATE ${LIBMAD_LIBRARY})
+target_link_libraries(onscripter_en PRIVATE libmad)
 target_link_libraries(onscripter_en PRIVATE Ogg::ogg)
-target_link_libraries(onscripter_en PRIVATE ${SMPEG2_LIBRARY})
+target_link_libraries(onscripter_en PRIVATE smpeg2)
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbis)
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbisfile)
 target_link_libraries(onscripter_en PRIVATE Vorbis::vorbisenc)

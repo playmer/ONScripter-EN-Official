@@ -57,10 +57,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-
-
-
-
 message(STATUS SMPEG2_SHARED_DEBUG_LIBRARY: ${SMPEG2_SHARED_DEBUG_LIBRARY})
 message(STATUS SMPEG2_DEBUG_LIBRARY: ${SMPEG2_DEBUG_LIBRARY})
 message(STATUS SMPEG2_SHARED_LIBRARY: ${SMPEG2_SHARED_LIBRARY})
@@ -267,6 +263,25 @@ PRIVATE
     version.h
     winres.h
 )
+
+if(APPLE)
+    target_sources(onscripter_en
+    PRIVATE
+        macosx/cocoa_alertbox.h
+        macosx/cocoa_alertbox.mm
+        macosx/cocoa_alertbox_result.h
+        macosx/cocoa_bundle.h
+        macosx/cocoa_bundle.mm
+        macosx/cocoa_directories.h
+        macosx/cocoa_directories.mm
+        macosx/cocoa_encoding.h
+        macosx/cocoa_encoding.mm
+        macosx/cocoa_modal_alert.h
+        macosx/cocoa_modal_alert.mm
+        macosx/cocoa_url.h
+        macosx/cocoa_url.mm
+    )
+endif()
 
 if(NOT WIN32)
     target_sources(onscripter_en

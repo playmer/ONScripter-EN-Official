@@ -1478,11 +1478,11 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
     if ((event->keysym.sym == SDLK_F1) && (version_str != NULL)){
         //F1 is for Help (on Windows), so show the About dialog box
         menu_windowCommand();
+        HWND pwin = NULL;
         SDL_SysWMinfo info;
         SDL_VERSION(&info.version);
-        HWND pwin = NULL;
-        if (SDL_GetWMInfo(&info) == 1)
-            pwin = info.window;
+        if (SDL_GetWindowWMInfo(m_window, &info))
+          pwin = info.info.win.window;
         MessageBox(pwin, version_str, "About",
                    MB_OK|MB_ICONINFORMATION);
 
@@ -1518,6 +1518,80 @@ void ONScripterLabel::timerEvent( void )
     volatile_button_state.reset();
 }
 
+enum WhatToDo
+{
+  Nothing,
+  Break,
+  Return
+};
+
+int ONScripterLabel::HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle)
+{
+    printf("Buton: %d State: %d\n", event.cbutton.button, event.cbutton.state);
+
+    SDL_KeyboardEvent keyEvent{};
+    bool relevantButton = false;
+
+    switch (event.cbutton.button)
+    {
+        // Treat these as keyboard buttons
+      case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+      case SDL_CONTROLLER_BUTTON_B:
+        keyEvent.keysym.sym = SDLK_ESCAPE; relevantButton = true;
+      case SDL_CONTROLLER_BUTTON_A:
+      case SDL_CONTROLLER_BUTTON_Y:
+        keyEvent.keysym.sym = SDLK_SPACE; relevantButton = true;
+      case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+      case SDL_CONTROLLER_BUTTON_X:
+        keyEvent.keysym.sym = SDLK_RETURN; relevantButton = true;
+      case SDL_CONTROLLER_BUTTON_BACK:
+      case SDL_CONTROLLER_BUTTON_GUIDE:
+      case SDL_CONTROLLER_BUTTON_START:
+        keyEvent.keysym.sym = SDLK_ESCAPE; relevantButton = true;
+        //case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+        //case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
+      case SDL_CONTROLLER_BUTTON_DPAD_UP:
+        keyEvent.keysym.sym = SDLK_UP; relevantButton = true;
+      case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+        keyEvent.keysym.sym = SDLK_DOWN; relevantButton = true;
+      case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+        keyEvent.keysym.sym = SDLK_LEFT; relevantButton = true;
+      case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+        keyEvent.keysym.sym = SDLK_RIGHT; relevantButton = true;
+    }
+
+    if (relevantButton)
+    {
+      if (event.cbutton.state == SDL_PRESSED)
+      {
+          keyEvent.type = SDL_KEYDOWN;
+
+          bool ret = keyDownEvent(&keyEvent);
+          ctrl_toggle ^= (ctrl_pressed_status != 0);
+          //allow skipping sleep waits with start of ctrl keydown
+          ret |= (event_mode & WAIT_SLEEP_MODE) && ctrl_toggle;
+          if (btndown_flag)
+              ret |= keyPressEvent(&keyEvent);
+          if (ret) return Return;
+      }
+      else
+      {
+          keyEvent.type = SDL_KEYUP;
+
+          keyUpEvent(&keyEvent);
+          bool ret = keyPressEvent(&keyEvent);
+          if (ret) return Return;
+      }
+    }
+
+    return Nothing;
+}
+
+float ToFloat(Sint16 aValue)
+{
+  return (static_cast<float>(aValue + 32768.f) / 65535.f);
+}
+
 
 void ONScripterLabel::runEventLoop()
 {
@@ -1539,6 +1613,56 @@ void ONScripterLabel::runEventLoop()
         }
 
         switch (event.type) {
+            // Joypad Events
+          case SDL_CONTROLLERDEVICEADDED:
+          {
+            // We don't care which controller, we're taking input from all of them.
+            SDL_GameController* pad = SDL_GameControllerOpen(event.cdevice.which);
+
+            if (pad)
+            {
+              const char* name = SDL_GameControllerName(pad);
+              SDL_Joystick* joystick = SDL_GameControllerGetJoystick(pad);
+              SDL_JoystickID instanceId = SDL_JoystickInstanceID(joystick);
+
+              printf("Added %s, %d\n", name, instanceId);
+            }
+            break;
+          }
+          case SDL_CONTROLLERDEVICEREMOVED:
+            printf("Removed %d\n", event.cdevice.which);
+            break;
+
+          case SDL_CONTROLLERBUTTONDOWN:
+          case SDL_CONTROLLERBUTTONUP:
+          {
+            int ret = HandleGamepadEvent(event, had_automode, ctrl_toggle);
+            if (ret == WhatToDo::Break) break;
+            else if (ret == WhatToDo::Return) return;
+            break;
+          }
+
+          case SDL_CONTROLLERAXISMOTION:
+          {
+            static std::pair<float, float> left;
+            static std::pair<float, float> right;
+            switch (event.caxis.axis)
+            {
+                case SDL_CONTROLLER_AXIS_LEFTX: left.first = 2.f * (ToFloat(event.caxis.value) - .5f); break;
+                case SDL_CONTROLLER_AXIS_LEFTY: left.second = 2.f * (ToFloat(event.caxis.value) - .5f); break;
+                case SDL_CONTROLLER_AXIS_RIGHTX: right.first = 2.f * (ToFloat(event.caxis.value) - .5f); break;
+                case SDL_CONTROLLER_AXIS_RIGHTY: right.second = 2.f * (ToFloat(event.caxis.value) - .5f); break;
+                case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+                case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+                break;
+            }
+
+            if (sqrt((right.first * right.first) + (right.second * right.second)) > 0.5)
+                WarpMouse(screen_surface->w, screen_surface->h);
+            else if (sqrt((left.first * left.first) + (left.second * left.second)) > 0.5)
+                WarpMouse(screen_surface->w, screen_surface->h);
+            break;
+          }
           case SDL_MOUSEMOTION:
             TranslateMouse(event.motion);
             ret = mouseMoveEvent( (SDL_MouseMotionEvent*)&event );

@@ -1,5 +1,4 @@
-build/
-build-msys2/
+build*/
 .vs/
 *.o
 *.lo

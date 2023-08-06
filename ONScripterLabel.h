@@ -452,6 +452,7 @@ protected:
     void WarpMouse(int x, int y);
     SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen);
     void UpdateScreen(SDL_Rect dst_rect);
+    int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
     static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
 
     template <typename SDLEvent>

@@ -1737,14 +1737,12 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool is
 #elif defined(WIN32) && defined(USE_MESSAGEBOX)
     char errtitle[256];
     HWND pwin = NULL;
-    SDL_SysWMinfo info;
     UINT mb_type = MB_OK;
+    SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
-    SDL_GetWMInfo(&info);
-
-    if (SDL_GetWMInfo(&info) == 1) {
-        pwin = info.window;
-        snprintf(errtitle, 256, "%s", title);
+    if (SDL_GetWindowWMInfo(m_window, &info)) {
+      pwin = info.info.win.window;
+      snprintf(errtitle, 256, "%s", title);
     } else {
         snprintf(errtitle, 256, "ONScripter-EN: %s", title);
     }

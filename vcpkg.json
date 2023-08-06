@@ -3,11 +3,13 @@
     "version-string": "0.1.0-dev",
     "dependencies": [
         "bzip2",
+        "dirent",
         {
             "name": "ffmpeg",
             "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ]
         },
         "freetype",
+        "libjpeg-turbo",
         "libmad",
         "libogg",
         "libpng",

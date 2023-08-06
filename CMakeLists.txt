@@ -1,26 +1,21 @@
 cmake_minimum_required(VERSION 3.20.0 FATAL_ERROR) 
-
-
-# we should not do it this way, I'm being lazy for testing/ initial development of this cmake, we should just have the user pass in the toolchain
-# file on windows/mac, and then the find_packages should get intercepted and these libraries installed, linux can use their built in package managers.
-include(FetchContent)
-FetchContent_Declare(
-    vcpkg
-    GIT_REPOSITORY https://github.com/microsoft/vcpkg.git
-)
-
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    FetchContent_Populate(vcpkg)
-    set(CMAKE_TOOLCHAIN_FILE "${vcpkg_SOURCE_DIR}/scripts/buildsystems/vcpkg.cmake")
-endif()
-
 project(onscripter_en C CXX)
 
+if (APPLE)
+    enable_language(OBJCXX)
+endif()
 
+option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" ON)
 option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
+option(ONS_USE_MESSAGEBOX "Determines whether Message Boxes are create on Windows" ON)
+option(ONS_USE_OGG_VORBIS "Choose whether to enable Lua support or not" ON)
 
-find_library(LIBMAD_LIBRARY mad.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-find_library(LIBMAD_DEBUG_LIBRARY mad.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+
+###############
+# onscripter-en required Libraries/Packages
+
+find_library(LIBMAD_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+find_library(LIBMAD_DEBUG_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
 
 add_library(libmad STATIC IMPORTED [GLOBAL])
 # set the location that we are going to import the library from
@@ -31,20 +26,19 @@ set_target_properties(
         IMPORTED_LOCATION ${LIBMAD_LIBRARY}
 )
 
-find_library(SMPEG2_LIBRARY smpeg2.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-find_file(SMPEG2_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-find_library(SMPEG2_DEBUG_LIBRARY smpeg2.lib PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-find_file(SMPEG2_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+find_library(SMPEG2_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+find_library(SMPEG2_DEBUG_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+#find_file(SMPEG2_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
+#find_file(SMPEG2_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
 
 add_library(smpeg2 STATIC IMPORTED [GLOBAL])
 # set the location that we are going to import the library from
 set_target_properties(
     smpeg2 
     PROPERTIES
-        IMPORTED_IMPLIB_DEBUG ${SMPEG2_SHARED_DEBUG_LIBRARY}
         IMPORTED_LOCATION_DEBUG ${SMPEG2_DEBUG_LIBRARY}
-        IMPORTED_IMPLIB_RELEASE ${SMPEG2_SHARED_LIBRARY}
         IMPORTED_LOCATION_RELEASE ${SMPEG2_LIBRARY}
+        IMPORTED_LOCATION ${SMPEG2_LIBRARY}
 )
 
 find_package(BZip2 REQUIRED)
@@ -53,8 +47,6 @@ find_package(PNG REQUIRED)
 find_package(FFMPEG REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(Ogg CONFIG REQUIRED)
-find_package(Vorbis CONFIG REQUIRED)
-find_package(Vorbis CONFIG REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
@@ -69,11 +61,31 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
 
+message(STATUS SMPEG2_SHARED_DEBUG_LIBRARY: ${SMPEG2_SHARED_DEBUG_LIBRARY})
+message(STATUS SMPEG2_DEBUG_LIBRARY: ${SMPEG2_DEBUG_LIBRARY})
+message(STATUS SMPEG2_SHARED_LIBRARY: ${SMPEG2_SHARED_LIBRARY})
+message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
 
 
 
+###############
+# onscripter-en Build Tools
 
-#Theoretical CD Rom library
+if(NOT WIN32)
+    # embed
+    add_executable(onscripter_embed embed.cpp)
+
+    add_custom_command(
+        OUTPUT resources.cpp
+        COMMAND onscripter_embed ons-en.ico > resources.cpp
+        COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+        VERBATIM
+    )
+endif()
+
+
+###############
+#SDL CD Rom library adapted from original SDL1 CD Module
 add_library(SDLHelper_CD)
 
 target_sources(SDLHelper_CD 
@@ -97,26 +109,40 @@ if (WIN32)
     PUBLIC
         SDLHelper_CD/cdrom/win32/SDL_syscdrom.c
     )
+else()
+    target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_LINUX)
+
+    target_sources(SDLHelper_CD 
+    PUBLIC
+        SDLHelper_CD/cdrom/linux/SDL_syscdrom.c
+    )
 endif()
 
+###############
+# onscripter-en Tools
+add_subdirectory(tools)
 
-
+###############
 # onscripter-en
 if (MSVC)
     add_compile_options(/MP)
 endif()
 
-
 add_executable(onscripter_en)
 
-# I suppose these should be options like Lua.
-target_compile_definitions(onscripter_en PRIVATE -DUSE_AVIFILE -DUSE_OGG_VORBIS)
+#########
+# AVI Support
+if (ONS_USE_AVIFILE)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_AVIFILE)
+endif()
 
+#########
+# Lua Support
 if (ONS_USE_LUA)
     find_package(Lua REQUIRED)
     target_include_directories(onscripter_en PRIVATE ${LUA_INCLUDE_DIR})
     target_link_libraries(onscripter_en PRIVATE ${LUA_LIBRARIES})
-    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA -DUSE_AVIFILE -DUSE_OGG_VORBIS)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA)
 
     target_sources(onscripter_en
     PRIVATE
@@ -125,40 +151,51 @@ if (ONS_USE_LUA)
     )
 endif()
 
-target_link_libraries(onscripter_en PRIVATE BZip2::BZip2)
-target_link_libraries(onscripter_en PRIVATE ZLIB::ZLIB)
-target_link_libraries(onscripter_en PRIVATE PNG::PNG)
-target_include_directories(onscripter_en PRIVATE ${FFMPEG_INCLUDE_DIRS})
+#########
+# MessageBox Support (Windows)
+if (ONS_USE_MESSAGEBOX)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_MESSAGEBOX)
+endif()
+
+#########
+# Ogg Vorbis Support
+if (ONS_USE_OGG_VORBIS)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_OGG_VORBIS)
+endif()
+
+target_include_directories(onscripter_en 
+PRIVATE 
+    .
+    ${FFMPEG_INCLUDE_DIRS}
+)
+
 target_link_directories(onscripter_en PRIVATE ${FFMPEG_LIBRARY_DIRS})
-target_link_libraries(onscripter_en PRIVATE ${FFMPEG_LIBRARIES})
-target_link_libraries(onscripter_en PRIVATE Freetype::Freetype)
-target_link_libraries(onscripter_en PRIVATE libmad)
-target_link_libraries(onscripter_en PRIVATE Ogg::ogg)
-target_link_libraries(onscripter_en PRIVATE smpeg2)
-target_link_libraries(onscripter_en PRIVATE Vorbis::vorbis)
-target_link_libraries(onscripter_en PRIVATE Vorbis::vorbisfile)
-target_link_libraries(onscripter_en PRIVATE Vorbis::vorbisenc)
-target_link_libraries(onscripter_en
-    PRIVATE
+
+target_link_libraries(onscripter_en PRIVATE BZip2::BZip2
+PRIVATE
+    ZLIB::ZLIB
+    PNG::PNG
+    ${FFMPEG_LIBRARIES}
+    Freetype::Freetype
+    libmad
+    Ogg::ogg
+    smpeg2
+    Vorbis::vorbis
+    Vorbis::vorbisfile
+    Vorbis::vorbisenc
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+    $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
+    $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
+    $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
+    SDLHelper_CD
 )
-target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>)
-target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>)
-target_link_libraries(onscripter_en PRIVATE $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>)
-target_link_libraries(onscripter_en PRIVATE SDLHelper_CD)
 
+if (WIN32)
+    target_link_libraries(onscripter_en PRIVATE winmm)
+endif()
 
-message(STATUS FFMPEG_LIBRARIES: ${FFMPEG_LIBRARIES})
-
-
-
-
-
-
-#target_compile_definitions(onscripter_en PUBLIC -DUSE_OGG_VORBIS -DINTEGER_OGG_VORBIS)
-
-target_compile_features(onscripter_en PUBLIC cxx_std_17)
+target_compile_features(onscripter_en PUBLIC cxx_std_11)
 
 target_sources(onscripter_en
 PRIVATE
@@ -174,7 +211,6 @@ PRIVATE
     DirPaths.h
     DirtyRect.cpp
     DirtyRect.h
-    #embed.cpp
     Encoding.cpp
     Encoding.h
     FFMpegWrapper.cpp
@@ -219,7 +255,6 @@ PRIVATE
     ONScripterLabel.h
     resize_image.cpp
     resize_image.h
-    resources.h
     SarReader.cpp
     SarReader.h
     ScriptHandler.cpp
@@ -228,15 +263,18 @@ PRIVATE
     ScriptParser.cpp
     ScriptParser.h
     ScriptParser_command.cpp
-    #SDL_win32_main.c
     sjis2utf16.cpp
     version.h
     winres.h
 )
 
-
-if (WIN32)
-    target_link_libraries(onscripter_en PRIVATE winmm)
+if(NOT WIN32)
+    target_sources(onscripter_en
+    PRIVATE
+        resources.cpp
+        resources.h
+    )
 endif()
 
+# Sets onscripter_en as the startup project in VS, doesn't affect non-VS generators.
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT onscripter_en)

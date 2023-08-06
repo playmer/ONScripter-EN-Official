@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <zlib.h>
+
 namespace jpeglib { //Mion: added namespace to avoid type conflicts
     extern "C" {
 #include <jpeglib.h>

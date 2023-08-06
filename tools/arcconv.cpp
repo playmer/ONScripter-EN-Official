@@ -35,7 +35,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <regex.h>
+//#include <regex.h>
+
+#include <regex>
 
 #ifdef SAR
 #include "SarReader.h"
@@ -71,16 +73,9 @@ static ruleset *rules;
 static unsigned int num_of_rules;
 
 int match(const char *string, const char *pattern) {
-    int status;
-    regex_t re;
+    std::regex matcher{pattern, std::regex_constants::extended | std::regex_constants::icase | std::regex_constants::nosubs};
 
-    if ((status = regcomp(&re, pattern, REG_EXTENDED|REG_ICASE|REG_NOSUB)) != 0)
-        return status;
-
-    status = regexec(&re, string, 0, NULL, 0);
-    regfree(&re);
-
-    return status;
+    return std::regex_match(string, matcher);
 }
 
 int parseRulesFile(const char *rulesfile)

@@ -115,8 +115,8 @@ int ONScripterLabel::yesnoboxCommand()
         HWND pwin = NULL;
         SDL_SysWMinfo info;
         SDL_VERSION(&info.version);
-        if (SDL_GetWMInfo(&info) == 1)
-            pwin = info.window;
+        if (SDL_GetWindowWMInfo(m_window, &info))
+          pwin = info.info.win.window;
         res = MessageBox(pwin, msg, title, mb_type);
         res = ((res == IDYES) || (res == IDOK)) ? 1 : 0;
 #elif defined(LINUX)
@@ -1967,8 +1967,8 @@ int ONScripterLabel::mesboxCommand()
     HWND pwin = NULL;
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
-    if (SDL_GetWMInfo(&info) == 1)
-        pwin = info.window;
+    if (SDL_GetWindowWMInfo(m_window, &info))
+      pwin = info.info.win.window;
     MessageBox(pwin, msg, title, MB_OK);
 #endif
     fprintf(stderr,"Got message box '%s': '%s'\n", title, msg);

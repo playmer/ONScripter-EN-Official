@@ -25,7 +25,6 @@
 
 #include "cocoa_alertbox.h"
 #include "cocoa_modal_alert.h"
-#include "SDLMain.h"
 #include "ONSCocoaUIController.h"
 #include <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>

@@ -105,6 +105,21 @@ if (WIN32)
     PUBLIC
         SDLHelper_CD/cdrom/win32/SDL_syscdrom.c
     )
+elseif (APPLE)
+    target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_MACOSX)
+
+    target_sources(SDLHelper_CD 
+    PUBLIC
+        SDLHelper_CD/cdrom/macosx/AudioFilePlayer.c
+        SDLHelper_CD/cdrom/macosx/AudioFilePlayer.h
+        SDLHelper_CD/cdrom/macosx/AudioFileReaderThread.c
+        SDLHelper_CD/cdrom/macosx/CDPlayer.c
+        SDLHelper_CD/cdrom/macosx/CDPlayer.h
+        SDLHelper_CD/cdrom/macosx/SDL_syscdrom.c
+        SDLHelper_CD/cdrom/macosx/SDL_syscdrom_c.h
+        SDLHelper_CD/cdrom/macosx/SDLOSXCAGuard.c
+        SDLHelper_CD/cdrom/macosx/SDLOSXCAGuard.h
+    )
 else()
     target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_LINUX)
 

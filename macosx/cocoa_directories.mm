@@ -25,7 +25,6 @@
 
 #include "cocoa_directories.h"
 #include "cocoa_modal_alert.h"
-#include "SDLMain.h"
 
 #include <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>

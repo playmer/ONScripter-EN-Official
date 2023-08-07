@@ -33,6 +33,7 @@
 #include "SDL.h"
 #include "SDL_thread.h"
 #include "SDL_mutex.h"
+#include "SDL_cdrom.h"
 
 #ifdef __cplusplus
 extern "C" {

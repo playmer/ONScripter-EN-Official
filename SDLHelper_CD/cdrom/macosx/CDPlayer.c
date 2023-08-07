@@ -554,7 +554,7 @@ static OSStatus CheckInit ()
     callbackSem = SDL_CreateSemaphore(0);
 
     /* Start callback thread */
-    SDL_CreateThread(RunCallBackThread, NULL);
+    SDL_CreateThread(RunCallBackThread, "CDRom Thread", NULL);
 
     { /*try {*/
         ComponentDescription desc;

@@ -287,8 +287,6 @@ if(APPLE)
         macosx/cocoa_alertbox_result.h
         macosx/cocoa_bundle.h
         macosx/cocoa_bundle.mm
-        macosx/cocoa_directories.h
-        macosx/cocoa_directories.mm
         macosx/cocoa_encoding.h
         macosx/cocoa_encoding.mm
         macosx/cocoa_modal_alert.h

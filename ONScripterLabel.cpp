@@ -1226,10 +1226,9 @@ int ONScripterLabel::init()
         }
 #elif defined MACOSX
         // On Mac OS X, place in ~/Library/Application Support/<gameid>/
-        char *path;
-        ONSCocoa::getGameAppSupportPath(&path, gameid);
+        char* path = SDL_GetPrefPath("ONScripter-EN", gameid);
         setSavePath(path);
-        delete[] path;
+        SDL_free(path);
 #elif defined LINUX
         // On Linux (and similar *nixen), place in ~/.gameid
         passwd* pwd = getpwuid(getuid());

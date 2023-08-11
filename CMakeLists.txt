@@ -10,6 +10,9 @@ option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 option(ONS_USE_MESSAGEBOX "Determines whether Message Boxes are create on Windows" ON)
 option(ONS_USE_OGG_VORBIS "Choose whether to enable Lua support or not" ON)
 
+if (MSVC)
+    add_compile_options(/MP)
+endif()
 
 ###############
 # onscripter-en required Libraries/Packages
@@ -79,6 +82,26 @@ if(NOT WIN32)
     )
 endif()
 
+set(I \"ons-en.ico\")
+
+string(TIMESTAMP Y %Y)
+string(TIMESTAMP M %m)
+string(TIMESTAMP D %d)
+string(TIMESTAMP 0M %m)
+string(TIMESTAMP 0D %d)
+
+configure_file(onscripter.rc.in onscripter.rc
+    @ONLY
+)
+
+configure_file(winres.h winres.h
+    @ONLY
+)
+
+configure_file(version.h version.h
+    @ONLY
+)
+
 
 ###############
 #SDL CD Rom library adapted from original SDL1 CD Module
@@ -135,10 +158,6 @@ add_subdirectory(tools)
 
 ###############
 # onscripter-en
-if (MSVC)
-    add_compile_options(/MP)
-endif()
-
 add_executable(onscripter_en)
 
 #########
@@ -248,7 +267,6 @@ PRIVATE
     NsaReader.cpp
     NsaReader.h
     onscripter.cpp
-    onscripter.rc.in
     ONScripterLabel_animation.cpp
     ONScripterLabel_command.cpp
     ONScripterLabel_effect_breakup.cpp
@@ -278,6 +296,13 @@ PRIVATE
     version.h
     winres.h
 )
+
+if(WIN32)
+    target_sources(onscripter_en
+    PRIVATE
+        onscripter.rc
+    )
+endif()
 
 if(APPLE)
     target_sources(onscripter_en

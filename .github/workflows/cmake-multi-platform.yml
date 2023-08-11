@@ -50,6 +50,10 @@ jobs:
       # Developer Command Prompt environment in VS 2022 17.6, which would override this one 
       # if it had the same name.
       _VCPKG_: ${{ github.workspace }}/extlib/vcpkg
+      # Tells vcpkg where binary packages are stored.
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+      # Let's use GitHub Action cache as storage for the vcpkg Binary Caching feature.
+      VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
     steps:
     # Set env vars needed for vcpkg to leverage the GitHub Action cache as a storage
     # for Binary Caching.

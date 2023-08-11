@@ -59,6 +59,11 @@ jobs:
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
+    - name: Get Ninja
+      # You may pin to the exact commit or the version.
+      # uses: turtlesec-no/get-ninja@d7a7c37af896a14495405252c4657afbc7a7b6fa
+      uses: turtlesec-no/get-ninja@1.1.0
+      
     - uses: actions/checkout@v3
       with:
         submodules: true
@@ -78,7 +83,8 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DCMAKE_TOOLCHAIN_FILE=${{ env._VCPKG_ }}/buildsystems/vcpkg.cmake
+        -DCMAKE_MAKE_PROGRAM=ninja
+        -DCMAKE_TOOLCHAIN_FILE=${{ env._VCPKG_ }}/scripts/buildsystems/vcpkg.cmake
         -S ${{ github.workspace }}
 
     - name: Build

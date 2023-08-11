@@ -9,6 +9,13 @@ on:
     branches: [ "master" ]
 
 jobs:
+  install_packages:
+    runs-on: ubuntu-latest
+      
+    steps:
+      - name: Install packages
+        run: sudo apt install -y zip pkg-config nasm libx11-dev libxft-dev libxext-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev
+
   build:
     runs-on: ${{ matrix.os }}
 
@@ -58,7 +65,8 @@ jobs:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
+    
+      
     - name: Get Ninja
       # You may pin to the exact commit or the version.
       # uses: turtlesec-no/get-ninja@d7a7c37af896a14495405252c4657afbc7a7b6fa
@@ -80,8 +88,9 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -G Ninja
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_MAKE_PROGRAM=ninja
         -DCMAKE_TOOLCHAIN_FILE=${{ env._VCPKG_ }}/scripts/buildsystems/vcpkg.cmake

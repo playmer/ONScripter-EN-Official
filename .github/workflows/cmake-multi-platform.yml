@@ -33,7 +33,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - run: brew install ninja nasm cmake
-      
+
   job:
     name: ${{ matrix.os }}-${{ github.workflow }}
     runs-on: ${{ matrix.os }}
@@ -61,6 +61,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
+          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
 
       # Note: if the preset misses the "configuration", it is possible to explicitly select the
       # configuration with the additional `--config` flag, e.g.:

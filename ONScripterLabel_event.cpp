@@ -1529,8 +1529,6 @@ enum WhatToDo
 
 int ONScripterLabel::HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle)
 {
-    printf("Buton: %d State: %d\n", event.cbutton.button, event.cbutton.state);
-
     SDL_KeyboardEvent keyEvent{};
     bool relevantButton = false;
 
@@ -1539,27 +1537,27 @@ int ONScripterLabel::HandleGamepadEvent(SDL_Event& event, bool had_automode, boo
         // Treat these as keyboard buttons
       case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
       case SDL_CONTROLLER_BUTTON_B:
-        keyEvent.keysym.sym = SDLK_ESCAPE; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_ESCAPE; relevantButton = true; break;
       case SDL_CONTROLLER_BUTTON_A:
       case SDL_CONTROLLER_BUTTON_Y:
-        keyEvent.keysym.sym = SDLK_SPACE; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_SPACE; relevantButton = true; break;
       case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
       case SDL_CONTROLLER_BUTTON_X:
-        keyEvent.keysym.sym = SDLK_RETURN; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_RETURN; relevantButton = true; break;
       case SDL_CONTROLLER_BUTTON_BACK:
       case SDL_CONTROLLER_BUTTON_GUIDE:
       case SDL_CONTROLLER_BUTTON_START:
-        keyEvent.keysym.sym = SDLK_ESCAPE; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_ESCAPE; relevantButton = true; break;
         //case SDL_CONTROLLER_BUTTON_LEFTSTICK:
         //case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
       case SDL_CONTROLLER_BUTTON_DPAD_UP:
-        keyEvent.keysym.sym = SDLK_UP; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_UP; relevantButton = true; break;
       case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-        keyEvent.keysym.sym = SDLK_DOWN; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_DOWN; relevantButton = true; break;
       case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-        keyEvent.keysym.sym = SDLK_LEFT; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_LEFT; relevantButton = true; break;
       case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-        keyEvent.keysym.sym = SDLK_RIGHT; relevantButton = true;
+        keyEvent.keysym.sym = SDLK_RIGHT; relevantButton = true; break;
     }
 
     if (relevantButton)

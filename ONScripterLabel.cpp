@@ -444,7 +444,6 @@ void ONScripterLabel::SetWindowCaption(const char* title, const char* icon_name)
 
 void ONScripterLabel::WarpMouse(int x, int y)
 {
-  //printf("x: %d, y: %d\n", x, y);
   int windowResolutionX, windowResolutionY;
   SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
 
@@ -460,6 +459,12 @@ void ONScripterLabel::WarpMouse(int x, int y)
 
   x = (x * scale) + dstRect.x;
   y = (y * scale) + dstRect.y;
+
+  // Tiny adjustment to fix rounding errors on resized windows, shouldn't cause issues
+  // unless the original button we're warping to is 1x1 or 2x2. (which is typically what
+  // this function is used for.
+  ++x;
+  ++y;
 
   SDL_WarpMouseInWindow(m_window, x, y);
 }

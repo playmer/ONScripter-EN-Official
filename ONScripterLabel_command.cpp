@@ -68,6 +68,7 @@ int message_main(int mode, char *title, char *message);
 
 extern SDL_TimerID timer_bgmfade_id;
 extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param );
+extern "C" void waveCallback(int channel);
 
 int ONScripterLabel::yesnoboxCommand()
 {
@@ -155,6 +156,7 @@ int ONScripterLabel::wavestopCommand()
 {
     if ( audio_open_flag && wave_sample[MIX_WAVE_CHANNEL] ){
         Mix_Pause( MIX_WAVE_CHANNEL );
+        Mix_ChannelFinished(NULL);
         Mix_FreeChunk( wave_sample[MIX_WAVE_CHANNEL] );
         wave_sample[MIX_WAVE_CHANNEL] = NULL;
     }
@@ -2198,11 +2200,13 @@ int ONScripterLabel::loopbgmstopCommand()
 {
     if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ){
         Mix_Pause(MIX_LOOPBGM_CHANNEL0);
+        Mix_ChannelFinished(NULL);
         Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL0] );
         wave_sample[MIX_LOOPBGM_CHANNEL0] = NULL;
     }
     if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ){
         Mix_Pause(MIX_LOOPBGM_CHANNEL1);
+        Mix_ChannelFinished(NULL);
         Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL1] );
         wave_sample[MIX_LOOPBGM_CHANNEL1] = NULL;
     }
@@ -3521,6 +3525,7 @@ int ONScripterLabel::dwaveCommand()
     else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
 
     if (play_mode == WAVE_PLAY_LOADED){
+        Mix_ChannelFinished(waveCallback);
         Mix_PlayChannel(ch, wave_sample[ch], loop_flag?-1:0);
     }
     else{

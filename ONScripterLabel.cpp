@@ -473,18 +473,17 @@ void ONScripterLabel::initSDL()
     /* ---------------------------------------- */
     /* Initialize SDL */
 
-    if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0 ){
+    if ( SDL_Init( SDL_INIT_EVERYTHING ) < 0 ){
         errorAndExit("Couldn't initialize SDL", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
-    if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_EVERYTHING ) < 0 ){
+    if( cdaudio_flag && SDL_CDROMInit() < 0 ){
         errorAndExit("Couldn't initialize CD-ROM", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
-
-    SDL_CDROMInit();
+    
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 
 #if 0
@@ -737,7 +736,6 @@ void ONScripterLabel::openAudio(int freq, Uint16 format, int channels)
         audio_open_flag = true;
 
         Mix_AllocateChannels( ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS );
-        Mix_ChannelFinished( waveCallback );
     }
 }
 

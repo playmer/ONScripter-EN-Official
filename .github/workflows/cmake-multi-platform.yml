@@ -36,7 +36,7 @@ jobs:
       CMAKE_C_COMPILER: gcc
       CMAKE_MAKE_PROGRAM: ninja
     steps:
-      - run: sudo apt install -y zip pkg-config nasm libx11-dev libxft-dev libxext-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev
+      - run: sudo apt install -y ninja-build zip pkg-config nasm libx11-dev libxft-dev libxext-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev
       - run: ninja --version
       - run: nasm -v
       

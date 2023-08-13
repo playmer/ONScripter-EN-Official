@@ -90,15 +90,19 @@ string(TIMESTAMP D %d)
 string(TIMESTAMP 0M %m)
 string(TIMESTAMP 0D %d)
 
+# trim off the leading 0 if the month/day has one.
+string(REGEX REPLACE "^0" "" M ${M})
+string(REGEX REPLACE "^0" "" D ${D})
+
 configure_file(onscripter.rc.in onscripter.rc
     @ONLY
 )
 
-configure_file(winres.h winres.h
+configure_file(winres.h.in winres.h
     @ONLY
 )
 
-configure_file(version.h version.h
+configure_file(version.h.in version.h
     @ONLY
 )
 
@@ -196,6 +200,7 @@ endif()
 target_include_directories(onscripter_en 
 PRIVATE 
     .
+    ${CMAKE_CURRENT_BINARY_DIR}
     ${FFMPEG_INCLUDE_DIRS}
 )
 
@@ -294,7 +299,7 @@ PRIVATE
     ScriptParser_command.cpp
     sjis2utf16.cpp
     version.h
-    winres.h
+    "winres.h.in"
 )
 
 if(WIN32)

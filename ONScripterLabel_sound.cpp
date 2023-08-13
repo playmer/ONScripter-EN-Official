@@ -46,6 +46,9 @@
 //#endif
 #include "FFMpegWrapper.h"
 
+
+extern "C" void waveCallback(int channel);
+
 struct WAVE_HEADER{
     char chunk_riff[4];
     char riff_length[4];
@@ -422,11 +425,11 @@ void ONScripterLabel::playCDAudio()
         //track number; check for mp3, ogg and wav files
         char filename[256];
         sprintf( filename, "cd\\track%2.2d.mp3", current_cd_track );
-        int ret = playSound( filename, SOUND_MP3, cd_play_loop_flag );
+        int ret = playSound( filename, SOUND_MP3, cd_play_loop_flag, MIX_BGM_CHANNEL);
         if (ret == SOUND_MP3) return;
 
         sprintf( filename, "cd\\track%2.2d.ogg", current_cd_track );
-        ret = playSound( filename, SOUND_OGG, cd_play_loop_flag );
+        ret = playSound( filename, SOUND_OGG, cd_play_loop_flag, MIX_BGM_CHANNEL);
         if (ret == SOUND_OGG) return;
 
         sprintf( filename, "cd\\track%2.2d.wav", current_cd_track );
@@ -437,7 +440,10 @@ void ONScripterLabel::playCDAudio()
 int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel)
 {
     Mix_Pause( channel );
-    if ( wave_sample[channel] ) Mix_FreeChunk( wave_sample[channel] );
+    if ( wave_sample[channel] ) {
+      Mix_ChannelFinished(NULL);
+      Mix_FreeChunk( wave_sample[channel] );
+    }
     wave_sample[channel] = chunk;
 
     if (!chunk) return -1;
@@ -451,8 +457,10 @@ int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int 
     else
         Mix_Volume( channel, !volume_on_flag? 0 : DEFAULT_VOLUME * 128 / 100 );
 
-    if ( !(format & SOUND_PRELOAD) )
-        Mix_PlayChannel( channel, wave_sample[channel], loop_flag?-1:0 );
+    if (!(format & SOUND_PRELOAD)) {
+        Mix_ChannelFinished(waveCallback);
+        Mix_PlayChannel(channel, wave_sample[channel], loop_flag ? -1 : 0);
+    }
 
     return 0;
 }
@@ -987,6 +995,7 @@ void ONScripterLabel::stopBGM( bool continue_flag )
 
     if ( wave_sample[MIX_BGM_CHANNEL] ){
         Mix_Pause( MIX_BGM_CHANNEL );
+        Mix_ChannelFinished(NULL);
         Mix_FreeChunk( wave_sample[MIX_BGM_CHANNEL] );
         wave_sample[MIX_BGM_CHANNEL] = NULL;
     }
@@ -1040,6 +1049,7 @@ void ONScripterLabel::stopDWAVE( int channel )
             //don't free preloaded channels, _except_:
             //always free voice channel, for now - could be
             //messy for bgmdownmode and/or voice-waiting FIXME
+            Mix_ChannelFinished(NULL);
             Mix_FreeChunk( wave_sample[channel] );
             wave_sample[channel] = NULL;
             channel_preloaded[channel] = false;
@@ -1059,6 +1069,7 @@ void ONScripterLabel::stopAllDWAVE()
             if ( !channel_preloaded[ch] || ch == 0 ){
                 //always free voice channel sample, for now - could be
                 //messy for bgmdownmode and/or voice-waiting FIXME
+                Mix_ChannelFinished(NULL);
                 Mix_FreeChunk( wave_sample[ch] );
                 wave_sample[ch] = NULL;
             }

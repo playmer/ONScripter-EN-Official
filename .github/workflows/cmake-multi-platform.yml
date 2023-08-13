@@ -116,11 +116,7 @@ jobs:
     
     env:
       CMAKE_CXX_COMPILER: cl
-    steps:
-      - run: winget install --disable-interactivity --force --silent --accept-source-agreements nasm cmake Ninja-build.Ninja
-      - run: ninja --version
-      - run: nasm -v
-      
+    steps:      
       - uses: actions/checkout@v3
         with:
           submodules: true

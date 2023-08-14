@@ -140,3 +140,56 @@ jobs:
         with:
           configurePreset: 'ninja-multi-vcpkg'
           buildPreset: 'ninja-vcpkg-release'
+  
+  windows_msys2:
+    name: windows-build-msys2
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+
+    runs-on: windows-latest
+    
+    env:
+      CMAKE_CXX_COMPILER: g++
+      CMAKE_C_COMPILER: gcc
+      CMAKE_MAKE_PROGRAM: ninja
+    defaults:
+        run:
+            shell: msys2 {0}
+          
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: mingw64
+          update: true
+          install: >-
+            curl
+            git
+            cmake
+            ninja
+            base-devel 
+            mingw-w64-x86_64-toolchain
+
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Restore from cache and setup vcpkg executable and data files.
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+
+      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+      # configuration with the additional `--config` flag, e.g.:
+      #   buildPreset: 'ninja-vcpkg'
+      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+      #   testPreset: 'ninja-vcpkg'
+      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ninja-multi-vcpkg'
+          buildPreset: 'ninja-vcpkg-release'

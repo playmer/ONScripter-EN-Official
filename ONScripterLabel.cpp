@@ -75,9 +75,8 @@ typedef HRESULT (WINAPI *GETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
 #include <sys/types.h>
 #include <pwd.h>
 #endif
-#if !defined(WIN32) && !defined(MACOSX)
+
 #include "resources.h"
-#endif
 
 extern void initSJIS2UTF16();
 extern "C" void waveCallback( int channel );
@@ -491,7 +490,17 @@ void ONScripterLabel::initSDL()
         errorAndExit("Couldn't initialize CD-ROM", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
-    
+
+    SDL_RWops* gamecontrollerdbFile = SDL_RWFromFile("gamecontrollerdb.txt", "r");
+    if (gamecontrollerdbFile != NULL) {
+      SDL_GameControllerAddMappingsFromRW(gamecontrollerdbFile, SDL_TRUE);
+    }
+    else {
+      const InternalResource* internal_file = getResource("gamecontrollerdb.txt");
+      SDL_GameControllerAddMappingsFromRW(SDL_RWFromConstMem(internal_file->buffer, internal_file->size), SDL_TRUE);
+    }
+
+    SDL_GameControllerEventState(SDL_ENABLE);
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 
 #if 0

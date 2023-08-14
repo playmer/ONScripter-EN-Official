@@ -2727,7 +2727,12 @@ void ONScripterLabel::quit(bool no_error)
 
     if ( cdrom_info ){
         SDL_CDStop( cdrom_info );
-        SDL_CDClose( cdrom_info );
+
+        // FIXME: This crashes when playing music, but we're about to close
+        //        due to an invalid handle when calling mciSendCommand, since
+        //        we're closing anyway, we can ignore it for now and let the 
+        //        OS handle it.
+        //SDL_CDClose(cdrom_info);
     }
     if ( seqmusic_info ){
         Mix_HaltMusic();

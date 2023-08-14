@@ -70,17 +70,18 @@ message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
 ###############
 # onscripter-en Build Tools
 
-if(NOT WIN32)
-    # embed
-    add_executable(onscripter_embed embed.cpp)
+# embed
+add_executable(onscripter_embed embed.cpp)
 
-    add_custom_command(
-        OUTPUT resources.cpp
-        COMMAND onscripter_embed ons-en.ico > resources.cpp
-        COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-        VERBATIM
-    )
-endif()
+add_custom_command(
+    OUTPUT resources.cpp
+    COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp
+    DEPENDS onscripter_embed ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 
 set(I \"ons-en.ico\")
 
@@ -289,6 +290,8 @@ PRIVATE
     ONScripterLabel.h
     resize_image.cpp
     resize_image.h
+    resources.cpp
+    resources.h
     SarReader.cpp
     SarReader.h
     ScriptHandler.cpp
@@ -299,7 +302,7 @@ PRIVATE
     ScriptParser_command.cpp
     sjis2utf16.cpp
     version.h
-    "winres.h.in"
+    winres.h
 )
 
 if(WIN32)
@@ -323,14 +326,6 @@ if(APPLE)
         macosx/cocoa_modal_alert.mm
         macosx/cocoa_url.h
         macosx/cocoa_url.mm
-    )
-endif()
-
-if(NOT WIN32)
-    target_sources(onscripter_en
-    PRIVATE
-        resources.cpp
-        resources.h
     )
 endif()
 

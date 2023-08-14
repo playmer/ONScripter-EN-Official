@@ -78,7 +78,7 @@ SDL_TimerID timer_seqmusic_id = NULL;
 #endif
 bool ext_music_play_once_flag = false;
 
-static inline void clearTimer(SDL_TimerID &timer_id)
+void ONScripterLabel::clearTimer(SDL_TimerID &timer_id)
 {
     if (timer_id != NULL ) {
         SDL_RemoveTimer( timer_id );
@@ -111,7 +111,7 @@ extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
 
 extern "C" Uint32 SDLCALL animCallback( Uint32 interval, void *param )
 {
-    clearTimer( anim_timer_id );
+    ONScripterLabel::clearTimer( anim_timer_id );
 
     SDL_Event event;
     event.type = ONS_ANIM_EVENT;
@@ -122,7 +122,7 @@ extern "C" Uint32 SDLCALL animCallback( Uint32 interval, void *param )
 
 extern "C" Uint32 SDLCALL breakCallback(Uint32 interval, void *param)
 {
-    clearTimer(break_id);
+    ONScripterLabel::clearTimer(break_id);
 
     SDL_Event event;
     event.type = ONS_BREAK_EVENT;
@@ -133,7 +133,7 @@ extern "C" Uint32 SDLCALL breakCallback(Uint32 interval, void *param)
 
 extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
 {
-    clearTimer( timer_id );
+    ONScripterLabel::clearTimer( timer_id );
 
     SDL_Event event;
     event.type = ONS_TIMER_EVENT;
@@ -144,7 +144,7 @@ extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
 
 extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
 {
-    clearTimer( timer_cdaudio_id );
+    ONScripterLabel::clearTimer( timer_cdaudio_id );
 
     SDL_Event event;
     event.type = ONS_CDAUDIO_EVENT;
@@ -169,7 +169,7 @@ extern "C" Uint32 SDLCALL silentmovieCallback( Uint32 interval, void *param )
     if (*mpeg && (SMPEG_status(*mpeg) != SMPEG_PLAYING)){
         SMPEG_play( *mpeg );
     } else if (*mpeg == NULL){
-        clearTimer( timer_silentmovie_id );
+        ONScripterLabel::clearTimer( timer_silentmovie_id );
         return 0;
     }
 

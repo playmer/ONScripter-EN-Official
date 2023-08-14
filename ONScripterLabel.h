@@ -389,6 +389,8 @@ public:
     int resetmenuCommand();
     int layermessageCommand();
 
+    static void clearTimer(SDL_TimerID& timer_id);
+
 protected:
     /* ---------------------------------------- */
     /* Event related variables */

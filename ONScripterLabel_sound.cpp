@@ -71,11 +71,6 @@ static void setupWaveHeader( unsigned char *buffer, int channels, int bits,
                              unsigned long rate, unsigned long data_length,
                              unsigned int extra_bytes=0, unsigned char *extra_ptr=NULL );
 
-static inline void clearTimer(SDL_TimerID &timer_id)
-{
-    clearTimer( timer_id );
-}
-
 extern bool ext_music_play_once_flag;
 
 extern "C"{

@@ -73,6 +73,7 @@ message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
 # embed
 add_executable(onscripter_embed embed.cpp)
 
+target_compile_features(onscripter_embed PUBLIC cxx_std_11)
 add_custom_command(
     OUTPUT resources.cpp
     COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp

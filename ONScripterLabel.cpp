@@ -498,6 +498,14 @@ void ONScripterLabel::initSDL()
     }
 
     SDL_GameControllerEventState(SDL_ENABLE);
+
+    // Open any controllers that may already be connected.
+    for (int i = 0; i < SDL_NumJoysticks(); i++) {
+      if (SDL_IsGameController(i)) {
+        SDL_GameControllerOpen(i);
+      }
+    }
+
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 
 #if 0

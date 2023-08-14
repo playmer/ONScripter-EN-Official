@@ -502,6 +502,10 @@ void ONScripterLabel::initSDL()
 
     SDL_CreateWindowAndRenderer(800, 600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI, &m_window, &m_renderer);
 
+    // We're about to resize up to roughly the display size, we should try to fill as much of it as possible, without
+    // pushing the top window frame offscreen.
+    SDL_SetWindowPosition(m_window, 50, 50); 
+
     //SDL_EnableUNICODE(1);
 
     /* ---------------------------------------- */

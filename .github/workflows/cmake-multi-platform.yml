@@ -36,7 +36,7 @@ jobs:
       CMAKE_C_COMPILER: gcc
       CMAKE_MAKE_PROGRAM: ninja
     steps:
-      - run: sudo apt install -y ninja-build zip pkg-config nasm libx11-dev libxft-dev libxext-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev
+      - run: sudo apt install -y apt autoconf automake build-essential build-essential cmake cmake fcitx-libs-dev git gnome-desktop-testing install libasound2-dev libaudio-dev libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libfreetype-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libmad0-dev libogg-dev libpipewire-0.3-dev libpng-dev libpulse-dev libsamplerate0-dev libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsmpeg-dev libsndio-dev libtool libudev-dev libvorbis-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make ninja-build ninja-build pkg-config zlib1g-dev
       - run: ninja --version
       - run: nasm -v
       

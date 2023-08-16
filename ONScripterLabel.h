@@ -457,13 +457,17 @@ protected:
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
     static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
 
+
+
+    bool TranslateMouse(int& x, int& y);
     template <typename SDLEvent>
     bool TranslateMouse(SDLEvent& event)
     {
       const int x = event.x;
       const int y = event.y;
       int windowResolutionX, windowResolutionY;
-      SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+      SDL_GetWindowSize(m_window, &windowResolutionX, &windowResolutionY);
+      //SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
 
       float scaleHeight = windowResolutionY / (float)screen_surface->h;
       float scaleWidth = windowResolutionX / (float)screen_surface->w;

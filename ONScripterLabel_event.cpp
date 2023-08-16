@@ -995,8 +995,9 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
 
     if (button) {
         SDL_Rect clip = {0, 0, button->select_rect.w, button->select_rect.h};
-        int x = button->select_rect.x;
-        int y = button->select_rect.y;
+        //center the position on the button.
+        int x = button->select_rect.x + (button->select_rect.w / 2);
+        int y = button->select_rect.y + (button->select_rect.h / 2);
         if (x < 0) clip.x -= x;
         else if (x > screen_width){
             clip.w = 0;

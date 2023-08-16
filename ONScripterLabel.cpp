@@ -441,29 +441,122 @@ void ONScripterLabel::SetWindowCaption(const char* title, const char* icon_name)
   }
 }
 
+static void ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
+{
+  // Scale the mouse to Window (pixel) coordinates
+  float scaleWidth = w_1 / (float)w_2;
+  float scaleHeight = h_1 / (float)h_2;
+  float scale = std::min(scaleHeight, scaleWidth);
+
+  SDL_Rect dstRect = {};
+  dstRect.w = scale * w_2;
+  dstRect.h = scale * h_2;
+  dstRect.x = (w_1 - dstRect.w) / 2;
+  dstRect.y = (h_1 - dstRect.h) / 2;
+
+  x_m = (x_m * scale) + dstRect.x;
+  y_m = (y_m * scale) + dstRect.y;
+
+}
+
+static void ScaleMouseToPoints(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
+{
+  // Scale the mouse to Window (pixel) coordinates
+  float scaleWidth = w_1 / (float)w_2;
+  float scaleHeight = h_1 / (float)h_2;
+  float scale = std::min(scaleHeight, scaleWidth);
+
+  SDL_Rect dstRect = {};
+  dstRect.w = scale * w_2;
+  dstRect.h = scale * h_2;
+  dstRect.x = (w_1) / 2;
+  dstRect.y = (h_1) / 2;
+
+  x_m = (x_m / scale) - (dstRect.x / scale);
+  y_m = (y_m / scale) - (dstRect.y / scale);
+
+}
+
+bool ONScripterLabel::TranslateMouse(int& x, int& y)
+{
+  int windowResolutionX, windowResolutionY;
+  SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
+  //SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+  int windowPointsW, windowPointsH;
+  SDL_GetWindowSize(m_window, &windowPointsW, &windowPointsH);
+
+  if (windowResolutionX == windowPointsW && windowResolutionY == windowPointsH) {
+    printf("same, skipping transform\n");
+    return false;
+  }
+
+  float scaleHeight = windowResolutionY / (float)windowPointsH;
+  float scaleWidth = windowResolutionX / (float)windowPointsW;
+  float scale = std::min(scaleHeight, scaleWidth);
+
+  SDL_Rect dstRect = {};
+  dstRect.w = scale * windowPointsW;
+  dstRect.h = scale * windowPointsH;
+  dstRect.x = (windowResolutionX - dstRect.w) / 2;
+  dstRect.y = (windowResolutionY - dstRect.h) / 2;
+
+  int new_x = (x / scale) - (dstRect.x / scale);
+  int new_y = (y / scale) - (dstRect.y / scale);
+
+  if (new_x < 0 || new_x > windowPointsW || new_y < 0 || new_y > windowPointsH)
+  {
+    // clip the mouse to the window
+    if (new_x < 0)
+      x = 0;
+
+    if (new_x > windowPointsW)
+      x = windowPointsW;
+
+    if (new_y < 0)
+      y = 0;
+
+    if (new_y > windowPointsH)
+      y = windowPointsH;
+
+    return false;
+  }
+
+  fprintf(stderr, "Warping Orig: {%d, %d}; New: {%d, %d}\n", x, y, new_x, new_y);
+
+  x = new_x;
+  y = new_y;
+  return true;
+}
+
 void ONScripterLabel::WarpMouse(int x, int y)
 {
   int windowResolutionX, windowResolutionY;
-  SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+  //SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+  SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
 
-  float scaleHeight = windowResolutionY / (float)screen_surface->h;
+  // Scale the mouse to Window (pixel) coordinates
+  /*float scaleHeight = windowResolutionY / (float)screen_surface->h;
   float scaleWidth = windowResolutionX / (float)screen_surface->w;
   float scale = std::min(scaleHeight, scaleWidth);
-
   SDL_Rect dstRect = {};
   dstRect.w = scale * screen_surface->w;
   dstRect.h = scale * screen_surface->h;
   dstRect.x = (windowResolutionX - dstRect.w) / 2;
   dstRect.y = (windowResolutionY - dstRect.h) / 2;
-
   x = (x * scale) + dstRect.x;
-  y = (y * scale) + dstRect.y;
+  y = (y * scale) + dstRect.y;*/
+
+  ScaleMouseToPixels(windowResolutionX, windowResolutionY, screen_surface->w, screen_surface->h, x, y);
+  TranslateMouse(x, y);
+  //int windowPointsX, windowPointsY;
+  //SDL_GetRendererOutputSize(m_renderer, &windowPointsX, &windowPointsY);
+  //ScaleMouseToPoints(windowPointsX, windowPointsY, windowResolutionX, windowResolutionY, x, y);
 
   // Tiny adjustment to fix rounding errors on resized windows, shouldn't cause issues
   // unless the original button we're warping to is 1x1 or 2x2. (which is typically what
   // this function is used for.
-  ++x;
-  ++y;
+  //x += 2;
+  //y += 2;
 
   SDL_WarpMouseInWindow(m_window, x, y);
 }

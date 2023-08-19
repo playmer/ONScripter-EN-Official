@@ -1742,6 +1742,14 @@ int ScriptHandler::readScript( DirPaths &path )
                 global_variable_border = global_variable_border * 10 + *buf++ - '0';
             //printf("set global_variable_border: %d\n", global_variable_border);
         }
+        else if (!strncmp(buf, ";csv", 6)) {
+          buf += 6;
+          SKIP_SPACE(buf);
+          global_variable_border = 0;
+          while (*buf >= '0' && *buf <= '9')
+            global_variable_border = global_variable_border * 10 + *buf++ - '0';
+          //printf("set global_variable_border: %d\n", global_variable_border);
+        }
         else if (!(strncmp( buf, ";$", 2 ))) {
             buf += 2;
             while ( *buf != '\n' ) {

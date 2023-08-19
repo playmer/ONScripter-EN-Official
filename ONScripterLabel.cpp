@@ -163,6 +163,7 @@ static struct FuncLUT{
     {"resettimer",   &ONScripterLabel::resettimerCommand},
     {"resetmenu", &ONScripterLabel::resetmenuCommand},
     {"reset",   &ONScripterLabel::resetCommand},
+    {"reset2",   &ONScripterLabel::reset2Command},
     {"repaint",   &ONScripterLabel::repaintCommand},
     {"quakey",   &ONScripterLabel::quakeCommand},
     {"quakex",   &ONScripterLabel::quakeCommand},

@@ -104,6 +104,8 @@
 
 #define KEYPRESS_NULL ((SDL_Keycode)(SDLK_AUDIOFASTFORWARD+1)) // "null" for keypress variables
 
+struct ResetException {};
+
 class ONScripterLabel : public ScriptParser
 {
 public:
@@ -240,6 +242,7 @@ public:
     int rmodeCommand();
     int resettimerCommand();
     int resetCommand();
+    int reset2Command();
     int repaintCommand();
     int quakeCommand();
     int puttextCommand();

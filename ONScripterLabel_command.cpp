@@ -1482,6 +1482,12 @@ int ONScripterLabel::resetCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::reset2Command()
+{
+    quit();
+    throw ResetException{};
+}
+
 int ONScripterLabel::repaintCommand()
 {
     dirty_rect.fill( screen_width, screen_height );

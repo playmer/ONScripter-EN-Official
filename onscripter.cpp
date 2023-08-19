@@ -425,45 +425,56 @@ extern "C" int main( int argc, char **argv )
 int main( int argc, char **argv )
 #endif
 {
-    ONScripterLabel ons;
+    bool rebooting = false;
 
-#ifdef PSP
-    ons.disableRescale();
-    ons.enableButtonShortCut();
-#endif
+    while (rebooting) {
+        try {
+            rebooting = false;
+            ONScripterLabel ons;
 
-#ifdef MACOSX
-    //Check for application bundle on Mac OS X
-    ons.checkBundled();
-#endif
+        #ifdef PSP
+            ons.disableRescale();
+            ons.enableButtonShortCut();
+        #endif
 
-    // ----------------------------------------
-    // Parse options
-    bool hasArchivePath = false;
-#ifdef MACOSX
-    if (ons.isBundled()) {
-        const int maxpath=32768;
-        char cfgpath[maxpath];
-        char *tmp = ons.bundleResPath();
-        if (tmp) {
-            sprintf(cfgpath, "%s/%s", tmp, CFG_FILE);
-            parseOptionFile(cfgpath, ons, hasArchivePath);
+        #ifdef MACOSX
+            //Check for application bundle on Mac OS X
+            ons.checkBundled();
+        #endif
+
+            // ----------------------------------------
+            // Parse options
+            bool hasArchivePath = false;
+        #ifdef MACOSX
+            if (ons.isBundled()) {
+                const int maxpath=32768;
+                char cfgpath[maxpath];
+                char *tmp = ons.bundleResPath();
+                if (tmp) {
+                    sprintf(cfgpath, "%s/%s", tmp, CFG_FILE);
+                    parseOptionFile(cfgpath, ons, hasArchivePath);
+                }
+                tmp = ons.bundleAppPath();
+                if (tmp) {
+                    sprintf(cfgpath, "%s/%s", tmp, CFG_FILE);
+                    parseOptionFile(cfgpath, ons, hasArchivePath);
+                }
+            } else
+        #endif
+            parseOptionFile(CFG_FILE, ons, hasArchivePath);
+            parseOptions(argc, argv, ons, hasArchivePath);
+
+            // ----------------------------------------
+            // Run ONScripter
+
+            if (ons.init()) exit(-1);
+            ons.executeLabel();
+    
         }
-        tmp = ons.bundleAppPath();
-        if (tmp) {
-            sprintf(cfgpath, "%s/%s", tmp, CFG_FILE);
-            parseOptionFile(cfgpath, ons, hasArchivePath);
+        catch (ResetException) {
+            rebooting = true;
         }
-    } else
-#endif
-    parseOptionFile(CFG_FILE, ons, hasArchivePath);
-    parseOptions(argc, argv, ons, hasArchivePath);
-
-    // ----------------------------------------
-    // Run ONScripter
-
-    if (ons.init()) exit(-1);
-    ons.executeLabel();
+    }
     
     exit(0);
 }

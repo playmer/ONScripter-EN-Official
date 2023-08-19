@@ -67,7 +67,7 @@ int NsaReader::processArchives( const DirPaths &path )
 {
     int i,j,k,n,nd;
     FILE *fp;
-    char archive_name[256], archive_name2[256];
+    char sar_archive_name[256], archive_name[256], archive_name2[256];
 
     if ( !SarReader::open( "arc.sar" ) ) {
         sar_flag = true;
@@ -81,6 +81,13 @@ int NsaReader::processArchives( const DirPaths &path )
     i = j = -1;
     n = nd = 0;
     while ((i<MAX_EXTRA_ARCHIVE) && (n<archive_path->get_num_paths())) {
+        if( !sar_flag ) {
+            sprintf(sar_archive_name, "%sarc.sar", nsa_path->get_path(nd));
+            if ( !SarReader::open( sar_archive_name ) ) {
+                sar_flag = true;
+            }
+        }
+
         if (j < 0) {
             sprintf( archive_name, "%s%s.%s", nsa_path->get_path(nd), NSA_ARCHIVE_NAME, nsa_archive_ext );
             sprintf(archive_name2, "%s%s", archive_path->get_path(n), archive_name);

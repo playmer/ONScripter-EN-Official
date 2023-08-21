@@ -71,7 +71,7 @@ message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
 #########
 # Qt Support
 if (ONS_USE_QT_WINDOW)
-    find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
     qt_standard_project_setup()
 endif()
 
@@ -241,7 +241,7 @@ endif()
 #########
 # Qt Window Support
 if (ONS_USE_QT_WINDOW)
-    target_link_libraries(onscripter_en PRIVATE Qt::Widgets)
+    target_link_libraries(onscripter_en PRIVATE Qt::Core Qt::Widgets)
     target_compile_definitions(onscripter_en PRIVATE -DUSE_QT_WINDOW)
 
     target_sources(onscripter_en

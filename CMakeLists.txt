@@ -9,6 +9,8 @@ option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" ON)
 option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 option(ONS_USE_MESSAGEBOX "Determines whether Message Boxes are create on Windows" ON)
 option(ONS_USE_OGG_VORBIS "Choose whether to enable Lua support or not" ON)
+option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
 
 if (MSVC)
     add_compile_options(/MP)
@@ -66,6 +68,12 @@ message(STATUS SMPEG2_SHARED_LIBRARY: ${SMPEG2_SHARED_LIBRARY})
 message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
 
 
+#########
+# Qt Support
+if (ONS_USE_QT_WINDOW)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    qt_standard_project_setup()
+endif()
 
 ###############
 # onscripter-en Build Tools
@@ -164,7 +172,14 @@ add_subdirectory(tools)
 
 ###############
 # onscripter-en
-add_executable(onscripter_en)
+
+# Qt is a little weird
+if (ONS_USE_QT_WINDOW)
+    qt_add_executable(onscripter_en)
+    qt_disable_unicode_defines(onscripter_en)
+else()    
+    add_executable(onscripter_en)
+endif()
 
 #########
 # AVI Support
@@ -205,6 +220,38 @@ PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${FFMPEG_INCLUDE_DIRS}
 )
+
+
+#########
+# Lua Support
+if (ONS_USE_QT_WINDOW)
+    find_package(Lua REQUIRED)
+    target_include_directories(onscripter_en PRIVATE ${LUA_INCLUDE_DIR})
+    target_link_libraries(onscripter_en PRIVATE ${LUA_LIBRARIES})
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA)
+
+    target_sources(onscripter_en
+    PRIVATE
+        LUAHandler.cpp
+        LUAHandler.h
+    )
+endif()
+
+
+#########
+# Qt Window Support
+if (ONS_USE_QT_WINDOW)
+    target_link_libraries(onscripter_en PRIVATE Qt::Widgets)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_QT_WINDOW)
+
+    target_sources(onscripter_en
+    PRIVATE
+        QtWindow.cpp
+        QtWindow.h
+    )
+endif()
+
+option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
 
 target_link_directories(onscripter_en PRIVATE ${FFMPEG_LIBRARY_DIRS})
 
@@ -303,6 +350,8 @@ PRIVATE
     ScriptParser_command.cpp
     sjis2utf16.cpp
     version.h
+    Window.cpp
+    Window.h
     winres.h
 )
 
@@ -311,6 +360,18 @@ if(WIN32)
     PRIVATE
         onscripter.rc
     )
+
+    if (ONS_USE_QT_WINDOW)
+        # Qt Deployment stuff
+        find_program(TOOL_WINDEPLOYQT_DEBUG NAMES windeployqt.debug.bat)
+        find_program(TOOL_WINDEPLOYQT NAMES windeployqt)
+
+        add_custom_command(TARGET onscripter_en POST_BUILD
+            COMMAND $<IF:$<CONFIG:DEBUG>,${TOOL_WINDEPLOYQT_DEBUG},${TOOL_WINDEPLOYQT}>
+                    $<TARGET_FILE:onscripter_en>
+            COMMENT "Running windeployqt..."
+        )
+    endif()
 endif()
 
 if(APPLE)
@@ -328,6 +389,12 @@ if(APPLE)
         macosx/cocoa_url.h
         macosx/cocoa_url.mm
     )
+
+    if (ONS_USE_QT_WINDOW)
+        # Qt Deployment stuff
+        find_program(TOOL_MACDEPLOYQT_DEBUG NAMES macdeployqt.debug.bat)
+        find_program(TOOL_MACDEPLOYQT NAMES macdeployqt)
+    endif()
 endif()
 
 # Sets onscripter_en as the startup project in VS, doesn't affect non-VS generators.

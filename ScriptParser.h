@@ -78,8 +78,8 @@
 #define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
 
 // Mion: kinsoku
-#define DEFAULT_START_KINSOKU "vxjnpABCDEHIRSTUX["
-#define DEFAULT_END_KINSOKU   "uwimo"
+#define DEFAULT_START_KINSOKU "ã€ã€ï¼‰ï¼½ï½ã€ã€‚ï¼Œï¼ãƒ»ï¼Ÿï¼ãƒ½ãƒ¾ã‚ã‚ã€…ãƒ¼"
+#define DEFAULT_END_KINSOKU   "ã€Œã€ï¼ˆï¼»ï½›"
 
 typedef unsigned char uchar3[3];
 

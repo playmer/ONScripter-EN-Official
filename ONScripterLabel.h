@@ -351,6 +351,11 @@ public:
     int delayCommand();
     int defineresetCommand();
     int cspCommand();
+    int csvwriteCommand();
+    int csvreadCommand();
+    int csvopenCommand();
+    int csveofCommand();
+    int csvcloseCommand();
     int cselgotoCommand();
     int cselbtnCommand();
     int clickCommand();
@@ -511,6 +516,8 @@ protected:
     int smpeg_scale_y;
     int smpeg_move_x;
     int smpeg_move_y;
+
+    SDL_RWops* m_csvFile = NULL;
 
 private:
     enum {

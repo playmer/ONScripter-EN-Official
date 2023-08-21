@@ -241,6 +241,8 @@ PRIVATE
     AVIWrapper.cpp
     AVIWrapper.h
     BaseReader.h
+    CsvHandler.cpp
+    CsvHandler.h
     CMakeLists.txt
     DirectReader.cpp
     DirectReader.h

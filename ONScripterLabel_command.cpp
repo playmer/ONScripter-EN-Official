@@ -31,6 +31,8 @@
  *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <string>
+
 #include "Encoding.h"
 #include "ONScripterLabel.h"
 #include "graphics_resize.h"
@@ -3795,6 +3797,118 @@ int ONScripterLabel::cspCommand()
         si[no].remove();
     }
 
+    return RET_CONTINUE;
+}
+
+/*
+    VAL: numeric or string value to write
+
+    (For use in write mode only)
+    Writes data items to a CSV file, in the specified order.
+
+    Example:
+    Writes 4 data items to a CSV file: 12, "test", %1, and $2.
+    csvwrite 12,"test",%1,$2
+*/
+int ONScripterLabel::csvwriteCommand()
+{
+    return RET_CONTINUE;
+}
+
+/*
+    VAR: numeric or string variable for extracted CSV item
+
+    (For use in read mode only)
+    Reads data items from a CSV file, in the specified order.
+
+    Example:
+    Reads 4 data items from a CSV file and assigns them to $0, $1, %0, and %2 (in that order).
+    csvread $0,$1,%0,%2
+*/
+int ONScripterLabel::csvreadCommand()
+{
+  
+    //script_h.readVariable();
+    //
+    //if ( script_h.current_variable.type == ScriptHandler::VAR_INT ||
+    //     script_h.current_variable.type == ScriptHandler::VAR_ARRAY ){
+    //    script_h.setInt( &script_h.current_variable, getret_int );
+    //}
+    //else if ( script_h.current_variable.type == ScriptHandler::VAR_STR ){
+    //    int no = script_h.current_variable.var_no;
+    //    setStr( &script_h.getVariableData(no).str, getret_str );
+    //}
+    //else errorAndExit( "getret: no variable." );
+
+
+    return RET_CONTINUE;
+}
+
+/*
+    STR: CSV file name
+    STR: file access mode
+
+    Opens a given CSV file, using the given file access mode.
+    The possible modes are:
+    "r" - read mode; reads a standard CSV file
+    "rc" - read encrypted mode; reads a CSV file written in "wc" mode
+    "w" - write mode; write to a standard CSV file
+    "wc" - write encrypted mode; writes an encrypted CSV file
+
+    Note that it's possible to open a CSV file inside an NSA archive, but only for reading.
+
+    * The CSV file will be closed automatically at a reset command. (by senzogawa)
+    Example:
+    Opens "test.csv" for reading.
+    csvopen "test.csv","r"
+    Example:
+    Opens "angou.csv" for encrypted writing.
+    csvopen "angou.csv","wc"
+*/
+int ONScripterLabel::csvopenCommand()
+{
+    std::string filename = script_h.readStr();
+    std::string mode = script_h.readStr();
+
+    if ((mode.size() < 1 || mode.size() > 2) // make sure it' the correct length.
+        || (mode[0] != 'r' || mode[0] != 'w') // read/write mode check
+        || ((mode.size() == 2) && mode[1] != 'c')) // encryption check
+    {
+      // error somehow idk
+      return RET_SKIP_LINE;
+    }
+
+    const char* modeStr = mode[0] == 'r' ? "r" : "w";
+    m_csvFile = SDL_RWFromFile(filename.c_str(), modeStr);
+
+    return RET_CONTINUE;
+}
+
+/*
+    VAR: numeric result variable (0: not at end of file, 1: at end of file)
+
+    (For use in read mode only)
+    Detects whether or not the end of a CSV file has been reached.
+    Returns 1 if so, 0 if not.
+
+    Example:
+    Sets the value of %1 depending on the end status of the CSV file.
+    csveof %1
+*/
+int ONScripterLabel::csveofCommand()
+{
+
+    //script_h.readInt();
+    //script_h.setInt(&script_h.current_variable, isEof);
+    return RET_CONTINUE;
+}
+
+/*
+    Closes an open CSV file. Please use this command when finished with the file; otherwise it will remain open.
+*/
+int ONScripterLabel::csvcloseCommand()
+{
+    SDL_RWclose(m_csvFile);
     return RET_CONTINUE;
 }
 

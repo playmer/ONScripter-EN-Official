@@ -1190,9 +1190,9 @@ void ScriptParser::setDefaultMenuLabels()
         setStr( &save_item_name, "Slot " );
     }
     else {
-        setStr( &save_menu_name, "ƒƒZ[ƒu„" );
-        setStr( &load_menu_name, "ƒƒ[ƒh„" );
-        setStr( &save_item_name, "‚µ‚¨‚è" );
+        setStr( &save_menu_name, "ï¼œã‚»ãƒ¼ãƒ–ï¼" );
+        setStr( &load_menu_name, "ï¼œãƒ­ãƒ¼ãƒ‰ï¼" );
+        setStr( &save_item_name, "ã—ãŠã‚Š" );
     }
 }
 

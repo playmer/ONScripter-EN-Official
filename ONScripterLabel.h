@@ -48,6 +48,7 @@
 #include "DirPaths.h"
 #include "ScriptParser.h"
 #include "DirtyRect.h"
+#include "Window.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -98,11 +99,26 @@
 #endif
 
 #define DEFAULT_WM_TITLE "ONScripter-EN"
-#define DEFAULT_WM_ICON  "Ons-en"
+#define DEFAULT_WM_ICON  "Ons-en.ico"
 
 #define NUM_GLYPH_CACHE 30
 
 #define KEYPRESS_NULL ((SDL_Keycode)(SDLK_AUDIOFASTFORWARD+1)) // "null" for keypress variables
+
+enum ONScripterCustomEvent
+{
+    ONS_USEREVENT_START = SDL_USEREVENT,
+    ONS_TIMER_EVENT = SDL_USEREVENT,
+    ONS_SOUND_EVENT,
+    ONS_CDAUDIO_EVENT,
+    ONS_SEQMUSIC_EVENT,
+    ONS_WAVE_EVENT,
+    ONS_MUSIC_EVENT,
+    ONS_BREAK_EVENT,
+    ONS_ANIM_EVENT,
+    ONS_BGMFADE_EVENT,
+    ONS_USEREVENT_END,
+};
 
 class ONScripterLabel : public ScriptParser
 {
@@ -447,9 +463,6 @@ protected:
     void initSDL();
     void openAudio(int freq=DEFAULT_AUDIO_RATE, Uint16 format=MIX_DEFAULT_FORMAT, int channels=MIX_DEFAULT_CHANNELS);
 
-    void SetWindowCaption(const char* title, const char* icon);
-    void WarpMouse(int x, int y);
-    SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen);
     void UpdateScreen(SDL_Rect dst_rect);
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
     static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
@@ -463,7 +476,7 @@ protected:
       const int x = event.x;
       const int y = event.y;
       int windowResolutionX, windowResolutionY;
-      SDL_GetWindowSize(m_window, &windowResolutionX, &windowResolutionY);
+      SDL_GetWindowSize(m_window->GetWindow(), &windowResolutionX, &windowResolutionY);
       //SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
 
       float scaleHeight = windowResolutionY / (float)screen_surface->h;
@@ -502,8 +515,7 @@ protected:
       return true;
     }
 
-    SDL_Renderer* m_renderer;
-    SDL_Window* m_window;
+    Window* m_window;
     int smpeg_scale_x;
     int smpeg_scale_y;
     int smpeg_move_x;
@@ -1213,6 +1225,18 @@ private:
     bool executeSystemYesNo( int caller, int file_no=0 );
     void setupLookbackButton();
     void executeSystemLookback();
+
+    friend Window;
+    friend BasicWindow;
+
+
+#ifdef USE_QT_WINDOW
+    friend QtWindow;
+#endif
+
+#ifdef USE_IMGUIWINDOW
+    friend ImguiWindow;
+#endif
 };
 
 #endif // __ONSCRIPTER_LABEL_H__

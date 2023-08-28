@@ -1,11 +1,40 @@
+#ifndef __WINDOW_H__
+#define __WINDOW_H__
+
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include "SDL2/SDL.h"
 
+class ONScripterLabel;
+
+enum class MenuBarFunction
+{
+    ClickPage,
+
+    Submenu,
+
+    Exit,
+    Version,
+    Volume,
+    SkipToChoice,
+
+    TextSlow,
+    TextFast,
+};
+
+enum ONScripterCustomEvent;
+
 class Window
 {
 public:
-    virtual std::vector<SDL_Event>& PollEvents();
+    virtual std::vector<SDL_Event>& PollEvents() = 0;
+    virtual void WarpMouse(int x, int y) = 0;
+    virtual void SetWindowCaption(const char* title, const char* icon_name) = 0;
+    virtual SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen) = 0;
+    virtual void* GetWindowHandle() = 0;
+    virtual void Repaint() {};
 
     SDL_Window* GetWindow()
     {
@@ -17,25 +46,44 @@ public:
         return m_renderer;
     }
 
+    // Only implemented for current Onscripter custom events.
+    virtual void SendCustomEvent(ONScripterCustomEvent event, int value = 0) = 0;
+
+    static void SendCustomEventStatic(ONScripterCustomEvent event, int value = 0)
+    {
+        s_window->SendCustomEvent(event, value);
+    }
+
     bool IgnoreContinuousMouseMove = true;
 protected:
-    Window(int w, int h, int x, int y);
+    bool TranslateMouse(int& x, int& y);
+    virtual void CreateToolbar() {};
 
     SDL_Window* m_window = NULL;
     SDL_Renderer* m_renderer = NULL;
+    ONScripterLabel* m_onscripterLabel = NULL;
     std::vector<SDL_Event> m_events;
+
+    std::vector<std::tuple<MenuBarFunction, std::string, int>> m_menuBarEntries;
+
+    static Window* s_window;
 };
 
 // We want the alternate Window implementations to be visible to other files, but their headers
 // should remain private to not poison other files with their implementation details. So we 
 // provide this factory function in the main Window header.
 
-Window* CreateDummyWindow(int w, int h, int x, int y);
+class BasicWindow;
+Window* CreateBasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
 
-#ifdef USE_QTWINDOW
-Window* CreateQtWindow(int w, int h, int x, int y);
+#ifdef USE_QT_WINDOW
+class QtWindow;
+Window* CreateQtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
 #endif
 
 #ifdef USE_IMGUIWINDOW
-Window* CreateImGuiWindow(int w, int h, int x, int y);
+class ImguiWindow;
+Window* CreateImGuiWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
+#endif
+
 #endif

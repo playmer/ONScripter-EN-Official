@@ -1,0 +1,21 @@
+#ifndef __BASIC_WINDOW_H__
+#define __BASIC_WINDOW_H__
+
+#include "Window.h"
+
+
+class BasicWindow : public Window
+{
+public:
+    BasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
+    virtual std::vector<SDL_Event>& PollEvents();
+    virtual void WarpMouse(int x, int y);
+    virtual void SetWindowCaption(const char* title, const char* icon_name);
+    virtual SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen);
+    virtual void* GetWindowHandle();
+    virtual void SendCustomEvent(ONScripterCustomEvent event, int value);
+
+private:
+};
+
+#endif

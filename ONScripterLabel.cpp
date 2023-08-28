@@ -65,7 +65,6 @@
 #ifdef WIN32
 #define NOMINMAX
 #include <windows.h>
-#include "SDL_syswm.h"
 #include "winres.h"
 typedef HRESULT (WINAPI *GETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
 #endif
@@ -385,21 +384,21 @@ static int onscripter_putenv(const char* _var)
 
 void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
 {
-  SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-  SDL_RenderClear(m_renderer);
+  SDL_SetRenderDrawColor(m_window->GetRenderer(), 0, 0, 0, 255);
+  SDL_RenderClear(m_window->GetRenderer());
 
   bool doIt = false;
   if (doIt)
     SDL_SaveBMP(accumulation_surface, "Test.bmp");
 
-  auto texture = SDL_CreateTextureFromSurface(m_renderer, accumulation_surface);
+  auto texture = SDL_CreateTextureFromSurface(m_window->GetRenderer(), accumulation_surface);
 
   Uint32 format;
   int imageResolutionX, imageResolutionY, access;
   SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
 
   int windowResolutionX, windowResolutionY;
-  SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+  SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
 
   float scaleHeight = windowResolutionY / (float)imageResolutionY;
   float scaleWidth = windowResolutionX / (float)imageResolutionX;
@@ -411,9 +410,13 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
   dstRect.x = (windowResolutionX - dstRect.w) / 2;
   dstRect.y = (windowResolutionY - dstRect.h) / 2;
 
-  SDL_RenderCopy(m_renderer, texture, NULL /*&dst_rect*/, &dstRect);
-  SDL_RenderPresent(m_renderer);
+  SDL_RenderCopy(m_window->GetRenderer(), texture, NULL /*&dst_rect*/, &dstRect);
+  SDL_RenderPresent(m_window->GetRenderer());
   SDL_DestroyTexture(texture);
+
+  //m_window->Repaint();
+  //
+  fprintf(stderr, "UpdateScreen\n");
 }
 
 
@@ -430,143 +433,6 @@ void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
   //#error "Unfinished"
 }
 
-void ONScripterLabel::SetWindowCaption(const char* title, const char* icon_name)
-{
-  SDL_SetWindowTitle(m_window, title);
-
-  SDL_Surface* icon = IMG_Load(icon_name);
-  if (icon != NULL) {
-    SDL_SetWindowIcon(m_window, icon);
-    SDL_FreeSurface(icon);
-  }
-}
-
-static void ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
-{
-  // Scale the mouse to Window (pixel) coordinates
-  float scaleWidth = w_1 / (float)w_2;
-  float scaleHeight = h_1 / (float)h_2;
-  float scale = std::min(scaleHeight, scaleWidth);
-
-  SDL_Rect dstRect = {};
-  dstRect.w = scale * w_2;
-  dstRect.h = scale * h_2;
-  dstRect.x = (w_1 - dstRect.w) / 2;
-  dstRect.y = (h_1 - dstRect.h) / 2;
-
-  x_m = (x_m * scale) + dstRect.x;
-  y_m = (y_m * scale) + dstRect.y;
-
-}
-
-static void ScaleMouseToPoints(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
-{
-  // Scale the mouse to Window (pixel) coordinates
-  float scaleWidth = w_1 / (float)w_2;
-  float scaleHeight = h_1 / (float)h_2;
-  float scale = std::min(scaleHeight, scaleWidth);
-
-  SDL_Rect dstRect = {};
-  dstRect.w = scale * w_2;
-  dstRect.h = scale * h_2;
-  dstRect.x = (w_1) / 2;
-  dstRect.y = (h_1) / 2;
-
-  x_m = (x_m / scale) - (dstRect.x / scale);
-  y_m = (y_m / scale) - (dstRect.y / scale);
-
-}
-
-bool ONScripterLabel::TranslateMouse(int& x, int& y)
-{
-  int windowResolutionX, windowResolutionY;
-  SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
-  //SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
-  int windowPointsW, windowPointsH;
-  SDL_GetWindowSize(m_window, &windowPointsW, &windowPointsH);
-
-  if (windowResolutionX == windowPointsW && windowResolutionY == windowPointsH) {
-    printf("same, skipping transform\n");
-    return false;
-  }
-
-  float scaleHeight = windowResolutionY / (float)windowPointsH;
-  float scaleWidth = windowResolutionX / (float)windowPointsW;
-  float scale = std::min(scaleHeight, scaleWidth);
-
-  SDL_Rect dstRect = {};
-  dstRect.w = scale * windowPointsW;
-  dstRect.h = scale * windowPointsH;
-  dstRect.x = (windowResolutionX - dstRect.w) / 2;
-  dstRect.y = (windowResolutionY - dstRect.h) / 2;
-
-  int new_x = (x / scale) - (dstRect.x / scale);
-  int new_y = (y / scale) - (dstRect.y / scale);
-
-  if (new_x < 0 || new_x > windowPointsW || new_y < 0 || new_y > windowPointsH)
-  {
-    // clip the mouse to the window
-    if (new_x < 0)
-      x = 0;
-
-    if (new_x > windowPointsW)
-      x = windowPointsW;
-
-    if (new_y < 0)
-      y = 0;
-
-    if (new_y > windowPointsH)
-      y = windowPointsH;
-
-    return false;
-  }
-
-  fprintf(stderr, "Warping Orig: {%d, %d}; New: {%d, %d}\n", x, y, new_x, new_y);
-
-  x = new_x;
-  y = new_y;
-  return true;
-}
-
-void ONScripterLabel::WarpMouse(int x, int y)
-{
-  int windowResolutionX, windowResolutionY;
-  //SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
-  SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
-
-  // Scale the mouse to Window (pixel) coordinates
-  /*float scaleHeight = windowResolutionY / (float)screen_surface->h;
-  float scaleWidth = windowResolutionX / (float)screen_surface->w;
-  float scale = std::min(scaleHeight, scaleWidth);
-  SDL_Rect dstRect = {};
-  dstRect.w = scale * screen_surface->w;
-  dstRect.h = scale * screen_surface->h;
-  dstRect.x = (windowResolutionX - dstRect.w) / 2;
-  dstRect.y = (windowResolutionY - dstRect.h) / 2;
-  x = (x * scale) + dstRect.x;
-  y = (y * scale) + dstRect.y;*/
-
-  ScaleMouseToPixels(windowResolutionX, windowResolutionY, screen_surface->w, screen_surface->h, x, y);
-  TranslateMouse(x, y);
-  //int windowPointsX, windowPointsY;
-  //SDL_GetRendererOutputSize(m_renderer, &windowPointsX, &windowPointsY);
-  //ScaleMouseToPoints(windowPointsX, windowPointsY, windowResolutionX, windowResolutionY, x, y);
-
-  // Tiny adjustment to fix rounding errors on resized windows, shouldn't cause issues
-  // unless the original button we're warping to is 1x1 or 2x2. (which is typically what
-  // this function is used for.
-  //x += 2;
-  //y += 2;
-
-  SDL_WarpMouseInWindow(m_window, x, y);
-}
-
-SDL_Surface* ONScripterLabel::SetVideoMode(int width, int height, int bpp, bool fullscreen)
-{
-  SDL_SetWindowSize(m_window, width, height);
-  SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-  return screen_surface;
-}
 
 void ONScripterLabel::initSDL()
 {
@@ -613,11 +479,10 @@ void ONScripterLabel::initSDL()
     SDL_ShowCursor(SDL_DISABLE);
 #endif
 
-    SDL_CreateWindowAndRenderer(800, 600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI, &m_window, &m_renderer);
-
     // We're about to resize up to roughly the display size, we should try to fill as much of it as possible, without
     // pushing the top window frame offscreen.
-    SDL_SetWindowPosition(m_window, 50, 50); 
+    //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
+    m_window = CreateQtWindow(this, 800, 600, 50, 50);
 
     //SDL_EnableUNICODE(1);
 
@@ -640,10 +505,7 @@ void ONScripterLabel::initSDL()
         //use the (first) Windows icon resource
         HICON wicon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(ONSCRICON));
         if (wicon) {
-            SDL_SysWMinfo info;
-            SDL_VERSION(&info.version);
-            SDL_GetWindowWMInfo(m_window, &info);
-            SendMessage(info.info.win.window, WM_SETICON, ICON_BIG, (LPARAM)wicon);
+            SendMessage((HWND)m_window->GetWindowHandle(), WM_SETICON, ICON_BIG, (LPARAM)wicon);
         }
 #else
         //backport from ponscripter
@@ -688,7 +550,7 @@ void ONScripterLabel::initSDL()
             SDL_FreeSurface(tmp);
         }
 #endif //MACOSX || WIN32
-        SDL_SetWindowIcon(m_window, icon);
+        SDL_SetWindowIcon(m_window->GetWindow(), icon);
     }
     if (icon)
         SDL_FreeSurface(icon);
@@ -795,7 +657,7 @@ void ONScripterLabel::initSDL()
     }
 #endif
     screen_surface = AnimationInfo::allocSurface(screen_width, screen_height);
-    screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, fullscreen_mode );
+    screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, fullscreen_mode );
 
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
@@ -822,7 +684,7 @@ void ONScripterLabel::initSDL()
 
     setStr(&wm_title_string, DEFAULT_WM_TITLE);
     setStr(&wm_icon_string, DEFAULT_WM_ICON);
-    SetWindowCaption( wm_title_string, wm_icon_string );
+    m_window->SetWindowCaption( wm_title_string, wm_icon_string );
 
 #ifdef WIN32
     //check the audio driver setting
@@ -1854,14 +1716,17 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool is
     char errtitle[256];
     HWND pwin = NULL;
     UINT mb_type = MB_OK;
-    SDL_SysWMinfo info;
-    SDL_VERSION(&info.version);
-    if (SDL_GetWindowWMInfo(m_window, &info)) {
-      pwin = info.info.win.window;
-      snprintf(errtitle, 256, "%s", title);
-    } else {
-        snprintf(errtitle, 256, "ONScripter-EN: %s", title);
-    }
+
+    pwin = (HWND)m_window->GetWindowHandle();
+    snprintf(errtitle, 256, "%s", title);
+    //SDL_SysWMinfo info;
+    //SDL_VERSION(&info.version);
+    //if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info)) {
+    //  pwin = info.info.win.window;
+    //  snprintf(errtitle, 256, "%s", title);
+    //} else {
+    //    snprintf(errtitle, 256, "ONScripter-EN: %s", title);
+    //}
 
     if (is_warning) {
         //Retry and Ignore both continue, Abort exits

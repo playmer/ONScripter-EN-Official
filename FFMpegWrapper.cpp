@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "Window.h"
+
 // Referenced https://gist.github.com/mashingan/e94d41e21c6e0ce4c9f19cea72a57dc4
 
 
@@ -81,7 +83,7 @@ FFMpegWrapper::~FFMpegWrapper()
     SDL_DestroyTexture(m_texture);
 }
 
-int FFMpegWrapper::initialize(SDL_Renderer* renderer, const char* filename, bool audio_open_flag, bool debug_flag)
+int FFMpegWrapper::initialize(Window* window, const char* filename, bool audio_open_flag, bool debug_flag)
 {
     format_context.value = avformat_alloc_context();
 
@@ -144,8 +146,8 @@ int FFMpegWrapper::initialize(SDL_Renderer* renderer, const char* filename, bool
     video_width = video_parameters->width;
     video_height = video_parameters->height;
 
-    m_renderer = renderer;
-    m_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_IYUV,
+    m_window = window;
+    m_texture = SDL_CreateTexture(m_window->GetRenderer(), SDL_PIXELFORMAT_IYUV,
       SDL_TEXTUREACCESS_STREAMING | SDL_TEXTUREACCESS_TARGET,
       video_width, video_height);
 
@@ -210,8 +212,7 @@ int FFMpegWrapper::play(bool click_flag)
 
     while (av_read_frame(format_context, m_packet) >= 0)
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
+        for (SDL_Event& event : m_window->PollEvents()) {
             switch (event.type) {
                 case SDL_KEYUP:
                     if (((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_RETURN ||
@@ -268,9 +269,9 @@ void FFMpegWrapper::display_frame()
         m_video_frame->data[0], m_video_frame->linesize[0],
         m_video_frame->data[1], m_video_frame->linesize[1],
         m_video_frame->data[2], m_video_frame->linesize[2]);
-    SDL_RenderClear(m_renderer);
-    SDL_RenderCopy(m_renderer, m_texture, NULL, &rect);
-    SDL_RenderPresent(m_renderer);
+    SDL_RenderClear(m_window->GetRenderer());
+    SDL_RenderCopy(m_window->GetRenderer(), m_texture, NULL, &rect);
+    SDL_RenderPresent(m_window->GetRenderer());
     time_t end = time(NULL);
     double diffms = difftime(end, start) / 1000.0;
     if (diffms < fpsrendering) {

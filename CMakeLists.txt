@@ -288,6 +288,8 @@ PRIVATE
     AVIWrapper.cpp
     AVIWrapper.h
     BaseReader.h
+    BasicWindow.cpp
+    BasicWindow.h
     CMakeLists.txt
     DirectReader.cpp
     DirectReader.h

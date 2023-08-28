@@ -832,7 +832,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 
             SDL_Event event;
 
-            while( SDL_PollEvent( &event ) ){
+            for (SDL_Event& event : m_window->PollEvents()) {
                 switch (event.type){
                   case SDL_KEYUP:
                     if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RETURN ||
@@ -841,13 +841,13 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
                         done_flag = movie_click_flag;
                     else if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_f ){
 #ifndef PSP
-                        if ( SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP) < 0 ){
+                        if ( SDL_SetWindowFullscreen(m_window->GetWindow(), SDL_WINDOW_FULLSCREEN_DESKTOP) < 0) {
                             SMPEG_pause( mpeg_sample );
                             SDL_FreeSurface(screen_surface);
                             if ( fullscreen_mode )
-                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, false );
+                                screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, false );
                             else
-                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, true );
+                                screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, true );
                             SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, NULL );
                             SMPEG_play( mpeg_sample );
                         }
@@ -904,7 +904,7 @@ int ONScripterLabel::playAVI( const char *filename, bool click_flag )
     if ( audio_open_flag ) Mix_CloseAudio();
 
     FFMpegWrapper avi;
-    if ( avi.initialize(m_renderer, filename, audio_open_flag, false) == 0 ){
+    if ( avi.initialize(m_window, filename, audio_open_flag, false) == 0) {
         if (avi.play( click_flag )) return 1;
     }
     //delete[] absolute_filename;

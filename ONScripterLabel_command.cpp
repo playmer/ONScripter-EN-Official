@@ -116,7 +116,7 @@ int ONScripterLabel::yesnoboxCommand()
         HWND pwin = NULL;
         SDL_SysWMinfo info;
         SDL_VERSION(&info.version);
-        if (SDL_GetWindowWMInfo(m_window, &info))
+        if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
           pwin = info.info.win.window;
         res = MessageBox(pwin, msg, title, mb_type);
         res = ((res == IDYES) || (res == IDOK)) ? 1 : 0;
@@ -1452,8 +1452,7 @@ int ONScripterLabel::resettimerCommand()
 int ONScripterLabel::resetCommand()
 {
     //clear out the event queue
-    SDL_Event event;
-    while( SDL_PollEvent( &event ) )
+    for (SDL_Event& event : m_window->PollEvents())
         if (event.type == SDL_QUIT) endCommand();
 
     int fadeout = mp3fadeout_duration;
@@ -1904,7 +1903,7 @@ int ONScripterLabel::movemousecursorCommand()
     int x = StretchPosX(script_h.readInt());
     int y = StretchPosY(script_h.readInt());
 
-    WarpMouse( x, y );
+    m_window->WarpMouse( x, y );
 
     return RET_CONTINUE;
 }
@@ -1947,7 +1946,7 @@ int ONScripterLabel::monocroCommand()
 int ONScripterLabel::minimizewindowCommand()
 {
 #ifndef PSP
-    SDL_MinimizeWindow(m_window);
+    SDL_MinimizeWindow(m_window->GetWindow());
 #endif
 
     return RET_CONTINUE;
@@ -1969,7 +1968,7 @@ int ONScripterLabel::mesboxCommand()
     HWND pwin = NULL;
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
-    if (SDL_GetWindowWMInfo(m_window, &info))
+    if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
       pwin = info.info.win.window;
     MessageBox(pwin, msg, title, MB_OK);
 #endif
@@ -1984,7 +1983,7 @@ int ONScripterLabel::menu_windowCommand()
     if ( fullscreen_mode ){
 #ifndef PSP
         if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, false );
+        screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, false );
         SDL_Rect rect = {0, 0, screen_width, screen_height};
         flushDirect( rect, refreshMode() );
         if (async_movie){
@@ -2019,12 +2018,12 @@ int ONScripterLabel::menu_fullCommand()
     if ( !fullscreen_mode ){
 #ifndef PSP
         if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, true );
+        screen_surface = m_window->SetVideoMode(screen_width, screen_height, screen_bpp, true);
         if (screen_surface)
             fullscreen_mode = true;
         else {
             fprintf(stderr, "*** menu_full: Error: %s (using windowed surface instead) ***\n", SDL_GetError());
-            screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, false );
+            screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, false );
             fullscreen_mode = false;
         }
         SDL_Rect rect = {0, 0, screen_width, screen_height};
@@ -3733,7 +3732,7 @@ int ONScripterLabel::defineresetCommand()
 {
     //clear out the event queue
     SDL_Event event;
-    while( SDL_PollEvent( &event ) )
+    for (SDL_Event& event : m_window->PollEvents())
         if (event.type == SDL_QUIT) endCommand();
 
     script_h.reset();
@@ -4104,7 +4103,7 @@ int ONScripterLabel::captionCommand()
     setStr( &wm_icon_string,  buf2 );
     delete[] buf2;
     //printf("caption (utf8): '%s'\n", wm_title_string);
-    SetWindowCaption( wm_title_string, wm_icon_string );
+    m_window->SetWindowCaption( wm_title_string, wm_icon_string );
 #ifdef WIN32
     //convert from UTF-8 to Wide (Unicode) and thence to system ANSI
     len = MultiByteToWideChar(CP_UTF8, 0, wm_title_string, -1, NULL, 0);
@@ -4118,7 +4117,7 @@ int ONScripterLabel::captionCommand()
     //set the window caption directly
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
-    SDL_GetWindowWMInfo(m_window, &info);
+    SDL_GetWindowWMInfo(m_window->GetWindow(), &info);
     SendMessageA(info.info.win.window, WM_SETTEXT, 0, (LPARAM)cvt);
     delete[] cvt;
 #endif //WIN32

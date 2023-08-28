@@ -114,7 +114,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
         event_mode = shelter_event_mode;
         draw_cursor_flag = shelter_draw_cursor_flag;
         if ( event_mode & WAIT_BUTTON_MODE ){
-            WarpMouse( shelter_mouse_state.x, shelter_mouse_state.y );
+            m_window->WarpMouse( shelter_mouse_state.x, shelter_mouse_state.y );
         }
     }
     display_mode = shelter_display_mode;

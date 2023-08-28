@@ -34,6 +34,8 @@ extern "C"
 #include <libavformat/avformat.h>
 }
 
+class Window;
+
 class FFMpegWrapper
 {
 public:
@@ -43,7 +45,7 @@ public:
     FFMpegWrapper() = default;
     ~FFMpegWrapper();
 
-    int initialize(SDL_Renderer* renderer, const char* filename, bool audio_open_flag, bool debug_flag);
+    int initialize(Window* window, const char* filename, bool audio_open_flag, bool debug_flag);
 
     int play( bool click_flag );
 
@@ -106,7 +108,7 @@ private:
     std::vector<uint8_t> audio_data;
     SDL_mutex* audio_data_mutex;
 
-    SDL_Renderer* m_renderer = NULL;
+    Window* m_window = NULL;
     SDL_Texture* m_texture = NULL;
 
     int video_width;

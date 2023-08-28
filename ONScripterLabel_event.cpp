@@ -44,19 +44,9 @@
 #include "SDL_syswm.h"
 #endif
 
-#define ONS_TIMER_EVENT    (SDL_USEREVENT)
-#define ONS_SOUND_EVENT    (SDL_USEREVENT+1)
-#define ONS_CDAUDIO_EVENT  (SDL_USEREVENT+2)
-#define ONS_SEQMUSIC_EVENT (SDL_USEREVENT+3)
-#define ONS_WAVE_EVENT     (SDL_USEREVENT+4)
-#define ONS_MUSIC_EVENT    (SDL_USEREVENT+5)
-#define ONS_BREAK_EVENT    (SDL_USEREVENT+6)
-#define ONS_ANIM_EVENT     (SDL_USEREVENT+7)
-
 // This sets up the fade event flag for use in bgm fadeout and fadein.
 #define BGM_FADEOUT 0
 #define BGM_FADEIN  1
-#define ONS_BGMFADE_EVENT    (SDL_USEREVENT+8)
 
 #define EDIT_MODE_PREFIX "[EDIT MODE]  "
 #define EDIT_SELECT_STRING "Music vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)  Exit (Esc)"
@@ -94,18 +84,14 @@ extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, Uint8 *b
 extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
 {
     if ( SMPEG_playAudio( (SMPEG*)userdata, stream, len ) == 0 ){
-        SDL_Event event;
-        event.type = ONS_SOUND_EVENT;
-        SDL_PushEvent(&event);
+        Window::SendCustomEventStatic(ONS_SOUND_EVENT);
     }
 }
 
 extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
 {
     if (decodeOggVorbis((ONScripterLabel::MusicStruct*)userdata, stream, len, true) == 0){
-        SDL_Event event;
-        event.type = ONS_SOUND_EVENT;
-        SDL_PushEvent(&event);
+        Window::SendCustomEventStatic(ONS_SOUND_EVENT);
     }
 }
 
@@ -113,9 +99,7 @@ extern "C" Uint32 SDLCALL animCallback( Uint32 interval, void *param )
 {
     ONScripterLabel::clearTimer( anim_timer_id );
 
-    SDL_Event event;
-    event.type = ONS_ANIM_EVENT;
-    SDL_PushEvent( &event );
+    Window::SendCustomEventStatic(ONS_ANIM_EVENT);
 
     return 0;
 }
@@ -124,9 +108,7 @@ extern "C" Uint32 SDLCALL breakCallback(Uint32 interval, void *param)
 {
     ONScripterLabel::clearTimer(break_id);
 
-    SDL_Event event;
-    event.type = ONS_BREAK_EVENT;
-    SDL_PushEvent(&event);
+    Window::SendCustomEventStatic(ONS_BREAK_EVENT);
 
     return 0;
 }
@@ -135,9 +117,7 @@ extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
 {
     ONScripterLabel::clearTimer( timer_id );
 
-    SDL_Event event;
-    event.type = ONS_TIMER_EVENT;
-    SDL_PushEvent( &event );
+    Window::SendCustomEventStatic(ONS_TIMER_EVENT);
 
     return 0;
 }
@@ -146,19 +126,14 @@ extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
 {
     ONScripterLabel::clearTimer( timer_cdaudio_id );
 
-    SDL_Event event;
-    event.type = ONS_CDAUDIO_EVENT;
-    SDL_PushEvent( &event );
+    Window::SendCustomEventStatic(ONS_CDAUDIO_EVENT);
 
     return 0;
 }
 
 extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param )
 {
-    SDL_Event event;
-    event.type = ONS_BGMFADE_EVENT;
-    event.user.code = (param == NULL) ? 0 : 1;
-    SDL_PushEvent( &event );
+    Window::SendCustomEventStatic(ONS_BGMFADE_EVENT, (param == NULL) ? 0 : 1);
 
     return interval;
 }
@@ -182,9 +157,7 @@ extern "C" Uint32 SDLCALL silentmovieCallback( Uint32 interval, void *param )
 #if defined(MACOSX)
 extern "C" Uint32 seqmusicSDLCallback( Uint32 interval, void *param )
 {
-	SDL_Event event;
-	event.type = ONS_SEQMUSIC_EVENT;
-	SDL_PushEvent( &event );
+    Window::SendCustomEventStatic(ONS_SEQMUSIC_EVENT);
 	return interval;
 }
 #endif
@@ -196,9 +169,7 @@ void seqmusicCallback( int sig )
     wait( &status );
 #endif
     if ( !ext_music_play_once_flag ){
-        SDL_Event event;
-        event.type = ONS_SEQMUSIC_EVENT;
-        SDL_PushEvent(&event);
+        Window::SendCustomEventStatic(ONS_SEQMUSIC_EVENT);
     }
 }
 
@@ -209,18 +180,13 @@ void musicCallback( int sig )
     wait( &status );
 #endif
     if ( !ext_music_play_once_flag ){
-        SDL_Event event;
-        event.type = ONS_MUSIC_EVENT;
-        SDL_PushEvent(&event);
+        Window::SendCustomEventStatic(ONS_MUSIC_EVENT);
     }
 }
 
 extern "C" void waveCallback( int channel )
 {
-    SDL_Event event;
-    event.type = ONS_WAVE_EVENT;
-    event.user.code = channel;
-    SDL_PushEvent(&event);
+    Window::SendCustomEventStatic(ONS_WAVE_EVENT, channel);
 }
 
 
@@ -385,9 +351,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
             //set break event to return to script processing
             clearTimer(break_id);
 
-            SDL_Event event;
-            event.type = ONS_BREAK_EVENT;
-            SDL_PushEvent( &event );
+            Window::SendCustomEventStatic(ONS_BREAK_EVENT);
         }
     }
 
@@ -411,9 +375,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
             event_mode &= ~WAIT_TIMER_MODE;
             //set break event to return to script processing
             clearTimer(break_id);
-            SDL_Event event;
-            event.type = ONS_BREAK_EVENT;
-            SDL_PushEvent( &event );
+            Window::SendCustomEventStatic(ONS_BREAK_EVENT);
         }
     }
 
@@ -475,7 +437,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
 void ONScripterLabel::flushEvent()
 {
     SDL_Event event;
-    while( SDL_PollEvent( &event ) )
+    for (SDL_Event& event : m_window->PollEvents())
         flushEventSub( event );
 }
 
@@ -530,9 +492,7 @@ void ONScripterLabel::waitEventSub(int count)
     }
     
     if ((count >= 0) && (break_id == NULL)){
-        SDL_Event event;
-        event.type = ONS_BREAK_EVENT;
-        SDL_PushEvent( &event );
+        Window::SendCustomEventStatic(ONS_BREAK_EVENT);
     }
 
     runEventLoop();
@@ -924,9 +884,9 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
         if ( (variable_edit_mode == EDIT_SELECT_MODE) ||
              (variable_edit_mode == EDIT_VOLUME_MODE) ){
             variable_edit_mode = NOT_EDIT_MODE;
-            SetWindowCaption( DEFAULT_WM_TITLE, DEFAULT_WM_ICON );
+            m_window->SetWindowCaption( DEFAULT_WM_TITLE, DEFAULT_WM_ICON );
             SDL_Delay( 100 );
-            SetWindowCaption( wm_title_string, wm_icon_string );
+            m_window->SetWindowCaption( wm_title_string, wm_icon_string );
             return;
         }
         if (edit_flag)
@@ -972,7 +932,7 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
                  EDIT_MODE_PREFIX, var_name, p, (variable_edit_sign==1)?"":"-", variable_edit_num );
     }
 
-    SetWindowCaption( wm_edit_string, wm_icon_string );
+    m_window->SetWindowCaption( wm_edit_string, wm_icon_string );
 }
 
 void ONScripterLabel::shiftCursorOnButton( int diff )
@@ -1024,7 +984,8 @@ void ONScripterLabel::shiftCursorOnButton( int diff )
             x += clip.x;
             y += clip.y;
         }
-        WarpMouse(x, y);
+
+        m_window->WarpMouse(x, y);
     }
 }
 
@@ -1150,7 +1111,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             variable_edit_sign = 1;
             variable_edit_num = 0;
             sprintf( wm_edit_string, "%s%s", EDIT_MODE_PREFIX, EDIT_VOLUME_STRING );
-            SetWindowCaption( wm_edit_string, wm_icon_string );
+            m_window->SetWindowCaption( wm_edit_string, wm_icon_string );
         }
 
         //'z' is for entering Edit Mode (if enabled)
@@ -1161,7 +1122,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             variable_edit_sign = 1;
             variable_edit_num = 0;
             sprintf( wm_edit_string, "%s%s", EDIT_MODE_PREFIX, EDIT_SELECT_STRING );
-            SetWindowCaption( wm_edit_string, wm_icon_string );
+            m_window->SetWindowCaption( wm_edit_string, wm_icon_string );
         }
     }
 
@@ -1484,7 +1445,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         HWND pwin = NULL;
         SDL_SysWMinfo info;
         SDL_VERSION(&info.version);
-        if (SDL_GetWindowWMInfo(m_window, &info))
+        if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
           pwin = info.info.win.window;
         MessageBox(pwin, version_str, "About",
                    MB_OK|MB_ICONINFORMATION);
@@ -1596,22 +1557,13 @@ float ToFloat(Sint16 aValue)
 
 void ONScripterLabel::runEventLoop()
 {
-    SDL_Event event, tmp_event;
     bool started_in_automode = automode_flag;
 
-    while ( SDL_WaitEvent(&event) ) {
+    for ( SDL_Event& event : m_window->PollEvents() ) {
         bool ret = false;
         bool ctrl_toggle = (ctrl_pressed_status != 0);
         bool voice_just_ended = false;
         bool had_automode = automode_flag;
-
-        // ignore continous SDL_MOUSEMOTION
-        while (event.type == SDL_MOUSEMOTION){
-            if (SDL_PeepEvents(&tmp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
-            if (tmp_event.type != SDL_MOUSEMOTION) break;
-            SDL_PeepEvents(&tmp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-            event = tmp_event;
-        }
 
         switch (event.type) {
             // Joypad Events
@@ -1659,9 +1611,9 @@ void ONScripterLabel::runEventLoop()
             }
 
             if (sqrt((right.first * right.first) + (right.second * right.second)) > 0.5)
-                WarpMouse(screen_surface->w, screen_surface->h);
+                m_window->WarpMouse(screen_surface->w, screen_surface->h);
             else if (sqrt((left.first * left.first) + (left.second * left.second)) > 0.5)
-                WarpMouse(screen_surface->w, screen_surface->h);
+                m_window->WarpMouse(screen_surface->w, screen_surface->h);
             break;
           }
           case SDL_MOUSEMOTION:

@@ -4734,6 +4734,7 @@ int ONScripterLabel::insertmenuCommand()
     script_h.skipToken();
     return RET_CONTINUE;
 }
+
 int ONScripterLabel::resetmenuCommand()
 {
     script_h.skipToken();

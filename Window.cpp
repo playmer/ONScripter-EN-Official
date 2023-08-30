@@ -2,6 +2,60 @@
 
 Window* Window::s_window = NULL;
 
+
+bool IsCheckable(MenuBarFunction function)
+{
+    switch (function)
+    {
+    case MenuBarFunction::WAVEOFF:
+    case MenuBarFunction::WAVEON:
+    case MenuBarFunction::CLICKDEF:
+    case MenuBarFunction::CLICKPAGE:
+    case MenuBarFunction::TEXTFAST:
+    case MenuBarFunction::TEXTMIDDLE:
+    case MenuBarFunction::TEXTSLOW:
+    case MenuBarFunction::kidokuoff:
+    case MenuBarFunction::kidokuon:
+    case MenuBarFunction::FULL:
+    case MenuBarFunction::WINDOW:
+        return true;
+    default: 
+        return false;
+    }
+
+    
+}
+
+Window::Window()
+{
+    m_menuBarEntries.emplace_back(MenuBarFunction::END, "Exit", 0);
+    m_menuBarEntries.emplace_back(MenuBarFunction::VERSION, "Version Information", 0);
+    m_menuBarEntries.emplace_back(MenuBarFunction::DWAVEVOLUME, "Volume", 0);
+    m_menuBarEntries.emplace_back(MenuBarFunction::SKIP, "Skip to Choice", 0);
+    m_menuBarEntries.emplace_back(MenuBarFunction::AUTO, "Auto mode", 0);
+    m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Settings", 0);
+    m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Sound effects", 1);
+    m_menuBarEntries.emplace_back(MenuBarFunction::WAVEON, "On", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::WAVEOFF, "Off", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Click settings", 1);
+    m_menuBarEntries.emplace_back(MenuBarFunction::CLICKDEF, "Per line", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::CLICKPAGE, "Per page", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::FONT, "Font", 1);
+    m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Text speed", 1);
+    m_menuBarEntries.emplace_back(MenuBarFunction::TEXTSLOW, "Slow", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::TEXTMIDDLE, "Default", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::TEXTFAST, "Fast", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Skip settings", 1);
+    m_menuBarEntries.emplace_back(MenuBarFunction::kidokuoff, "Skip all messages", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::kidokuon, "Skip read text", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Screen settings", 1);
+    m_menuBarEntries.emplace_back(MenuBarFunction::FULL, "Fullscreen", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::WINDOW, "Windowed", 2);
+
+    auto test = ParseMenuBarTree();
+}
+
+
 bool Window::TranslateMouse(int& x, int& y)
 {
     int windowResolutionX, windowResolutionY;
@@ -51,4 +105,58 @@ bool Window::TranslateMouse(int& x, int& y)
     x = new_x;
     y = new_y;
     return true;
+}
+
+Window::MenuBarInput* Window::GetCurrentParent(MenuBarInput& input, std::vector<size_t>& depthTracker)
+{
+    MenuBarInput* toReturn = &input;
+    
+    for (size_t i = 0; i < depthTracker.size(); ++i)
+        toReturn = &toReturn->m_children[depthTracker[i]];
+
+    return toReturn;
+}
+
+
+void Window::ReverseChildren(MenuBarInput& input)
+{
+    for (size_t i = 0; i < input.m_children.size(); ++i)
+    {
+        ReverseChildren(input.m_children[i]);
+    }
+
+    std::reverse(input.m_children.begin(), input.m_children.end());
+}
+
+
+Window::MenuBarInput Window::ParseMenuBarTree()
+{
+    MenuBarInput toReturn;
+    std::vector<size_t> depthTracker; // the size is how many nodes deep we are, the values are how we get there.
+
+    for (size_t i = 0; i < m_menuBarEntries.size(); ++i)
+    {
+        const MenuBarInput& currentEntry = m_menuBarEntries[i];
+        if (depthTracker.size() > currentEntry.m_depth)//depthTracker.back()
+        {
+            depthTracker.pop_back();
+        }
+
+        MenuBarInput* parent = GetCurrentParent(toReturn, depthTracker);
+
+
+        if (currentEntry.m_function == MenuBarFunction::SUB)
+        {
+            depthTracker.push_back(parent->m_children.size());
+            parent->m_children.push_back(currentEntry);
+        }
+        else
+        {
+            parent->m_children.push_back(currentEntry);
+        }
+    }
+
+    ReverseChildren(toReturn);
+
+    return toReturn;
 }

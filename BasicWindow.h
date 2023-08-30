@@ -14,6 +14,7 @@ public:
     virtual SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen);
     virtual void* GetWindowHandle();
     virtual void SendCustomEvent(ONScripterCustomEvent event, int value);
+    virtual void CreateMenuBar();
 
 private:
 };

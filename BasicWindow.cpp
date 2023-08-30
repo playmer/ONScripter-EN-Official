@@ -106,3 +106,8 @@ void BasicWindow::SendCustomEvent(ONScripterCustomEvent eventType, int value)
     event.user.code = value;
     SDL_PushEvent(&event);
 }
+
+
+void BasicWindow::CreateMenuBar()
+{
+}

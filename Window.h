@@ -11,24 +11,36 @@ class ONScripterLabel;
 
 enum class MenuBarFunction
 {
-    ClickPage,
-
-    Submenu,
-
-    Exit,
-    Version,
-    Volume,
-    SkipToChoice,
-
-    TextSlow,
-    TextFast,
+    AUTO,
+    CLICKDEF,
+    CLICKPAGE,
+    DWAVEVOLUME,
+    END,
+    FONT,
+    FULL,
+    kidokuoff,
+    kidokuon,
+    SKIP,
+    SUB,
+    TEXTFAST,
+    TEXTMIDDLE,
+    TEXTSLOW,
+    VERSION,
+    WAVEOFF,
+    WAVEON,
+    WINDOW,
+    UNKNOWN,
 };
+
+bool IsCheckable(MenuBarFunction function);
 
 enum ONScripterCustomEvent;
 
 class Window
 {
 public:
+    Window();
+
     virtual std::vector<SDL_Event>& PollEvents() = 0;
     virtual void WarpMouse(int x, int y) = 0;
     virtual void SetWindowCaption(const char* title, const char* icon_name) = 0;
@@ -54,17 +66,57 @@ public:
         s_window->SendCustomEvent(event, value);
     }
 
+    void DeleteMenu()
+    {
+        m_menuBarEntries.clear();
+        CreateMenuBar();
+    }
+
+    void ResetMenu()
+    {
+        m_menuBarEntries.clear();
+        CreateMenuBar();
+    }
+
+    void InsertMenu(MenuBarFunction function, const char* label, int depth)
+    {
+        m_menuBarEntries.emplace_back(function, label, depth);
+    }
+
     bool IgnoreContinuousMouseMove = true;
 protected:
+    struct MenuBarInput
+    {
+        MenuBarInput(MenuBarFunction function, const char* label, int depth)
+            : m_function(function)
+            , m_label(label)
+            , m_depth(depth)
+        {
+        }
+
+        MenuBarInput() {}
+
+        MenuBarFunction m_function = MenuBarFunction::UNKNOWN;
+        std::string m_label;
+        int m_depth = 0;
+        std::vector<MenuBarInput> m_children; // Unused unless returned from ParseMenuBarTree.
+    };
+
+
     bool TranslateMouse(int& x, int& y);
-    virtual void CreateToolbar() {};
+    virtual void CreateMenuBar() = 0;
+
+    static void ReverseChildren(MenuBarInput& input);
+    static MenuBarInput* GetCurrentParent(MenuBarInput& input, std::vector<size_t>& depthTracker);
+    MenuBarInput ParseMenuBarTree();
+    
 
     SDL_Window* m_window = NULL;
     SDL_Renderer* m_renderer = NULL;
     ONScripterLabel* m_onscripterLabel = NULL;
     std::vector<SDL_Event> m_events;
 
-    std::vector<std::tuple<MenuBarFunction, std::string, int>> m_menuBarEntries;
+    std::vector<MenuBarInput> m_menuBarEntries;
 
     static Window* s_window;
 };

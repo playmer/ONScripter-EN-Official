@@ -3,6 +3,8 @@
 #include "QLabel"
 #include "QMenuBar"
 #include "QPushButton"
+#include "QSlider"
+#include "QStyle"
 
 #include "QBoxLayout"
 
@@ -14,6 +16,280 @@ Window* CreateQtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
 {
     return new QtWindow(onscripter, w, h, x, y);
 }
+
+
+class VolumeDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    static void adjustVolumeSliders(ONScripterLabel* onscripter, int& voice_volume, int& se_volume, int& music_volume, QWidget* parent)
+    {
+        VolumeDialog* dialog = new VolumeDialog(onscripter, voice_volume, se_volume, music_volume, parent);
+        dialog->setModal(true);
+        dialog->show();
+        dialog->setWindowFlag(Qt::WindowType::Dialog, true);
+        dialog->setWindowFlag(Qt::WindowType::CustomizeWindowHint, true);
+        dialog->setWindowFlag(Qt::WindowType::WindowTitleHint, true);
+        dialog->setWindowFlag(Qt::WindowType::WindowSystemMenuHint, false);
+        dialog->exec();
+
+        delete dialog;
+    }
+
+
+
+private:
+    explicit VolumeDialog(ONScripterLabel* onscripter, int& voice_volume, int& se_volume, int& music_volume, QWidget* parent = nullptr)
+        : QDialog(parent)
+    {
+        setWindowTitle(QString::fromUtf8("Volume Dialog"));
+        setWindowIcon(this->style()->standardIcon(QStyle::SP_MediaVolume));
+
+        QLabel* slider1Label = new QLabel(QString::fromUtf8("Voice")); // voice_volume
+        QSlider* slider1 = new QSlider(Qt::Vertical, parent);
+        slider1->setMinimum(0);
+        slider1->setMaximum(100);
+        slider1->setValue(voice_volume);
+        QVBoxLayout* slider1Layout = new QVBoxLayout;
+        slider1Layout->addWidget(slider1Label);
+        slider1Layout->addWidget(slider1);
+        QObject::connect(slider1, &QSlider::sliderMoved, [=](int position) {
+            onscripter->SetVoiceVolume(position);
+        });
+
+        QLabel* slider2Label = new QLabel(QString::fromUtf8("SFX")); // se_volume
+        QSlider* slider2 = new QSlider(Qt::Vertical, parent);
+        slider2->setMinimum(0);
+        slider2->setMaximum(100);
+        slider2->setValue(se_volume);
+        QVBoxLayout* slider2Layout = new QVBoxLayout;
+        slider2Layout->addWidget(slider2Label);
+        slider2Layout->addWidget(slider2);
+        QObject::connect(slider2, &QSlider::sliderMoved, [=](int position) {
+            onscripter->SetSfxVolume(position);
+        });
+
+        QLabel* slider3Label = new QLabel(QString::fromUtf8("BGM")); //music_volume
+        QSlider* slider3 = new QSlider(Qt::Vertical, parent);
+        slider3->setMinimum(0);
+        slider3->setMaximum(100);
+        slider3->setValue(music_volume);
+        QVBoxLayout* slider3Layout = new QVBoxLayout;
+        slider3Layout->addWidget(slider3Label);
+        slider3Layout->addWidget(slider3);
+        QObject::connect(slider3, &QSlider::sliderMoved, [=](int position) {
+            onscripter->SetMusicVolume(position);
+        });
+
+        QHBoxLayout* mainLayout = new QHBoxLayout;
+
+        mainLayout->addLayout(slider1Layout);
+        mainLayout->addLayout(slider2Layout);
+        mainLayout->addLayout(slider3Layout);
+
+        setLayout(mainLayout);
+
+        resize(200, 200);
+    }
+
+    QLineEdit* m_lineEdit;
+    QString m_textValue;
+    ONScripterLabel* onscripter;
+};
+
+
+
+
+
+
+class InputStrDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    static std::string getInputStr(const std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h, QWidget* parent = nullptr)
+    {
+        std::string toReturn;
+        int err = 0;
+        while (err == 0)
+        {
+            InputStrDialog* dialog = new InputStrDialog(display, maximumInputLength, forceDoubleByte, w, h, input_w, input_h, parent);
+            dialog->setModal(true);
+            dialog->show();
+            dialog->setWindowFlag(Qt::WindowType::WindowCloseButtonHint, false);
+            dialog->setWindowFlag(Qt::WindowType::Dialog, true);
+            dialog->setWindowFlag(Qt::WindowType::CustomizeWindowHint, true);
+            dialog->setWindowFlag(Qt::WindowType::WindowTitleHint, true);
+            err = dialog->exec();
+
+            toReturn = dialog->m_lineEdit->text().toStdString();
+
+            delete dialog;
+        }
+
+        return toReturn;
+    }
+
+
+
+private:
+    explicit InputStrDialog(const std::string& label, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h, QWidget* parent = nullptr)
+        : QDialog(parent)
+    {
+        QString display = "Input String Dialog";
+        this->setWindowTitle(display);
+
+        QString labelText = QString::fromStdString(label);
+
+        QHBoxLayout* inputLayout = new QHBoxLayout;
+
+        QPushButton* okButton = new QPushButton("Ok", this);
+        m_lineEdit = new QLineEdit(this);
+        m_lineEdit->setMaxLength(maximumInputLength);
+
+        QObject::connect(okButton, &QPushButton::clicked, [=]() {
+            this->accept();
+            this->done(1);
+            });
+
+        inputLayout->addWidget(m_lineEdit);
+        inputLayout->addWidget(okButton);
+
+        QVBoxLayout* mainLayout = new QVBoxLayout;
+
+        mainLayout->addWidget(new QLabel(labelText));
+        mainLayout->addLayout(inputLayout);
+        setLayout(mainLayout);
+
+        // NOTE: These probably need to be relative to the parent window.
+        int width = w == NULL ? 0 : *w;
+        int height = h == NULL ? 0 : *h;
+
+        move(width, height);
+        //setBaseSize()
+    }
+
+    QLineEdit* m_lineEdit;
+
+    QString m_textValue;
+};
+
+class VersionDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    static void showVersion(const std::string& display, QWidget* parent = nullptr)
+    {
+        VersionDialog* dialog = new VersionDialog(display);
+        dialog->setModal(true);
+        dialog->show();
+        //dialog->setWindowFlag(Qt::WindowType::WindowCloseButtonHint, false);
+        dialog->setWindowFlag(Qt::WindowType::Dialog, true);
+        dialog->setWindowFlag(Qt::WindowType::CustomizeWindowHint, true);
+        dialog->setWindowFlag(Qt::WindowType::WindowTitleHint, true);
+        dialog->exec();
+
+        delete dialog;
+    }
+
+private:
+    explicit VersionDialog(const std::string& label, QWidget* parent = nullptr)
+        : QDialog(parent)
+    {
+        QIcon messageInfoIcon = style()->standardIcon(QStyle::SP_MessageBoxInformation);
+
+        QString display = "Version Dialog";
+        setWindowTitle(display);
+        setWindowIcon(messageInfoIcon);
+
+        QHBoxLayout* inputLayout = new QHBoxLayout;
+
+        QString labelText = QString::fromStdString(label);
+        inputLayout->addWidget(new QLabel(labelText));
+
+        QPushButton* okButton = new QPushButton("Ok", this);
+
+        QObject::connect(okButton, &QPushButton::clicked, [=]() {
+            this->accept();
+            this->done(1);
+        });
+
+        QVBoxLayout* mainLayout = new QVBoxLayout;
+
+        mainLayout->addLayout(inputLayout);
+        mainLayout->addWidget(okButton);
+        setLayout(mainLayout);
+    }
+
+    QLineEdit* m_lineEdit;
+
+    QString m_textValue;
+};
+
+
+
+class ExitDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    static bool shouldExit(const std::string& display, QWidget* parent = nullptr)
+    {
+        ExitDialog* dialog = new ExitDialog(display);
+        dialog->setModal(true);
+        dialog->show();
+        //dialog->setWindowFlag(Qt::WindowType::WindowCloseButtonHint, false);
+        dialog->setWindowFlag(Qt::WindowType::Dialog, true);
+        dialog->setWindowFlag(Qt::WindowType::CustomizeWindowHint, true);
+        dialog->setWindowFlag(Qt::WindowType::WindowTitleHint, true);
+        bool ret = !!dialog->exec();
+
+        delete dialog;
+
+        return ret;
+    }
+
+private:
+    explicit ExitDialog(const std::string& label, QWidget* parent = nullptr)
+        : QDialog(parent)
+    {
+        QIcon messageInfoIcon = style()->standardIcon(QStyle::SP_MessageBoxQuestion);
+
+        QString display = "Exit Dialog";
+        setWindowTitle(display);
+        setWindowIcon(messageInfoIcon);
+
+        QPushButton* yesButton = new QPushButton("Yes", this);
+
+        QObject::connect(yesButton, &QPushButton::clicked, [=]() {
+            this->accept();
+            this->done(1);
+        });
+        QPushButton* noButton = new QPushButton("No", this);
+
+        QObject::connect(noButton, &QPushButton::clicked, [=]() {
+            this->reject();
+            this->done(0);
+        });
+
+        QHBoxLayout* buttonLayout = new QHBoxLayout;
+        buttonLayout->addWidget(yesButton);
+        buttonLayout->addWidget(noButton);
+
+        QVBoxLayout* mainLayout = new QVBoxLayout;
+
+        QString labelText = QString::fromStdString(label);
+        mainLayout->addWidget(new QLabel(labelText));
+        mainLayout->addLayout(buttonLayout);
+
+        setLayout(mainLayout);
+    }
+
+    QLineEdit* m_lineEdit;
+
+    QString m_textValue;
+};
+
+
+
 
 enum Renderer
 {
@@ -97,7 +373,7 @@ public:
         //if (m_window == NULL)
         //    return QWindow::event(event);
 
-        fprintf(stderr, "QtEvent %d\n", event->type());
+        //fprintf(stderr, "QtEvent %d\n", event->type());
         switch (event->type())
         {
             case QEvent::User:
@@ -142,6 +418,15 @@ public:
                 m_events.push_back(sdlEvent);//SDL_PushEvent(&sdlEvent);
                 return false;
             }
+            case QEvent::Close:
+            {
+                QCloseEvent* qtEvent = static_cast<QCloseEvent*>(event);
+                SDL_Event sdlEvent;
+                sdlEvent.type = SDL_QUIT;
+
+                m_events.push_back(sdlEvent);
+                return QWindow::event(event);
+            }
             default:
             {
                 return QWindow::event(event);
@@ -153,6 +438,14 @@ public:
         //    return false;
         //}
         //else 
+    }
+
+    virtual void closeEvent(QCloseEvent*)
+    {
+        SDL_Event sdlEvent;
+        sdlEvent.type = SDL_QUIT;
+
+        m_events.push_back(sdlEvent);
     }
 
     virtual void exposeEvent(QExposeEvent*)
@@ -235,6 +528,8 @@ QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
     m_sdlWindow->resize(w, h);
     m_renderer = SDL_CreateRenderer(m_window, preferredRendererIndex, 0);
 
+    CreateMenuBar();
+
     m_mainWindow->show();
 
     //std::string test = "show this text";
@@ -264,13 +559,47 @@ std::vector<SDL_Event>& QtWindow::PollEvents()
             polledEvent = m_temp_event;
         }
 
-        fprintf(stderr, "SDLEvent: %d\n", polledEvent.type);
-        m_events.emplace_back(polledEvent);
+        //fprintf(stderr, "SDLEvent: %d\n", polledEvent.type);
+        m_events.push_back(polledEvent);
+
+        if (polledEvent.type == SDL_KEYUP)
+        {
+            switch (polledEvent.key.keysym.sym)
+            {
+                case SDLK_v:
+                {
+                    VolumeDialog::adjustVolumeSliders(m_onscripterLabel, m_onscripterLabel->voice_volume, m_onscripterLabel->se_volume, m_onscripterLabel->music_volume, m_sdlWidget);
+                    break;
+                }
+                case SDLK_b:
+                {
+                    VersionDialog::showVersion("NETANNAD\nCopyright 2004.Team Netannad", m_sdlWidget);
+                    break;
+                }
+                case SDLK_i:
+                {
+                    std::string output = "Input your name";
+                    std::string input = InputStrDialog::getInputStr(output, 10, false, NULL, NULL, NULL, NULL);
+                    fprintf(stderr, "User typed %s", input.c_str());
+                    break;
+                }
+                case SDLK_ESCAPE:
+                {
+                    std::string output = "Are you sure you want to quit?";
+                    if (ExitDialog::shouldExit(output, m_sdlWidget))
+                    {
+                        SDL_Event temp;
+                        temp.type = SDL_QUIT;
+                        m_events.push_back(temp);
+                    }
+                    break;
+                }
+            }
+            
+        }
     }
     //m_events.insert(m_events.end(), m_sdlWindow->m_events.begin(), m_sdlWindow->m_events.end());
     m_sdlWindow->m_events.clear();
-
-    fprintf(stderr, "Loop\n");
 
     return m_events;
 }
@@ -327,10 +656,6 @@ void QtWindow::SendCustomEvent(ONScripterCustomEvent event, int value)
     QCoreApplication::postEvent(static_cast<QtWindow*>(s_window)->m_sdlWindow, new ONScripterCustomQtEvent(event, value));
 }
 
-
-
-
-
 void QtWindow::MenuImpl_VolumeSlider()
 {
 
@@ -347,112 +672,269 @@ void QtWindow::MenuImpl_Exit()
 }
 
 
-class InputStrDialog : public QDialog
-{
-    Q_OBJECT
-public:
-    static std::string getInputStr(const std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h)
-    {
-        InputStrDialog* dialog = new InputStrDialog(display, maximumInputLength, forceDoubleByte, w, h, input_w, input_h);
-        dialog->show();
-
-        return std::string();
-    }
-
-private:
-    explicit InputStrDialog(const std::string& label, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h, QWidget* parent = nullptr)
-    {
-        QString display = "Input String";
-        this->setWindowTitle(display);
-
-        QString labelText = QString::fromStdString(label);
-
-        QHBoxLayout* inputLayout = new QHBoxLayout;
-
-        QPushButton* okButton = new QPushButton("Ok", this);
-        QLineEdit* lineEdit = new QLineEdit(this);
-        lineEdit->setMaxLength(maximumInputLength);
-
-        inputLayout->addWidget(lineEdit);
-        inputLayout->addWidget(okButton);
 
 
-        QVBoxLayout* mainLayout = new QVBoxLayout;
-
-        mainLayout->addWidget(new QLabel(labelText));
-        mainLayout->addLayout(inputLayout);
-        setLayout(mainLayout);
-    
-        // NOTE: These probably need to be relative to the parent window.
-        int width = w == NULL ? 0 : *w;
-        int height = h == NULL ? 0 : *h;
-
-        move(width, height);
-        //setBaseSize()
-    }
-};
 
 
 std::string QtWindow::Command_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h)
 {
-    //QString displayText = QString::fromStdString(display);
-    //QString output = QInputDialog::getText(m_sdlWidget, "ONScripter TextModal", displayText);
-
-    return InputStrDialog::getInputStr(display, maximumInputLength, forceDoubleByte, NULL, NULL, NULL, NULL);
+    return InputStrDialog::getInputStr(display, maximumInputLength, forceDoubleByte, NULL, NULL, NULL, NULL, m_sdlWidget);
 }
 
 
-static QMenu* CreateMenu(std::vector<std::tuple<MenuBarFunction, std::string, int>> m_menuBarEntries, size_t& index)
-{
 
-    while (index < m_menuBarEntries.size())
+
+
+ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
+{
+    ActionOrMenu toReturn;
+
+    switch (input.m_function)
     {
-        std::tuple<MenuBarFunction, std::string, int>& menuBarEntry = m_menuBarEntries[index++];
-        if (std::get<0>(menuBarEntry) == MenuBarFunction::Submenu)
+        case MenuBarFunction::SUB:
         {
-            QString display = QString::fromStdString(std::get<1>(menuBarEntry));
+            QString display = QString::fromStdString(input.m_label);
             QMenu* menu = new QMenu(display);
-            menu->addMenu(CreateMenu(m_menuBarEntries, index));
+
+            for (auto& menuBarEntry : input.m_children)
+            {
+                ActionOrMenu actionOrMenu = CreateMenuBarInternal(menuBarEntry);
+
+                if (actionOrMenu.isAction)
+                    menu->addAction(actionOrMenu.m_actionOrMenu.m_action);
+                else
+                    menu->addMenu(actionOrMenu.m_actionOrMenu.m_menu);
+            }
+
+            toReturn.isAction = false;
+            toReturn.m_actionOrMenu.m_menu = menu;
+            break;
         }
+        default:
+        {
+            QAction* action = new QAction(QString::fromStdString(input.m_label));
+            m_actionsMap[input.m_function].emplace_back(action);
+
+            if (IsCheckable(input.m_function))
+            {
+                action->setCheckable(true);
+            }
+
+            QObject::connect(action, &QAction::triggered, [this, function = input.m_function]() {
+                switch (function)
+                {
+                    case MenuBarFunction::AUTO:
+                    {
+                        m_onscripterLabel->automode_flag = true;
+                        m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_NORMAL;
+                        break;
+                    }
+                    case MenuBarFunction::CLICKDEF:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::CLICKPAGE])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+                        m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_TO_EOP;
+                        //printf("menu_click_def: disabling page-at-once mode\n");
+                        break;
+                    }
+                    case MenuBarFunction::CLICKPAGE:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::CLICKDEF])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_EOP;
+                        //printf("menu_click_page: enabling page-at-once mode\n");
+                        break;
+                    }
+                    case MenuBarFunction::DWAVEVOLUME:
+                    {
+                        VolumeDialog::adjustVolumeSliders(m_onscripterLabel, m_onscripterLabel->voice_volume, m_onscripterLabel->se_volume, m_onscripterLabel->music_volume, m_sdlWidget);
+                        break;
+                    }
+                    case MenuBarFunction::END:
+                    {
+                        std::string output = "Are you sure you want to quit?";
+                        if (ExitDialog::shouldExit(output, m_sdlWidget))
+                        {
+                            SDL_Event temp;
+                            temp.type = SDL_QUIT;
+                            m_events.push_back(temp);
+                        }
+                        break;
+                    }
+                    case MenuBarFunction::FONT:
+                    {
+                        break;
+                    }
+                    case MenuBarFunction::kidokuoff:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::kidokuon])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_WAIT;
+                        break;
+                    }
+                    case MenuBarFunction::kidokuon:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::kidokuoff])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
+                        break;
+                    }
+                    case MenuBarFunction::SKIP:
+                    {
+                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
+                        break;
+                    }
+                    case MenuBarFunction::TEXTFAST:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        m_onscripterLabel->text_speed_no = 2;
+                        m_onscripterLabel->sentence_font.wait_time = -1;
+                        break;
+                    }
+                    case MenuBarFunction::TEXTMIDDLE:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        m_onscripterLabel->text_speed_no = 1;
+                        m_onscripterLabel->sentence_font.wait_time = -1;
+                        break;
+                    }
+                    case MenuBarFunction::TEXTSLOW:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        m_onscripterLabel->text_speed_no = 0;
+                        m_onscripterLabel->sentence_font.wait_time = -1;
+                        break;
+                    }
+                    case MenuBarFunction::VERSION:
+                    {
+                        VersionDialog::showVersion("NETANNAD\nCopyright 2004.Team Netannad", m_sdlWidget);
+                        break;
+                    }
+                    case MenuBarFunction::WAVEOFF:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::WAVEON])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        m_onscripterLabel->volume_on_flag = false;
+                        break;
+                    }
+                    case MenuBarFunction::WAVEON:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::WAVEOFF])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        m_onscripterLabel->volume_on_flag = true;
+                        break;
+                    }
+                    case MenuBarFunction::FULL:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::WINDOW])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
 
 
+                        break;
+                    }
+                    case MenuBarFunction::WINDOW:
+                    {
+                        for (auto& action : m_actionsMap[MenuBarFunction::FULL])
+                            action->setChecked(false);
+
+                        for (auto& action : m_actionsMap[function])
+                            action->setChecked(true);
+
+                        break;
+                    }
+                }
+            });
+
+            toReturn.isAction = true;
+            toReturn.m_actionOrMenu.m_action = action;
+            break;
+        }
     }
+
+    return toReturn;
 }
 
-
-static QMenuBar* CreateMenuBar(std::vector<std::tuple<MenuBarFunction, std::string, int>> m_menuBarEntries)
+void QtWindow::CreateMenuBar()
 {
-    size_t index = 0;
+    MenuBarInput menuBarTree = ParseMenuBarTree();
 
-    while (index < m_menuBarEntries.size())
-    {
-        std::tuple<MenuBarFunction, std::string, int>& menuBarEntry = m_menuBarEntries[index++];
-        if (std::get<0>(menuBarEntry) == MenuBarFunction::Submenu)
-        {
-            QString display = QString::fromStdString(std::get<1>(menuBarEntry));
-            QMenu* menu = new QMenu(display);
-            CreateMenu(m_menuBarEntries, index);
-        }
-
-
-    }
-}
-
-void QtWindow::CreateToolbar()
-{
     QMenuBar* menuBar = new QMenuBar();
-    int lastNest = 0;
 
-    for (auto& menuBarEntry : m_menuBarEntries)
+    for (auto& menuBarEntry : menuBarTree.m_children)
     {
-        if (std::get<0>(menuBarEntry) == MenuBarFunction::Submenu)
-        {
-            QString display = QString::fromStdString(std::get<1>(menuBarEntry));
-            QMenu* menu = new QMenu(display);
-        }
+        ActionOrMenu actionOrMenu = CreateMenuBarInternal(menuBarEntry);
+
+        if (actionOrMenu.isAction)
+            menuBar->addAction(actionOrMenu.m_actionOrMenu.m_action);
+        else
+            menuBar->addMenu(actionOrMenu.m_actionOrMenu.m_menu);
     }
 
     m_mainWindow->setMenuBar(menuBar);
+
+    //int lastNest = 0;
+    //
+    //for (auto& menuBarEntry : m_menuBarEntries)
+    //{
+    //    if (std::get<0>(menuBarEntry) == MenuBarFunction::Submenu)
+    //    {
+    //        QString display = QString::fromStdString(std::get<1>(menuBarEntry));
+    //        QMenu* menu = new QMenu(display);
+    //    }
+    //}
+    
+
+
+    //m_mainWindow->setMenuBar(menuBar);
     //m_mainWindow->menuBar()->addMenu()
     //if (m_toolbar)
     //{

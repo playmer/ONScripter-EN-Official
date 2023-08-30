@@ -66,6 +66,8 @@
 #endif
 #endif
 
+#include "Window.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -625,6 +627,17 @@ protected:
     unsigned char *key_table;
 
     void createKeyTable( const char *key_exe );
+
+    friend Window;
+    friend BasicWindow;
+
+#ifdef USE_QT_WINDOW
+    friend QtWindow;
+#endif
+
+#ifdef USE_IMGUIWINDOW
+    friend ImguiWindow;
+#endif
 };
 
 #endif // __SCRIPT_PARSER_H__

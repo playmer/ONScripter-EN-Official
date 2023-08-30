@@ -413,7 +413,7 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
 
   //m_window->Repaint();
   //
-  fprintf(stderr, "UpdateScreen\n");
+  //fprintf(stderr, "UpdateScreen\n");
 }
 
 
@@ -428,6 +428,39 @@ void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
   
   // display to screen_surface
   //#error "Unfinished"
+}
+
+
+void ONScripterLabel::SetMusicVolume(int volume)
+{
+    music_volume = volume;
+
+    // Music Volume
+    setCurMusicVolume(music_volume);
+
+}
+
+void ONScripterLabel::SetSfxVolume(int volume)
+{
+    se_volume = volume;
+
+    // SFX Volume
+    for (int i = 1; i < ONS_MIX_CHANNELS; i++)
+        if (wave_sample[i])
+            Mix_Volume(i, !volume_on_flag ? 0 : se_volume * 128 / 100);
+    if (wave_sample[MIX_LOOPBGM_CHANNEL0])
+        Mix_Volume(MIX_LOOPBGM_CHANNEL0, !volume_on_flag ? 0 : se_volume * 128 / 100);
+    if (wave_sample[MIX_LOOPBGM_CHANNEL1])
+        Mix_Volume(MIX_LOOPBGM_CHANNEL1, !volume_on_flag ? 0 : se_volume * 128 / 100);
+}
+
+void ONScripterLabel::SetVoiceVolume(int volume)
+{
+    voice_volume = volume;
+
+    // Voice Volume
+    if (wave_sample[0])
+        Mix_Volume(0, !volume_on_flag ? 0 : voice_volume * 128 / 100);
 }
 
 

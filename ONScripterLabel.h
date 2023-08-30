@@ -48,7 +48,6 @@
 #include "DirPaths.h"
 #include "ScriptParser.h"
 #include "DirtyRect.h"
-#include "Window.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
@@ -404,6 +403,10 @@ public:
 
     static void clearTimer(SDL_TimerID& timer_id);
 
+    void SetMusicVolume(int volume);
+    void SetSfxVolume(int volume);
+    void SetVoiceVolume(int volume);
+
 protected:
     /* ---------------------------------------- */
     /* Event related variables */
@@ -466,6 +469,7 @@ protected:
     void UpdateScreen(SDL_Rect dst_rect);
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
     static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
+
 
 
 
@@ -1228,7 +1232,6 @@ private:
 
     friend Window;
     friend BasicWindow;
-
 
 #ifdef USE_QT_WINDOW
     friend QtWindow;

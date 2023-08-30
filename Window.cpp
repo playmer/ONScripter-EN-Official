@@ -1,4 +1,6 @@
 #include "Window.h"
+#include "ONScripterLabel.h"
+
 
 Window* Window::s_window = NULL;
 
@@ -22,11 +24,62 @@ bool IsCheckable(MenuBarFunction function)
     default: 
         return false;
     }
-
-    
 }
 
-Window::Window()
+bool Window::IsChecked(MenuBarFunction function)
+{
+    switch (function)
+    {
+        case MenuBarFunction::WAVEOFF:
+        {
+            return !m_onscripterLabel->volume_on_flag;
+        }
+        case MenuBarFunction::WAVEON:
+        {
+            return m_onscripterLabel->volume_on_flag;
+        }
+        case MenuBarFunction::CLICKDEF:
+        {
+            return !(m_onscripterLabel->skip_mode & ONScripterLabel::SKIP_TO_EOP);
+        }
+        case MenuBarFunction::CLICKPAGE:
+        {
+            return m_onscripterLabel->skip_mode & ONScripterLabel::SKIP_TO_EOP;
+        }
+        case MenuBarFunction::TEXTFAST:
+        {
+            return m_onscripterLabel->text_speed_no == 2;
+        }
+        case MenuBarFunction::TEXTMIDDLE:
+        {
+            return m_onscripterLabel->text_speed_no == 1;
+        }
+        case MenuBarFunction::TEXTSLOW:
+        {
+            return m_onscripterLabel->text_speed_no == 0;
+        }
+        case MenuBarFunction::kidokuoff:
+        {
+            return m_onscripterLabel->skip_mode & ONScripterLabel::SKIP_TO_WAIT;
+        }
+        case MenuBarFunction::kidokuon:
+        {
+            return m_onscripterLabel->skip_mode & ONScripterLabel::SKIP_NORMAL;
+        }
+        case MenuBarFunction::FULL:
+        {
+            return m_onscripterLabel->fullscreen_mode;
+        }
+        case MenuBarFunction::WINDOW:
+        {
+            return !m_onscripterLabel->fullscreen_mode;
+        }
+    }
+}
+
+
+Window::Window(ONScripterLabel* onscripterLabel)
+    : m_onscripterLabel(onscripterLabel)
 {
     m_menuBarEntries.emplace_back(MenuBarFunction::END, "Exit", 0);
     m_menuBarEntries.emplace_back(MenuBarFunction::VERSION, "Version Information", 0);

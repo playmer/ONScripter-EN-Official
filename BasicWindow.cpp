@@ -10,12 +10,11 @@ Window* CreateBasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int 
 }
 
 BasicWindow::BasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
-    : Window()
+    : Window(onscripter)
 {
     if (s_window != NULL)
         fprintf(stderr, "Game has created two instances of Window, there should only be one.");
     s_window = this;
-    m_onscripterLabel = onscripter;
     SDL_CreateWindowAndRenderer(w, h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI, &m_window, &m_renderer);
     SDL_SetWindowPosition(m_window, x, y);
 }

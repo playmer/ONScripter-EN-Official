@@ -633,12 +633,14 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
 {
     if (fullscreen)
     {
+        m_mainWindow->menuBar()->hide();
         m_mainWindow->showFullScreen();
     }
     else
     {
         //SDL_SetWindowSize(m_window, width, height);
         //SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+        m_mainWindow->menuBar()->show();
         m_mainWindow->resize(width, height);
         m_mainWindow->showNormal();
     }
@@ -914,6 +916,9 @@ void QtWindow::CreateMenuBar()
 {
     MenuBarInput menuBarTree = ParseMenuBarTree();
 
+    // FIXME: Memory leak? Or will deleting the existing menuBar clean them up?
+    m_actionsMap.clear();
+
     QMenuBar* menuBar = new QMenuBar();
 
     for (auto& menuBarEntry : menuBarTree.m_children)
@@ -926,38 +931,12 @@ void QtWindow::CreateMenuBar()
             menuBar->addMenu(actionOrMenu.m_actionOrMenu.m_menu);
     }
 
+    // Apple has a global menubar, were we to call `setMenuBar` here, it would disappear
+    // when clicking on one of our dialogs, for now, do not set it, so that it's the same
+    // across all Windows (the central window, and dialogs).
+#ifndef APPLE
     m_mainWindow->setMenuBar(menuBar);
-
-    //int lastNest = 0;
-    //
-    //for (auto& menuBarEntry : m_menuBarEntries)
-    //{
-    //    if (std::get<0>(menuBarEntry) == MenuBarFunction::Submenu)
-    //    {
-    //        QString display = QString::fromStdString(std::get<1>(menuBarEntry));
-    //        QMenu* menu = new QMenu(display);
-    //    }
-    //}
-    
-
-
-    //m_mainWindow->setMenuBar(menuBar);
-    //m_mainWindow->menuBar()->addMenu()
-    //if (m_toolbar)
-    //{
-    //    m_mainWindow->removeToolBar(m_toolbar);
-    //    m_toolbar = NULL;
-    //}
-    //
-    //m_toolbar = new QToolBar(m_sdlWidget);
-    //
-    //for (auto& toolbarEntry : m_toolbarEntries)
-    //{
-    //    //m_toolbar->add
-    //    //m_toolbar->
-    //}
-    //
-    //m_mainWindow->addToolBar(m_toolbar);
+#endif
 }
 
 

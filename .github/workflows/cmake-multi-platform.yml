@@ -16,9 +16,9 @@
 name: hosted-ninja-vcpkg_submod-autocache
 on:
   push:
-    branches: [ "master", "extensions" ]
+    branches: [ "master", "extensions", "Qt_window_wrapper" ]
   pull_request:
-    branches: [ "master", "extensions" ]
+    branches: [ "master", "extensions", "Qt_window_wrapper" ]
   workflow_dispatch:
   schedule:
   - cron: '0 1 * * *'

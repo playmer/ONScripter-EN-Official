@@ -631,9 +631,17 @@ void QtWindow::SetWindowCaption(const char* title, const char* icon_name)
 
 SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscreen)
 {
-    SDL_SetWindowSize(m_window, width, height);
-    SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-    m_mainWindow->resize(width, height);
+    if (fullscreen)
+    {
+        m_mainWindow->showFullScreen();
+    }
+    else
+    {
+        //SDL_SetWindowSize(m_window, width, height);
+        //SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+        m_mainWindow->resize(width, height);
+        m_mainWindow->showNormal();
+    }
 
     return m_onscripterLabel->screen_surface;
 }

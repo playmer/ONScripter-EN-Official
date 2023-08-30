@@ -39,7 +39,7 @@ enum ONScripterCustomEvent;
 class Window
 {
 public:
-    Window();
+    Window(ONScripterLabel* onscripter);
 
     virtual std::vector<SDL_Event>& PollEvents() = 0;
     virtual void WarpMouse(int x, int y) = 0;
@@ -109,6 +109,8 @@ protected:
     static void ReverseChildren(MenuBarInput& input);
     static MenuBarInput* GetCurrentParent(MenuBarInput& input, std::vector<size_t>& depthTracker);
     MenuBarInput ParseMenuBarTree();
+
+    bool IsChecked(MenuBarFunction function);
     
 
     SDL_Window* m_window = NULL;

@@ -484,7 +484,7 @@ private:
 
 
 QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
-    : Window()
+    : Window(m_onscripterLabel)
     , m_qtapplication(argc, &argv)
 {
     if (s_window != NULL)
@@ -726,6 +726,7 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
             if (IsCheckable(input.m_function))
             {
                 action->setCheckable(true);
+                action->setChecked(IsChecked(input.m_function));
             }
 
             QObject::connect(action, &QAction::triggered, [this, function = input.m_function]() {

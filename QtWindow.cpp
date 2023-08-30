@@ -770,9 +770,7 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
                         std::string output = "Are you sure you want to quit?";
                         if (ExitDialog::shouldExit(output, m_sdlWidget))
                         {
-                            SDL_Event temp;
-                            temp.type = SDL_QUIT;
-                            m_events.push_back(temp);
+                            SendCustomEvent(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
                         }
                         break;
                     }

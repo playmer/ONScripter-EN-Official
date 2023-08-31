@@ -4695,6 +4695,13 @@ int ONScripterLabel::insertmenuCommand()
     return RET_CONTINUE;
 }
 
+
+int ONScripterLabel::killmenuCommand()
+{
+    m_window->KillMenu();
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::resetmenuCommand()
 {
     m_window->ResetMenu();

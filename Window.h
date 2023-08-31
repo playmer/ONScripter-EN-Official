@@ -32,6 +32,8 @@ enum class MenuBarFunction
     UNKNOWN,
 };
 
+
+MenuBarFunction functionNameToMenuBarFunction(const char* functionName);
 bool IsCheckable(MenuBarFunction function);
 
 enum ONScripterCustomEvent;
@@ -81,10 +83,13 @@ public:
     void InsertMenu(MenuBarFunction function, const char* label, int depth)
     {
         m_menuBarEntries.emplace_back(function, label, depth);
+        CreateMenuBar();
     }
 
     bool IgnoreContinuousMouseMove = true;
 protected:
+    virtual void CreateMenuBar() = 0;
+
     struct MenuBarInput
     {
         MenuBarInput(MenuBarFunction function, const char* label, int depth)
@@ -104,7 +109,6 @@ protected:
 
 
     bool TranslateMouse(int& x, int& y);
-    virtual void CreateMenuBar() = 0;
 
     static void ReverseChildren(MenuBarInput& input);
     static MenuBarInput* GetCurrentParent(MenuBarInput& input, std::vector<size_t>& depthTracker);

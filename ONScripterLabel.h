@@ -399,7 +399,8 @@ public:
     int allsp2hideCommand();
     int allsphideCommand();
     int amspCommand();
-
+    
+    int deletemenuCommand();
     int insertmenuCommand();
     int resetmenuCommand();
     int layermessageCommand();

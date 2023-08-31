@@ -481,6 +481,57 @@ private:
     SDL_Window* m_window = NULL;
 };
 
+class SdlMainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    SdlMainWindow(QtWindow* window)
+        : m_window(window)
+    {
+
+    }
+
+protected:
+    bool eventFilter(QObject* object, QEvent* event)
+    {
+        if (m_window->m_qtapplication.activePopupWidget() == NULL /* && m_window->m_mainWindow->isFullScreen()*/)
+        {
+            if (event->type() == QEvent::MouseMove)
+            {
+                QMouseEvent* mouseMoveEvent = static_cast<QMouseEvent*>(event);
+                if (menuBar()->isHidden())
+                {
+                    QRect rect = geometry();
+                    rect.setHeight(25);
+
+                    if (rect.contains(mouseMoveEvent->globalPos()))
+                    {
+                        menuBar()->show();
+                    }
+                }
+                else
+                {
+                    QRect rect = QRect(menuBar()->mapToGlobal(QPoint(0, 0)), menuBar()->size());
+
+                    if (!rect.contains(mouseMoveEvent->globalPos()))
+                    {
+                        menuBar()->hide();
+                    }
+                }
+            }
+            else if (event->type() == QEvent::Leave && (object == this))
+            {
+                m_window->m_mainWindow->menuBar()->hide();
+            }
+        }
+
+        return QMainWindow::eventFilter(object, event);
+    }
+
+    QtWindow* m_window;
+};
+
 
 
 QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
@@ -517,7 +568,7 @@ QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
         }
     }
 
-    m_mainWindow = new QMainWindow();
+    m_mainWindow = new SdlMainWindow(this);
     m_sdlWindow = new QSdlWindow(this, preferredRenderer);
     m_sdlWidget = QWidget::createWindowContainer(m_sdlWindow);
     m_sdlWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -532,8 +583,7 @@ QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
 
     m_mainWindow->show();
 
-    //std::string test = "show this text";
-    //Command_InputStr(test, 10, false, NULL, NULL, NULL, NULL);
+    m_qtapplication.installEventFilter(m_mainWindow);
 }
 
 std::vector<SDL_Event>& QtWindow::PollEvents()
@@ -546,6 +596,7 @@ std::vector<SDL_Event>& QtWindow::PollEvents()
             event.window.windowID = SDL_GetWindowID(m_window);
         SDL_PushEvent(&event);
     }
+    SDL_Event temp_event;
 
     m_events.clear();
     SDL_Event polledEvent;
@@ -553,52 +604,15 @@ std::vector<SDL_Event>& QtWindow::PollEvents()
     {
         // ignore continous SDL_MOUSEMOTION
         while (IgnoreContinuousMouseMove && polledEvent.type == SDL_MOUSEMOTION) {
-            if (SDL_PeepEvents(&m_temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
-            if (m_temp_event.type != SDL_MOUSEMOTION) break;
-            SDL_PeepEvents(&m_temp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-            polledEvent = m_temp_event;
+            if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
+            if (temp_event.type != SDL_MOUSEMOTION) break;
+            SDL_PeepEvents(&temp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+            polledEvent = temp_event;
         }
 
         //fprintf(stderr, "SDLEvent: %d\n", polledEvent.type);
         m_events.push_back(polledEvent);
-
-        if (polledEvent.type == SDL_KEYUP)
-        {
-            switch (polledEvent.key.keysym.sym)
-            {
-                case SDLK_v:
-                {
-                    VolumeDialog::adjustVolumeSliders(m_onscripterLabel, m_onscripterLabel->voice_volume, m_onscripterLabel->se_volume, m_onscripterLabel->music_volume, m_sdlWidget);
-                    break;
-                }
-                case SDLK_b:
-                {
-                    VersionDialog::showVersion("NETANNAD\nCopyright 2004.Team Netannad", m_sdlWidget);
-                    break;
-                }
-                case SDLK_i:
-                {
-                    std::string output = "Input your name";
-                    std::string input = InputStrDialog::getInputStr(output, 10, false, NULL, NULL, NULL, NULL);
-                    fprintf(stderr, "User typed %s", input.c_str());
-                    break;
-                }
-                case SDLK_ESCAPE:
-                {
-                    std::string output = "Are you sure you want to quit?";
-                    if (ExitDialog::shouldExit(output, m_sdlWidget))
-                    {
-                        SDL_Event temp;
-                        temp.type = SDL_QUIT;
-                        m_events.push_back(temp);
-                    }
-                    break;
-                }
-            }
-            
-        }
     }
-    //m_events.insert(m_events.end(), m_sdlWindow->m_events.begin(), m_sdlWindow->m_events.end());
     m_sdlWindow->m_events.clear();
 
     return m_events;
@@ -917,7 +931,8 @@ void QtWindow::CreateMenuBar()
     MenuBarInput menuBarTree = ParseMenuBarTree();
 
     // FIXME: Memory leak? Or will deleting the existing menuBar clean them up?
-    m_actionsMap.clear();
+    for (auto& actionsEntry : m_actionsMap)
+        actionsEntry.second.clear();
 
     QMenuBar* menuBar = new QMenuBar();
 

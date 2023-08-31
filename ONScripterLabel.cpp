@@ -298,6 +298,7 @@ static struct FuncLUT{
     {"drawbg", &ONScripterLabel::drawbgCommand},
     {"draw", &ONScripterLabel::drawCommand},
     {"deletescreenshot", &ONScripterLabel::deletescreenshotCommand},
+    {"deletemenu", &ONScripterLabel::deletemenuCommand},
     {"delay", &ONScripterLabel::delayCommand},
     {"definereset", &ONScripterLabel::defineresetCommand},
     {"csp2", &ONScripterLabel::cspCommand},

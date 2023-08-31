@@ -14,10 +14,11 @@
 
 
 class QSdlWindow;
+class SdlMainWindow;
 
 struct ActionOrMenu
 {
-    union 
+    union
     {
         QAction* m_action;
         QMenu* m_menu;
@@ -27,7 +28,7 @@ struct ActionOrMenu
 
 class QtWindow : public Window
 {
-public: 
+public:
     QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
     virtual std::vector<SDL_Event>& PollEvents();
     virtual void WarpMouse(int x, int y);
@@ -52,7 +53,6 @@ private:
     QToolBar* m_toolbar = NULL;
     QSdlWindow* m_sdlWindow = NULL;
     QWidget* m_sdlWidget = NULL;
-    SDL_Event m_temp_event;
 
     std::map<MenuBarFunction, std::vector<QAction*>> m_actionsMap;
 
@@ -61,6 +61,8 @@ private:
     int argc = 0;
     QApplication m_qtapplication;
     QEventLoop m_eventLoop;
+
+    friend SdlMainWindow;
 };
 
 #endif

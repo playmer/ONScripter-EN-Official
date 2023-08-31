@@ -1,8 +1,48 @@
+#include <unordered_map>
+
 #include "Window.h"
 #include "ONScripterLabel.h"
 
 
 Window* Window::s_window = NULL;
+
+static const std::unordered_map <std::string, MenuBarFunction> stringsToFunction = {
+    { std::string("AUTO"), MenuBarFunction::AUTO },
+    { std::string("CLICKDEF"), MenuBarFunction::CLICKDEF },
+    { std::string("CLICKPAGE"), MenuBarFunction::CLICKPAGE },
+    { std::string("DWAVEVOLUME"), MenuBarFunction::DWAVEVOLUME },
+    { std::string("END"), MenuBarFunction::END },
+    { std::string("FONT"), MenuBarFunction::FONT },
+    { std::string("FULL"), MenuBarFunction::FULL },
+    { std::string("KIDOKUOFF"), MenuBarFunction::kidokuoff },
+    { std::string("KIDOKUON"), MenuBarFunction::kidokuon },
+    { std::string("SKIP"), MenuBarFunction::SKIP },
+    { std::string("SUB"), MenuBarFunction::SUB },
+    { std::string("TEXTFAST"), MenuBarFunction::TEXTFAST },
+    { std::string("TEXTMIDDLE"), MenuBarFunction::TEXTMIDDLE },
+    { std::string("TEXTSLOW"), MenuBarFunction::TEXTSLOW },
+    { std::string("VERSION"), MenuBarFunction::VERSION },
+    { std::string("WAVEOFF"), MenuBarFunction::WAVEOFF },
+    { std::string("WAVEON"), MenuBarFunction::WAVEON },
+    { std::string("WINDOW"), MenuBarFunction::WINDOW },
+    { std::string("UNKNOWN"), MenuBarFunction::UNKNOWN },
+};
+
+
+MenuBarFunction functionNameToMenuBarFunction(const char* functionName)
+{
+    std::string functionNameUpper = functionName;
+
+    for (size_t i = 0; i < functionNameUpper.size(); ++i)
+        functionNameUpper[i] = std::toupper(functionNameUpper[i]);
+
+    auto it = stringsToFunction.find(functionNameUpper);
+
+    if (it != stringsToFunction.end())
+        return it->second;
+
+    return MenuBarFunction::UNKNOWN;
+}
 
 
 bool IsCheckable(MenuBarFunction function)

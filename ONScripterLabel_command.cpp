@@ -45,6 +45,7 @@
 #ifdef WIN32
 #include <direct.h>
 #include <windows.h>
+#undef InsertMenu
 #include "SDL_syswm.h"
 #endif
 
@@ -4674,14 +4675,28 @@ int ONScripterLabel::allsphideCommand()
 
 // Haeleth: Stub out some commands to suppress unwanted debug messages
 
+
+int ONScripterLabel::deletemenuCommand()
+{
+    m_window->DeleteMenu();
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::insertmenuCommand()
 {
-    script_h.skipToken();
+    MenuBarFunction function = functionNameToMenuBarFunction(script_h.readStr());
+    std::string labelName = script_h.readStr();
+    int depth = 0;
+    if (script_h.getEndStatus() & ScriptHandler::END_COMMA)
+        depth = script_h.readInt();
+
+    m_window->InsertMenu(function, labelName.c_str(), depth);
+
     return RET_CONTINUE;
 }
 
 int ONScripterLabel::resetmenuCommand()
 {
-    script_h.skipToken();
+    m_window->ResetMenu();
     return RET_CONTINUE;
 }

@@ -402,6 +402,7 @@ public:
     
     int deletemenuCommand();
     int insertmenuCommand();
+    int killmenuCommand();
     int resetmenuCommand();
     int layermessageCommand();
 

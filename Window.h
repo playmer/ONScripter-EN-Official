@@ -80,6 +80,12 @@ public:
         CreateMenuBar();
     }
 
+    void KillMenu()
+    {
+        m_menuBarEntries.pop_back();
+        CreateMenuBar();
+    }
+
     void InsertMenu(MenuBarFunction function, const char* label, int depth)
     {
         m_menuBarEntries.emplace_back(function, label, depth);

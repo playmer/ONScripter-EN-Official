@@ -104,20 +104,6 @@
 
 #define KEYPRESS_NULL ((SDL_Keycode)(SDLK_AUDIOFASTFORWARD+1)) // "null" for keypress variables
 
-enum ONScripterCustomEvent
-{
-    ONS_USEREVENT_START = SDL_USEREVENT,
-    ONS_TIMER_EVENT = SDL_USEREVENT,
-    ONS_SOUND_EVENT,
-    ONS_CDAUDIO_EVENT,
-    ONS_SEQMUSIC_EVENT,
-    ONS_WAVE_EVENT,
-    ONS_MUSIC_EVENT,
-    ONS_BREAK_EVENT,
-    ONS_ANIM_EVENT,
-    ONS_BGMFADE_EVENT,
-    ONS_USEREVENT_END,
-};
 
 class ONScripterLabel : public ScriptParser
 {

@@ -9,6 +9,22 @@
 
 class ONScripterLabel;
 
+
+enum ONScripterCustomEvent
+{
+    ONS_USEREVENT_START = SDL_USEREVENT,
+    ONS_TIMER_EVENT = SDL_USEREVENT,
+    ONS_SOUND_EVENT,
+    ONS_CDAUDIO_EVENT,
+    ONS_SEQMUSIC_EVENT,
+    ONS_WAVE_EVENT,
+    ONS_MUSIC_EVENT,
+    ONS_BREAK_EVENT,
+    ONS_ANIM_EVENT,
+    ONS_BGMFADE_EVENT,
+    ONS_USEREVENT_END,
+};
+
 enum class MenuBarFunction
 {
     AUTO,
@@ -35,8 +51,6 @@ enum class MenuBarFunction
 
 MenuBarFunction functionNameToMenuBarFunction(const char* functionName);
 bool IsCheckable(MenuBarFunction function);
-
-enum ONScripterCustomEvent;
 
 class Window
 {

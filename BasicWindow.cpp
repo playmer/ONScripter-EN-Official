@@ -93,7 +93,11 @@ void* BasicWindow::GetWindowHandle()
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
     SDL_GetWindowWMInfo(m_window, &info);
+#ifdef WIN32
     return info.info.win.window;
+#elsif defined(APPLE)
+    return info.info.cocoa.window;
+#endif
 }
 
 void BasicWindow::SendCustomEvent(ONScripterCustomEvent eventType, int value)

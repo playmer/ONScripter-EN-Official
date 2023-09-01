@@ -63,11 +63,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi-vcpkg'
-          configurePresetAdditionalArgs: [
-            '-DCMAKE_CXX_COMPILER=g++',
-            '-DCMAKE_C_COMPILER=gcc',
-            '-DCMAKE_MAKE_PROGRAM=ninja',
-          ]
+          configurePresetAdditionalArgs: [ "-DCMAKE_CXX_COMPILER=g++", "-DCMAKE_C_COMPILER=gcc", "-DCMAKE_MAKE_PROGRAM=ninja"]
           buildPreset: 'ninja-vcpkg-release'
   
   mac:
@@ -109,11 +105,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi-vcpkg'
-          configurePresetAdditionalArgs: [
-            '-DCMAKE_CXX_COMPILER=clang++',
-            '-DCMAKE_C_COMPILER=clang',
-            '-DCMAKE_MAKE_PROGRAM=ninja',
-          ]
+          configurePresetAdditionalArgs: [ "-DCMAKE_CXX_COMPILER=clang++", "-DCMAKE_C_COMPILER=clang", "-DCMAKE_MAKE_PROGRAM=ninja"]
           buildPreset: 'ninja-vcpkg-release'
   
   windows:
@@ -150,11 +142,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi-vcpkg'
-          configurePresetAdditionalArgs: [
-            '-DCMAKE_CXX_COMPILER=cl',
-            '-DCMAKE_C_COMPILER=cl',
-            '-DCMAKE_MAKE_PROGRAM=ninja',
-          ]
+          configurePresetAdditionalArgs: [ "-DCMAKE_CXX_COMPILER=cl',"'-D"MAKE_C_COMPILER=cl', "-"CMAKE_MAKE_PROGRAM=ninja"]
           buildPreset: 'ninja-vcpkg-release'
   
   windows_msys2:
@@ -208,9 +196,5 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi-vcpkg'
-          configurePresetAdditionalArgs: [
-            '-DCMAKE_CXX_COMPILER=g++',
-            '-DCMAKE_C_COMPILER=gcc',
-            '-DCMAKE_MAKE_PROGRAM=ninja',
-          ]
+          configurePresetAdditionalArgs: [ "-DCMAKE_CXX_COMPILER=g++", "-DCMAKE_C_COMPILER=gcc", "-DCMAKE_MAKE_PROGRAM=ninja"]
           buildPreset: 'ninja-vcpkg-release'

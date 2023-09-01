@@ -832,7 +832,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 
             SDL_Event event;
 
-            for (SDL_Event& event : m_window->PollEvents()) {
+            while (m_window->PollEvents(event)) {
                 switch (event.type){
                   case SDL_KEYUP:
                     if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RETURN ||

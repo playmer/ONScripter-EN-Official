@@ -212,7 +212,8 @@ int FFMpegWrapper::play(bool click_flag)
 
     while (av_read_frame(format_context, m_packet) >= 0)
     {
-        for (SDL_Event& event : m_window->PollEvents()) {
+        SDL_Event event;
+        while (m_window->PollEvents(event)) {
             switch (event.type) {
                 case SDL_KEYUP:
                     if (((SDL_KeyboardEvent*)&event)->keysym.sym == SDLK_RETURN ||

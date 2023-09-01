@@ -437,7 +437,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
 void ONScripterLabel::flushEvent()
 {
     SDL_Event event;
-    for (SDL_Event& event : m_window->PollEvents())
+    while (m_window->PollEvents(event))
         flushEventSub( event );
 }
 
@@ -1559,7 +1559,21 @@ void ONScripterLabel::runEventLoop()
 {
     bool started_in_automode = automode_flag;
 
-    for ( SDL_Event& event : m_window->PollEvents() ) {
+    //SDL_Event temp_event;
+    //for ( SDL_Event& event : m_window->PollEvents() ) {
+    //SDL_Event temp_event;
+    SDL_Event event;
+    while (m_window->WaitEvents(event)) {
+        // ignore continous SDL_MOUSEMOTION
+        //while (event.type == SDL_MOUSEMOTION) {
+        //    if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
+        //    if (temp_event.type != SDL_MOUSEMOTION) break;
+        //    SDL_PeepEvents(&temp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+        //    event = temp_event;
+        //}
+
+        //fprintf(stderr, "SDLEvent: %d\n", event.type);
+
         bool ret = false;
         bool ctrl_toggle = (ctrl_pressed_status != 0);
         bool voice_just_ended = false;

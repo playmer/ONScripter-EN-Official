@@ -19,24 +19,22 @@ BasicWindow::BasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y
     SDL_SetWindowPosition(m_window, x, y);
 }
 
-std::vector<SDL_Event>& BasicWindow::PollEvents()
+int BasicWindow::PollEvents(SDL_Event& event)
 {
-    m_events.clear();
-    SDL_Event polledEvent;
-    while (SDL_PollEvent(&polledEvent))
-    {
-        // ignore continous SDL_MOUSEMOTION
-        SDL_Event temp_event;
-        while (IgnoreContinuousMouseMove && polledEvent.type == SDL_MOUSEMOTION) {
-            if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
-            if (temp_event.type != SDL_MOUSEMOTION) break;
-            SDL_PeepEvents(&temp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-            polledEvent = temp_event;
-        }
-
-        m_events.emplace_back(polledEvent);
+    return SDL_PollEvent(&event);
+}
+int BasicWindow::WaitEvents(SDL_Event& event)
+{
+    auto ret = SDL_WaitEvent(&event);
+    SDL_Event temp_event;
+    while (IgnoreContinuousMouseMove && event.type == SDL_MOUSEMOTION) {
+        if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
+        if (temp_event.type != SDL_MOUSEMOTION) break;
+        SDL_PeepEvents(&temp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+        event = temp_event;
     }
-    return m_events;
+
+    return ret;
 }
 
 

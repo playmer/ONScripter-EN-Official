@@ -384,7 +384,7 @@ public:
                 event.user.code = qtEvent->m_value;
 
                 m_events.push_back(event);
-                return false;
+                return true;
             }
             case QEvent::Move:
             {
@@ -396,7 +396,7 @@ public:
                 sdlEvent.window.data2 = qtEvent->pos().y();
 
                 m_events.push_back(sdlEvent);
-                return false;
+                return true;
             }
             case QEvent::Resize:
             {
@@ -416,7 +416,7 @@ public:
                 sdlEvent.window.data2 = qtEvent->size().height();
 
                 m_events.push_back(sdlEvent);//SDL_PushEvent(&sdlEvent);
-                return false;
+                return true;
             }
             case QEvent::Close:
             {
@@ -493,6 +493,11 @@ public:
     }
 
 protected:
+    void closeEvent(QCloseEvent* event)
+    {
+        Window::SendCustomEventStatic(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
+    }
+
     bool eventFilter(QObject* object, QEvent* event)
     {
         if (m_window->m_qtapplication.activePopupWidget() == NULL /* && m_window->m_mainWindow->isFullScreen()*/)
@@ -586,38 +591,59 @@ QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
     m_qtapplication.installEventFilter(m_mainWindow);
 }
 
-std::vector<SDL_Event>& QtWindow::PollEvents()
+int QtWindow::WaitEvents(SDL_Event& event)
 {
-    m_eventLoop.processEvents(QEventLoop::WaitForMoreEvents | QEventLoop::AllEvents);
+    auto processQtEvents = [this]() {
+        m_eventLoop.processEvents(QEventLoop::AllEvents);
+        for (SDL_Event& event : m_sdlWindow->m_events)
+        {
+            if (event.type == SDL_WINDOWEVENT)
+                event.window.windowID = SDL_GetWindowID(m_window);
+            SDL_PushEvent(&event);
+        }
 
+        m_sdlWindow->m_events.clear();
+    };
+
+    while (true)
+    {
+        processQtEvents();
+        bool ret = SDL_PollEvent(&event) == 1;
+
+        SDL_Event temp_event;
+
+        // ignore continous SDL_MOUSEMOTION
+        while (IgnoreContinuousMouseMove && event.type == SDL_MOUSEMOTION) {
+            processQtEvents();
+            if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
+            if (temp_event.type != SDL_MOUSEMOTION) break;
+            SDL_PeepEvents(&temp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+            event = temp_event;
+        }
+
+        if (ret)
+        {
+            fprintf(stderr, "SDLEvent: %d\n", event.type);
+            return 1;
+        }
+        SDL_Delay(1);
+    }
+}
+
+int QtWindow::PollEvents(SDL_Event& event)
+{
+    m_eventLoop.processEvents(QEventLoop::AllEvents);
     for (SDL_Event& event : m_sdlWindow->m_events)
     {
         if (event.type == SDL_WINDOWEVENT)
             event.window.windowID = SDL_GetWindowID(m_window);
         SDL_PushEvent(&event);
     }
-    SDL_Event temp_event;
 
-    m_events.clear();
-    SDL_Event polledEvent;
-    while (SDL_PollEvent(&polledEvent))
-    {
-        // ignore continous SDL_MOUSEMOTION
-        while (IgnoreContinuousMouseMove && polledEvent.type == SDL_MOUSEMOTION) {
-            if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
-            if (temp_event.type != SDL_MOUSEMOTION) break;
-            SDL_PeepEvents(&temp_event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-            polledEvent = temp_event;
-        }
-
-        //fprintf(stderr, "SDLEvent: %d\n", polledEvent.type);
-        m_events.push_back(polledEvent);
-    }
     m_sdlWindow->m_events.clear();
 
-    return m_events;
+    return SDL_PollEvent(&event);
 }
-
 
 void QtWindow::WarpMouse(int x, int y)
 {
@@ -649,6 +675,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
     {
         m_mainWindow->menuBar()->hide();
         m_mainWindow->showFullScreen();
+        m_sdlWidget->setFocus();
     }
     else
     {
@@ -657,6 +684,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
         m_mainWindow->menuBar()->show();
         m_mainWindow->resize(width, height);
         m_mainWindow->showNormal();
+        m_sdlWidget->setFocus();
     }
 
     return m_onscripterLabel->screen_surface;

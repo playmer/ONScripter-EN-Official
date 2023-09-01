@@ -43,7 +43,8 @@ class Window
 public:
     Window(ONScripterLabel* onscripter);
 
-    virtual std::vector<SDL_Event>& PollEvents() = 0;
+    virtual int WaitEvents(SDL_Event& event) = 0;
+    virtual int PollEvents(SDL_Event& event) = 0;
     virtual void WarpMouse(int x, int y) = 0;
     virtual void SetWindowCaption(const char* title, const char* icon_name) = 0;
     virtual SDL_Surface* SetVideoMode(int width, int height, int bpp, bool fullscreen) = 0;

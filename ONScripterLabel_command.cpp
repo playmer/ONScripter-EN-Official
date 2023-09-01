@@ -1453,7 +1453,8 @@ int ONScripterLabel::resettimerCommand()
 int ONScripterLabel::resetCommand()
 {
     //clear out the event queue
-    for (SDL_Event& event : m_window->PollEvents())
+    SDL_Event event;
+    while (m_window->PollEvents(event))
         if (event.type == SDL_QUIT) endCommand();
 
     int fadeout = mp3fadeout_duration;
@@ -3733,7 +3734,7 @@ int ONScripterLabel::defineresetCommand()
 {
     //clear out the event queue
     SDL_Event event;
-    for (SDL_Event& event : m_window->PollEvents())
+    while (m_window->PollEvents(event))
         if (event.type == SDL_QUIT) endCommand();
 
     script_h.reset();

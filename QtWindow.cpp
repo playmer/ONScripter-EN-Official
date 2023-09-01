@@ -675,7 +675,12 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
     {
         m_mainWindow->menuBar()->hide();
         m_mainWindow->showFullScreen();
+
+        m_eventLoop.processEvents(QEventLoop::AllEvents);
+        m_mainWindow->setFocus();
+        m_eventLoop.processEvents(QEventLoop::AllEvents);
         m_sdlWidget->setFocus();
+        m_eventLoop.processEvents(QEventLoop::AllEvents);
     }
     else
     {
@@ -684,7 +689,12 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
         m_mainWindow->menuBar()->show();
         m_mainWindow->resize(width, height);
         m_mainWindow->showNormal();
+
+        m_eventLoop.processEvents(QEventLoop::AllEvents);
+        m_mainWindow->setFocus();
+        m_eventLoop.processEvents(QEventLoop::AllEvents);
         m_sdlWidget->setFocus();
+        m_eventLoop.processEvents(QEventLoop::AllEvents);
     }
 
     return m_onscripterLabel->screen_surface;

@@ -15,7 +15,6 @@
     "libpng",
     "libvorbis",
     "lua",
-    "qtbase",
     "sdl2",
     {
       "name": "sdl2",

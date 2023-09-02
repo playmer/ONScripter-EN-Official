@@ -2,7 +2,9 @@
 #include "ONScripterLabel.h"
 #include "SDL_image.h"
 
-#include "SDL_syswm.h"
+#if defined(WIN32) || defined(APPLE)
+    #include "SDL_syswm.h"
+#endif
 
 Window* CreateBasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
 {
@@ -88,6 +90,8 @@ SDL_Surface* BasicWindow::SetVideoMode(int width, int height, int bpp, bool full
     return m_onscripterLabel->screen_surface;
 }
 
+// Ideally we remove this function completely, once we remove using SendMessage to set the Window Icon
+// on Window, hence why this is not fully implemented for Linux.
 void* BasicWindow::GetWindowHandle()
 {
     SDL_SysWMinfo info;
@@ -95,8 +99,10 @@ void* BasicWindow::GetWindowHandle()
     SDL_GetWindowWMInfo(m_window, &info);
 #ifdef WIN32
     return info.info.win.window;
-#elsif defined(APPLE)
+#elif defined(APPLE)
     return info.info.cocoa.window;
+#else
+    return NULL;
 #endif
 }
 

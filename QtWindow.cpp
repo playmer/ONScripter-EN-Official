@@ -500,7 +500,7 @@ protected:
 
     bool eventFilter(QObject* object, QEvent* event)
     {
-        if (m_window->m_qtapplication.activePopupWidget() == NULL /* && m_window->m_mainWindow->isFullScreen()*/)
+        if (m_window->m_qtapplication.activePopupWidget() == NULL && m_window->m_mainWindow->isFullScreen())
         {
             if (event->type() == QEvent::MouseMove)
             {

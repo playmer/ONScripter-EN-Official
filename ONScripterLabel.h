@@ -510,7 +510,7 @@ protected:
       return true;
     }
 
-    Window* m_window;
+    Window* m_window = NULL;
     int smpeg_scale_x;
     int smpeg_scale_y;
     int smpeg_move_x;

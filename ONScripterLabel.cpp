@@ -1751,16 +1751,9 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool is
     HWND pwin = NULL;
     UINT mb_type = MB_OK;
 
-    pwin = (HWND)m_window->GetWindowHandle();
+    if (m_window)
+        pwin = (HWND)m_window->GetWindowHandle();
     snprintf(errtitle, 256, "%s", title);
-    //SDL_SysWMinfo info;
-    //SDL_VERSION(&info.version);
-    //if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info)) {
-    //  pwin = info.info.win.window;
-    //  snprintf(errtitle, 256, "%s", title);
-    //} else {
-    //    snprintf(errtitle, 256, "ONScripter-EN: %s", title);
-    //}
 
     if (is_warning) {
         //Retry and Ignore both continue, Abort exits

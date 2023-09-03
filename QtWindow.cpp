@@ -689,6 +689,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
         //SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
         m_mainWindow->menuBar()->show();
         m_mainWindow->resize(width, height);
+        m_sdlWidget->resize(width, height);
         m_mainWindow->showNormal();
 
         m_eventLoop.processEvents(QEventLoop::AllEvents);

@@ -63,6 +63,8 @@ private:
     QApplication m_qtapplication;
     QEventLoop m_eventLoop;
 
+    QPoint m_originalPosition;
+
     friend SdlMainWindow;
 };
 

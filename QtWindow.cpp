@@ -673,6 +673,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
 {
     if (fullscreen)
     {
+        m_originalPosition = m_mainWindow->pos();
         m_mainWindow->menuBar()->hide();
         m_mainWindow->showFullScreen();
 
@@ -695,6 +696,8 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
         m_eventLoop.processEvents(QEventLoop::AllEvents);
         m_sdlWidget->setFocus();
         m_eventLoop.processEvents(QEventLoop::AllEvents);
+
+        m_mainWindow->move(m_originalPosition);
     }
 
     return m_onscripterLabel->screen_surface;

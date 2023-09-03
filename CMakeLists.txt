@@ -357,6 +357,28 @@ PRIVATE
     winres.h
 )
 
+
+
+if (ONS_USE_QT_WINDOW)
+    if(APPLE)
+        set(executable_path "$<TARGET_FILE_NAME:onscripter_en>.app")
+    else()
+        set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:onscripter_en>")
+    endif()
+
+    # Helper app, not necessarily built as part of this project.
+    # Generate a deployment script to be executed at install time
+    qt_generate_deploy_script(
+        TARGET onscripter_en
+        OUTPUT_SCRIPT deploy_script
+        CONTENT "
+    qt_deploy_runtime_dependencies(
+        EXECUTABLE \"${executable_path}\"
+        GENERATE_QT_CONF
+        VERBOSE
+    )")
+endif()
+
 if(WIN32)
     target_sources(onscripter_en
     PRIVATE
@@ -365,11 +387,13 @@ if(WIN32)
 
     if (ONS_USE_QT_WINDOW)
         # Qt Deployment stuff
-        find_program(TOOL_WINDEPLOYQT_DEBUG NAMES windeployqt.debug.bat)
-        find_program(TOOL_WINDEPLOYQT NAMES windeployqt)
+        find_program(TOOL_WINDEPLOYQT NAMES windeployqt PATHS ${_qt_cmake_dir}/../../bin)
+        message(STATUS Found Qt tools: ${TOOL_WINDEPLOYQT_DEBUG},${TOOL_WINDEPLOYQT})
 
+        
         add_custom_command(TARGET onscripter_en POST_BUILD
-            COMMAND $<IF:$<CONFIG:DEBUG>,${TOOL_WINDEPLOYQT_DEBUG},${TOOL_WINDEPLOYQT}>
+            COMMAND $<IF:$<CONFIG:DEBUG>,${TOOL_WINDEPLOYQT},${TOOL_WINDEPLOYQT}> 
+                    $<IF:$<CONFIG:DEBUG>,--debug,--release>
                     $<TARGET_FILE:onscripter_en>
             COMMENT "Running windeployqt..."
         )
@@ -393,9 +417,10 @@ if(APPLE)
     )
 
     if (ONS_USE_QT_WINDOW)
+        #include(${QT_DEPLOY_SUPPORT})
         # Qt Deployment stuff
-        find_program(TOOL_MACDEPLOYQT_DEBUG NAMES macdeployqt.debug.bat)
-        find_program(TOOL_MACDEPLOYQT NAMES macdeployqt)
+        #find_program(TOOL_MACDEPLOYQT_DEBUG NAMES macdeployqt.debug.bat PATHS ${_qt_cmake_dir}/../../bin)
+        #find_program(TOOL_MACDEPLOYQT NAMES macdeployqt PATHS ${_qt_cmake_dir}/../../bin)
     endif()
 endif()
 

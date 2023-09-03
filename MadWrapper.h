@@ -24,6 +24,8 @@
 #ifndef __MAD_WRAPPER_H__
 #define __MAD_WRAPPER_H__
 
+#ifdef MP3_MAD
+
 #include <stdio.h>
 #include <string.h>
 #include <SDL.h>
@@ -49,6 +51,8 @@ const char* MAD_WRAPPER_error( MAD_WRAPPER *mad );
 #define SMPEG_setvolume MAD_WRAPPER_setvolume
 #define SMPEG MAD_WRAPPER
 #define SMPEG_error MAD_WRAPPER_error
+
+#endif
 
 #endif // __MAD_WRAPPER_H__
 

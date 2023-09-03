@@ -5,12 +5,19 @@ if (APPLE)
     enable_language(OBJCXX)
 endif()
 
-option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" ON)
+if (NOT ANDROID)
+    option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" ON)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+else ()
+    option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
+endif()
+
+option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
+option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
 option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 option(ONS_USE_MESSAGEBOX "Determines whether Message Boxes are create on Windows" ON)
 option(ONS_USE_OGG_VORBIS "Choose whether to enable Lua support or not" ON)
-option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
 
 if (MSVC)
     add_compile_options(/MP)
@@ -18,19 +25,6 @@ endif()
 
 ###############
 # onscripter-en required Libraries/Packages
-
-find_library(LIBMAD_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-find_library(LIBMAD_DEBUG_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-
-add_library(libmad STATIC IMPORTED [GLOBAL])
-# set the location that we are going to import the library from
-set_target_properties(
-    libmad 
-    PROPERTIES
-        IMPORTED_LOCATION_DEBUG ${LIBMAD_DEBUG_LIBRARY}
-        IMPORTED_LOCATION ${LIBMAD_LIBRARY}
-)
-
 find_library(SMPEG2_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
 find_library(SMPEG2_DEBUG_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
 #find_file(SMPEG2_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
@@ -49,7 +43,6 @@ set_target_properties(
 find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
-find_package(FFMPEG REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(Ogg CONFIG REQUIRED)
 find_package(Vorbis CONFIG REQUIRED)
@@ -174,7 +167,9 @@ add_subdirectory(tools)
 # onscripter-en
 
 # Qt is a little weird
-if (ONS_USE_QT_WINDOW)
+if (ANDROID)
+    add_library(onscripter_en)
+elseif (ONS_USE_QT_WINDOW)
     qt_add_executable(onscripter_en)
     qt_disable_unicode_defines(onscripter_en)
 else()    
@@ -184,7 +179,51 @@ endif()
 #########
 # AVI Support
 if (ONS_USE_AVIFILE)
+    find_package(FFMPEG REQUIRED)
+
     target_compile_definitions(onscripter_en PRIVATE -DUSE_AVIFILE)
+    
+    target_include_directories(onscripter_en 
+    PRIVATE 
+        ${FFMPEG_INCLUDE_DIRS}
+    )
+    
+    target_link_directories(onscripter_en PRIVATE ${FFMPEG_LIBRARY_DIRS})
+
+    target_link_libraries(onscripter_en PRIVATE BZip2::BZip2
+    PRIVATE
+        ${FFMPEG_LIBRARIES}
+    )
+
+    target_sources(onscripter_en
+    PRIVATE
+        FFMpegWrapper.cpp
+        FFMpegWrapper.h
+    )
+endif()
+
+#########
+# Lib Mad Support
+if (ONS_USE_LIB_MAD)
+    find_library(LIBMAD_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+    find_library(LIBMAD_DEBUG_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+
+    add_library(libmad STATIC IMPORTED [GLOBAL])
+    # set the location that we are going to import the library from
+    set_target_properties(
+        libmad 
+        PROPERTIES
+            IMPORTED_LOCATION_DEBUG ${LIBMAD_DEBUG_LIBRARY}
+            IMPORTED_LOCATION ${LIBMAD_LIBRARY}
+    )
+
+    target_link_libraries(onscripter_en PRIVATE libmad)
+    
+    target_sources(onscripter_en
+    PRIVATE
+        MadWrapper.cpp
+        MadWrapper.h
+    )
 endif()
 
 #########
@@ -218,25 +257,7 @@ target_include_directories(onscripter_en
 PRIVATE 
     .
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${FFMPEG_INCLUDE_DIRS}
 )
-
-
-#########
-# Lua Support
-if (ONS_USE_QT_WINDOW)
-    find_package(Lua REQUIRED)
-    target_include_directories(onscripter_en PRIVATE ${LUA_INCLUDE_DIR})
-    target_link_libraries(onscripter_en PRIVATE ${LUA_LIBRARIES})
-    target_compile_definitions(onscripter_en PRIVATE -DUSE_LUA)
-
-    target_sources(onscripter_en
-    PRIVATE
-        LUAHandler.cpp
-        LUAHandler.h
-    )
-endif()
-
 
 #########
 # Qt Window Support
@@ -249,17 +270,31 @@ if (ONS_USE_QT_WINDOW)
         QtWindow.cpp
         QtWindow.h
     )
+
+    if(APPLE)
+        set(executable_path "$<TARGET_FILE_NAME:onscripter_en>.app")
+    else()
+        set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:onscripter_en>")
+    endif()
+
+    # Helper app, not necessarily built as part of this project.
+    # Generate a deployment script to be executed at install time
+    qt_generate_deploy_script(
+        TARGET onscripter_en
+        OUTPUT_SCRIPT deploy_script
+        CONTENT "
+    qt_deploy_runtime_dependencies(
+        EXECUTABLE \"${executable_path}\"
+        GENERATE_QT_CONF
+        VERBOSE
+    )")
 endif()
 
-option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
-
-target_link_directories(onscripter_en PRIVATE ${FFMPEG_LIBRARY_DIRS})
-
-target_link_libraries(onscripter_en PRIVATE BZip2::BZip2
+target_link_libraries(onscripter_en
 PRIVATE
+    BZip2::BZip2
     ZLIB::ZLIB
     PNG::PNG
-    ${FFMPEG_LIBRARIES}
     Freetype::Freetype
     libmad
     Ogg::ogg
@@ -299,8 +334,6 @@ PRIVATE
     DirtyRect.h
     Encoding.cpp
     Encoding.h
-    FFMpegWrapper.cpp
-    FFMpegWrapper.h
     FontInfo.cpp
     FontInfo.h
     graphics_altivec.cpp
@@ -317,8 +350,6 @@ PRIVATE
     graphics_sum.h
     Layer.cpp
     Layer.h
-    MadWrapper.cpp
-    MadWrapper.h
     #nscriptdecode.cpp
     NsaReader.cpp
     NsaReader.h
@@ -356,28 +387,6 @@ PRIVATE
     Window.h
     winres.h
 )
-
-
-
-if (ONS_USE_QT_WINDOW)
-    if(APPLE)
-        set(executable_path "$<TARGET_FILE_NAME:onscripter_en>.app")
-    else()
-        set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:onscripter_en>")
-    endif()
-
-    # Helper app, not necessarily built as part of this project.
-    # Generate a deployment script to be executed at install time
-    qt_generate_deploy_script(
-        TARGET onscripter_en
-        OUTPUT_SCRIPT deploy_script
-        CONTENT "
-    qt_deploy_runtime_dependencies(
-        EXECUTABLE \"${executable_path}\"
-        GENERATE_QT_CONF
-        VERBOSE
-    )")
-endif()
 
 if(WIN32)
     target_sources(onscripter_en

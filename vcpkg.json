@@ -6,11 +6,16 @@
     "dirent",
     {
       "name": "ffmpeg",
-      "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ]
+      "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ],
+      "platform": "windows|osx|ios|linux"
     },
     "freetype",
     "libjpeg-turbo",
     "libmad",
+    {
+      "name": "libmad",
+      "platform": "windows|osx|ios|linux"
+    },
     "libogg",
     "libpng",
     "libvorbis",

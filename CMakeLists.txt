@@ -253,7 +253,6 @@ PRIVATE
     ZLIB::ZLIB
     PNG::PNG
     Freetype::Freetype
-    libmad
     Ogg::ogg
     smpeg2
     Vorbis::vorbis

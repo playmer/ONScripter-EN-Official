@@ -104,7 +104,9 @@ target_compile_definitions(sardec PUBLIC -DTOOLS_BUILD -DSAR)
 # sarmake
 add_executable(sarmake)
 
-target_include_directories(sarmake PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+if(MSVC)
+    target_include_directories(sarmake PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+endif()
 
 target_compile_features(sarmake PUBLIC cxx_std_11)
 target_sources(sarmake 
@@ -199,7 +201,9 @@ target_compile_definitions(ns2dec PUBLIC -DTOOLS_BUILD -DNS2)
 # ns2make
 add_executable(ns2make)
 
-target_include_directories(ns2make PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+if(MSVC)
+    target_include_directories(ns2make PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+endif()
 
 target_compile_features(ns2make PUBLIC cxx_std_11)
 target_sources(ns2make 
@@ -295,7 +299,9 @@ target_compile_definitions(nsadec PUBLIC -DTOOLS_BUILD -DNSA)
 # nsamake
 add_executable(nsamake)
 
-target_include_directories(nsamake PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+if(MSVC)
+    target_include_directories(nsamake PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+endif()
 
 target_compile_features(nsamake PUBLIC cxx_std_11)
 target_sources(nsamake 

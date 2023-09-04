@@ -386,10 +386,6 @@ public:
     int allsphideCommand();
     int amspCommand();
     
-    int deletemenuCommand();
-    int insertmenuCommand();
-    int killmenuCommand();
-    int resetmenuCommand();
     int layermessageCommand();
 
     static void clearTimer(SDL_TimerID& timer_id);
@@ -510,7 +506,6 @@ protected:
     //  return true;
     //}
 
-    Window* m_window = NULL;
     int smpeg_scale_x;
     int smpeg_scale_y;
     int smpeg_move_x;

@@ -238,6 +238,11 @@ public:
     int addnsadirCommand();
     int addkinsokuCommand();
     int addCommand();
+
+    int deletemenuCommand();
+    int insertmenuCommand();
+    int killmenuCommand();
+    int resetmenuCommand();
     
     void add_debug_level();
     void errorAndExit( const char *str, const char *reason=NULL, const char *title=NULL, bool is_simple=false );
@@ -627,6 +632,8 @@ protected:
     unsigned char *key_table;
 
     void createKeyTable( const char *key_exe );
+
+    Window* m_window = NULL;
 
     friend Window;
     friend BasicWindow;

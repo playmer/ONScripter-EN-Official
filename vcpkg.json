@@ -3,7 +3,10 @@
   "version-string": "0.1.0-dev",
   "dependencies": [
     "bzip2",
-    "dirent",
+    {
+      "name": "dirent",
+      "platform": "(windows)&(!mingw)"
+    },
     {
       "name": "ffmpeg",
       "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ],

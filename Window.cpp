@@ -149,13 +149,22 @@ Window::Window(ONScripterLabel* onscripterLabel)
 }
 
 
-bool Window::TranslateMouse(int& x, int& y)
+bool Window::TranslateMouse(int& x, int& y, bool toScreenSize)
 {
     int windowResolutionX, windowResolutionY;
     SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
     //SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
     int windowPointsW, windowPointsH;
-    SDL_GetWindowSize(m_window, &windowPointsW, &windowPointsH);
+
+    if (toScreenSize)
+    {
+        windowPointsW = m_onscripterLabel->screen_surface->w;
+        windowPointsH = m_onscripterLabel->screen_surface->h;
+    }
+    else
+    {
+        SDL_GetWindowSize(m_window, &windowPointsW, &windowPointsH);
+    }
 
     if (windowResolutionX == windowPointsW && windowResolutionY == windowPointsH) {
         printf("same, skipping transform\n");
@@ -253,3 +262,21 @@ Window::MenuBarInput Window::ParseMenuBarTree()
 
     return toReturn;
 }
+
+void Window::ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
+{
+    // Scale the mouse to Window (pixel) coordinates
+    float scaleWidth = w_1 / (float)w_2;
+    float scaleHeight = h_1 / (float)h_2;
+    float scale = std::min(scaleHeight, scaleWidth);
+
+    SDL_Rect dstRect = {};
+    dstRect.w = scale * w_2;
+    dstRect.h = scale * h_2;
+    dstRect.x = (w_1 - dstRect.w) / 2;
+    dstRect.y = (h_1 - dstRect.h) / 2;
+
+    x_m = (x_m * scale) + dstRect.x;
+    y_m = (y_m * scale) + dstRect.y;
+}
+

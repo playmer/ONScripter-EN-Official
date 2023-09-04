@@ -39,27 +39,6 @@ int BasicWindow::WaitEvents(SDL_Event& event)
     return ret;
 }
 
-
-
-
-static void ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
-{
-    // Scale the mouse to Window (pixel) coordinates
-    float scaleWidth = w_1 / (float)w_2;
-    float scaleHeight = h_1 / (float)h_2;
-    float scale = std::min(scaleHeight, scaleWidth);
-
-    SDL_Rect dstRect = {};
-    dstRect.w = scale * w_2;
-    dstRect.h = scale * h_2;
-    dstRect.x = (w_1 - dstRect.w) / 2;
-    dstRect.y = (h_1 - dstRect.h) / 2;
-
-    x_m = (x_m * scale) + dstRect.x;
-    y_m = (y_m * scale) + dstRect.y;
-
-}
-
 void BasicWindow::WarpMouse(int x, int y)
 {
     int windowResolutionX, windowResolutionY;

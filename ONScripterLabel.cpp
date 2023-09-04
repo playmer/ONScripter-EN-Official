@@ -512,8 +512,12 @@ void ONScripterLabel::initSDL()
 
     // We're about to resize up to roughly the display size, we should try to fill as much of it as possible, without
     // pushing the top window frame offscreen.
-    //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
-    m_window = CreateQtWindow(this, 800, 600, 50, 50);
+#ifdef USE_QT_WINDOW
+    m_window = CreateBasicWindow(this, 800, 600, 50, 50);
+    //m_window = CreateQtWindow(this, 800, 600, 50, 50);
+#else
+    m_window = CreateBasicWindow(this, 800, 600, 50, 50);
+#endif
 
     //SDL_EnableUNICODE(1);
 

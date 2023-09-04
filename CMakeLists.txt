@@ -8,7 +8,10 @@ endif()
 if (NOT ANDROID AND NOT MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-else ()
+elseif (MINGW)
+    option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+else()
     option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
 endif()
@@ -391,3 +394,16 @@ endif()
 
 # Sets onscripter_en as the startup project in VS, doesn't affect non-VS generators.
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT onscripter_en)
+
+###############
+# Install
+install(TARGETS onscripter_en
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+if (ONS_USE_QT_WINDOW)
+    install(SCRIPT ${deploy_script})
+endif()
+
+include(CPack)

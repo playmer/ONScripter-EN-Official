@@ -168,7 +168,7 @@ bool Window::TranslateMouse(int& x, int& y, bool toScreenSize)
 
     if (windowResolutionX == windowPointsW && windowResolutionY == windowPointsH) {
         printf("same, skipping transform\n");
-        return false;
+        return true;
     }
 
     float scaleHeight = windowResolutionY / (float)windowPointsH;

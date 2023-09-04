@@ -1631,7 +1631,7 @@ void ONScripterLabel::runEventLoop()
             break;
           }
           case SDL_MOUSEMOTION:
-            TranslateMouse(event.motion);
+            m_window->TranslateMouse(event.motion);
             ret = mouseMoveEvent( (SDL_MouseMotionEvent*)&event );
             if (ret) return;
             break;
@@ -1639,7 +1639,7 @@ void ONScripterLabel::runEventLoop()
           case SDL_MOUSEBUTTONDOWN:
             if ( !btndown_flag ) break;
           case SDL_MOUSEBUTTONUP:
-            if (!TranslateMouse(event.button)) break;
+            if (!m_window->TranslateMouse(event.button)) break;
             ret = mousePressEvent( (SDL_MouseButtonEvent*)&event );
             if (ret) return;
             if (!(event_mode & WAIT_TEXTOUT_MODE) && had_automode && !automode_flag){
@@ -1648,7 +1648,7 @@ void ONScripterLabel::runEventLoop()
             break;
 
           case SDL_MOUSEWHEEL:
-            if (!TranslateMouse(event.wheel)) break;
+            if (!m_window->TranslateMouse(event.wheel)) break;
             ret = mouseWheelEvent(&event.wheel);
             if (ret) return;
             if (!(event_mode & WAIT_TEXTOUT_MODE) && had_automode && !automode_flag) {

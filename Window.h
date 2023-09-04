@@ -107,9 +107,16 @@ public:
         CreateMenuBar();
     }
 
+    template <typename SDLEvent>
+    bool TranslateMouse(SDLEvent& event)
+    {
+        return TranslateMouse(event.x, event.y, true);
+    }
+
     bool IgnoreContinuousMouseMove = true;
 protected:
     virtual void CreateMenuBar() = 0;
+    static void ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m);
 
     struct MenuBarInput
     {
@@ -129,7 +136,7 @@ protected:
     };
 
 
-    bool TranslateMouse(int& x, int& y);
+    bool TranslateMouse(int& x, int& y, bool toScreenSize = false);
 
     static void ReverseChildren(MenuBarInput& input);
     static MenuBarInput* GetCurrentParent(MenuBarInput& input, std::vector<size_t>& depthTracker);

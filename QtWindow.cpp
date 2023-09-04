@@ -647,7 +647,13 @@ int QtWindow::PollEvents(SDL_Event& event)
 
 void QtWindow::WarpMouse(int x, int y)
 {
+    int windowResolutionX, windowResolutionY;
+    SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
 
+    ScaleMouseToPixels(windowResolutionX, windowResolutionY, m_onscripterLabel->screen_surface->w, m_onscripterLabel->screen_surface->h, x, y);
+    TranslateMouse(x, y);
+
+    SDL_WarpMouseInWindow(m_window, x, y);
 }
 
 void QtWindow::SetWindowCaption(const char* title, const char* icon_name)

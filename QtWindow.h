@@ -55,6 +55,9 @@ private:
     QSdlWindow* m_sdlWindow = NULL;
     QWidget* m_sdlWidget = NULL;
 
+    QPoint m_originalPosition;
+    bool m_wasMaximized = false;
+
     std::map<MenuBarFunction, std::vector<QAction*>> m_actionsMap;
 
     // The order of the following members matters.
@@ -62,8 +65,6 @@ private:
     int argc = 0;
     QApplication m_qtapplication;
     QEventLoop m_eventLoop;
-
-    QPoint m_originalPosition;
 
     friend SdlMainWindow;
 };

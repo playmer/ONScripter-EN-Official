@@ -43,17 +43,16 @@ public:
     std::string Command_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h);
 
 private:
-    ActionOrMenu CreateMenuBarInternal(MenuBarInput& input);
+    ActionOrMenu CreateMenuBarPieceInternal(MenuBarInput& input);
+    QMenuBar* CreateMenuBarInternal(MenuBarInput& input);
 
-
-    void MenuImpl_VolumeSlider();
-    void MenuImpl_Version();
-    void MenuImpl_Exit();
-
-    QMainWindow* m_mainWindow = NULL;
+    SdlMainWindow* m_mainWindow = NULL;
     QToolBar* m_toolbar = NULL;
     QSdlWindow* m_sdlWindow = NULL;
     QWidget* m_sdlWidget = NULL;
+    QMenuBar* m_normalMenubar = NULL;
+    QMenuBar* m_fullscreenMenubar = NULL;
+    int m_menuBarHeight;
 
     QPoint m_originalPosition;
     bool m_wasMaximized = false;

@@ -498,6 +498,19 @@ protected:
         Window::SendCustomEventStatic(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
     }
 
+    void showMenuBar()
+    {
+        QRect rect = geometry();
+        rect.setHeight(m_menuBarHeight);
+        m_window->m_fullscreenMenubar->setGeometry(rect);
+        m_window->m_fullscreenMenubar->show();
+    }
+
+    void hideMenuBar()
+    {
+        m_window->m_fullscreenMenubar->hide();
+    }
+
     bool eventFilter(QObject* object, QEvent* event)
     {
         if (m_window->m_qtapplication.activePopupWidget() == NULL && m_window->m_mainWindow->isFullScreen())
@@ -505,29 +518,29 @@ protected:
             if (event->type() == QEvent::MouseMove)
             {
                 QMouseEvent* mouseMoveEvent = static_cast<QMouseEvent*>(event);
-                if (menuBar()->isHidden())
+                if (m_window->m_fullscreenMenubar->isHidden())
                 {
                     QRect rect = geometry();
                     rect.setHeight(25);
 
                     if (rect.contains(mouseMoveEvent->globalPos()))
                     {
-                        menuBar()->show();
+                        showMenuBar();
                     }
                 }
                 else
                 {
-                    QRect rect = QRect(menuBar()->mapToGlobal(QPoint(0, 0)), menuBar()->size());
+                    QRect rect = QRect(m_window->m_fullscreenMenubar->mapToGlobal(QPoint(0, 0)), m_window->m_fullscreenMenubar->size());
 
                     if (!rect.contains(mouseMoveEvent->globalPos()))
                     {
-                        menuBar()->hide();
+                        hideMenuBar();
                     }
                 }
             }
             else if (event->type() == QEvent::Leave && (object == this))
             {
-                m_window->m_mainWindow->menuBar()->hide();
+                hideMenuBar();
             }
         }
 
@@ -535,6 +548,9 @@ protected:
     }
 
     QtWindow* m_window;
+
+public:
+    int m_menuBarHeight;
 };
 
 
@@ -587,6 +603,9 @@ QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
     CreateMenuBar();
 
     m_mainWindow->show();
+
+    m_normalMenubar->show();
+    m_mainWindow->m_menuBarHeight = m_normalMenubar->geometry().height();
 
     m_qtapplication.installEventFilter(m_mainWindow);
 }
@@ -739,271 +758,240 @@ void QtWindow::Repaint()
     //m_mainWindow->repaint();
 }
 
-
 void QtWindow::SendCustomEvent(ONScripterCustomEvent event, int value)
 {
     QCoreApplication::postEvent(static_cast<QtWindow*>(s_window)->m_sdlWindow, new ONScripterCustomQtEvent(event, value));
 }
-
-void QtWindow::MenuImpl_VolumeSlider()
-{
-
-}
-
-void QtWindow::MenuImpl_Version()
-{
-
-}
-
-void QtWindow::MenuImpl_Exit()
-{
-
-}
-
-
-
-
-
 
 std::string QtWindow::Command_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h)
 {
     return InputStrDialog::getInputStr(display, maximumInputLength, forceDoubleByte, NULL, NULL, NULL, NULL, m_sdlWidget);
 }
 
-
-
-
-
-ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
+ActionOrMenu QtWindow::CreateMenuBarPieceInternal(MenuBarInput& input)
 {
     ActionOrMenu toReturn;
 
     switch (input.m_function)
     {
-        case MenuBarFunction::SUB:
+    case MenuBarFunction::SUB:
+    {
+        QString display = QString::fromStdString(input.m_label);
+        QMenu* menu = new QMenu(display);
+
+        for (auto& menuBarEntry : input.m_children)
         {
-            QString display = QString::fromStdString(input.m_label);
-            QMenu* menu = new QMenu(display);
+            ActionOrMenu actionOrMenu = CreateMenuBarPieceInternal(menuBarEntry);
 
-            for (auto& menuBarEntry : input.m_children)
-            {
-                ActionOrMenu actionOrMenu = CreateMenuBarInternal(menuBarEntry);
-
-                if (actionOrMenu.isAction)
-                    menu->addAction(actionOrMenu.m_actionOrMenu.m_action);
-                else
-                    menu->addMenu(actionOrMenu.m_actionOrMenu.m_menu);
-            }
-
-            toReturn.isAction = false;
-            toReturn.m_actionOrMenu.m_menu = menu;
-            break;
+            if (actionOrMenu.isAction)
+                menu->addAction(actionOrMenu.m_actionOrMenu.m_action);
+            else
+                menu->addMenu(actionOrMenu.m_actionOrMenu.m_menu);
         }
-        default:
+
+        toReturn.isAction = false;
+        toReturn.m_actionOrMenu.m_menu = menu;
+        break;
+    }
+    default:
+    {
+        QAction* action = new QAction(QString::fromStdString(input.m_label));
+        m_actionsMap[input.m_function].emplace_back(action);
+
+        if (IsCheckable(input.m_function))
         {
-            QAction* action = new QAction(QString::fromStdString(input.m_label));
-            m_actionsMap[input.m_function].emplace_back(action);
+            action->setCheckable(true);
+            action->setChecked(IsChecked(input.m_function));
+        }
 
-            if (IsCheckable(input.m_function))
+        QObject::connect(action, &QAction::triggered, [this, function = input.m_function]() {
+            switch (function)
             {
-                action->setCheckable(true);
-                action->setChecked(IsChecked(input.m_function));
+            case MenuBarFunction::AUTO:
+            {
+                m_onscripterLabel->automode_flag = true;
+                m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_NORMAL;
+                break;
             }
+            case MenuBarFunction::CLICKDEF:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::CLICKPAGE])
+                    action->setChecked(false);
 
-            QObject::connect(action, &QAction::triggered, [this, function = input.m_function]() {
-                switch (function)
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+                m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_TO_EOP;
+                //printf("menu_click_def: disabling page-at-once mode\n");
+                break;
+            }
+            case MenuBarFunction::CLICKPAGE:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::CLICKDEF])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+                m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_EOP;
+                //printf("menu_click_page: enabling page-at-once mode\n");
+                break;
+            }
+            case MenuBarFunction::DWAVEVOLUME:
+            {
+                VolumeDialog::adjustVolumeSliders(m_onscripterLabel, m_onscripterLabel->voice_volume, m_onscripterLabel->se_volume, m_onscripterLabel->music_volume, m_sdlWidget);
+                break;
+            }
+            case MenuBarFunction::END:
+            {
+                std::string output = "Are you sure you want to quit?";
+                if (ExitDialog::shouldExit(output, m_sdlWidget))
                 {
-                    case MenuBarFunction::AUTO:
-                    {
-                        m_onscripterLabel->automode_flag = true;
-                        m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_NORMAL;
-                        break;
-                    }
-                    case MenuBarFunction::CLICKDEF:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::CLICKPAGE])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-                        m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_TO_EOP;
-                        //printf("menu_click_def: disabling page-at-once mode\n");
-                        break;
-                    }
-                    case MenuBarFunction::CLICKPAGE:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::CLICKDEF])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_EOP;
-                        //printf("menu_click_page: enabling page-at-once mode\n");
-                        break;
-                    }
-                    case MenuBarFunction::DWAVEVOLUME:
-                    {
-                        VolumeDialog::adjustVolumeSliders(m_onscripterLabel, m_onscripterLabel->voice_volume, m_onscripterLabel->se_volume, m_onscripterLabel->music_volume, m_sdlWidget);
-                        break;
-                    }
-                    case MenuBarFunction::END:
-                    {
-                        std::string output = "Are you sure you want to quit?";
-                        if (ExitDialog::shouldExit(output, m_sdlWidget))
-                        {
-                            SendCustomEvent(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
-                        }
-                        break;
-                    }
-                    case MenuBarFunction::FONT:
-                    {
-                        break;
-                    }
-                    case MenuBarFunction::kidokuoff:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::kidokuon])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_WAIT;
-                        break;
-                    }
-                    case MenuBarFunction::kidokuon:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::kidokuoff])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
-                        break;
-                    }
-                    case MenuBarFunction::SKIP:
-                    {
-                        m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
-                        break;
-                    }
-                    case MenuBarFunction::TEXTFAST:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        m_onscripterLabel->text_speed_no = 2;
-                        m_onscripterLabel->sentence_font.wait_time = -1;
-                        break;
-                    }
-                    case MenuBarFunction::TEXTMIDDLE:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        m_onscripterLabel->text_speed_no = 1;
-                        m_onscripterLabel->sentence_font.wait_time = -1;
-                        break;
-                    }
-                    case MenuBarFunction::TEXTSLOW:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        m_onscripterLabel->text_speed_no = 0;
-                        m_onscripterLabel->sentence_font.wait_time = -1;
-                        break;
-                    }
-                    case MenuBarFunction::VERSION:
-                    {
-                        VersionDialog::showVersion("NETANNAD\nCopyright 2004.Team Netannad", m_sdlWidget);
-                        break;
-                    }
-                    case MenuBarFunction::WAVEOFF:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::WAVEON])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        m_onscripterLabel->volume_on_flag = false;
-                        break;
-                    }
-                    case MenuBarFunction::WAVEON:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::WAVEOFF])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        m_onscripterLabel->volume_on_flag = true;
-                        break;
-                    }
-                    case MenuBarFunction::FULL:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::WINDOW])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-
-                        break;
-                    }
-                    case MenuBarFunction::WINDOW:
-                    {
-                        for (auto& action : m_actionsMap[MenuBarFunction::FULL])
-                            action->setChecked(false);
-
-                        for (auto& action : m_actionsMap[function])
-                            action->setChecked(true);
-
-                        break;
-                    }
+                    SendCustomEvent(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
                 }
+                break;
+            }
+            case MenuBarFunction::FONT:
+            {
+                break;
+            }
+            case MenuBarFunction::kidokuoff:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::kidokuon])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_WAIT;
+                break;
+            }
+            case MenuBarFunction::kidokuon:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::kidokuoff])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
+                break;
+            }
+            case MenuBarFunction::SKIP:
+            {
+                m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
+                break;
+            }
+            case MenuBarFunction::TEXTFAST:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                m_onscripterLabel->text_speed_no = 2;
+                m_onscripterLabel->sentence_font.wait_time = -1;
+                break;
+            }
+            case MenuBarFunction::TEXTMIDDLE:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                m_onscripterLabel->text_speed_no = 1;
+                m_onscripterLabel->sentence_font.wait_time = -1;
+                break;
+            }
+            case MenuBarFunction::TEXTSLOW:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                m_onscripterLabel->text_speed_no = 0;
+                m_onscripterLabel->sentence_font.wait_time = -1;
+                break;
+            }
+            case MenuBarFunction::VERSION:
+            {
+                VersionDialog::showVersion("NETANNAD\nCopyright 2004.Team Netannad", m_sdlWidget);
+                break;
+            }
+            case MenuBarFunction::WAVEOFF:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::WAVEON])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                m_onscripterLabel->volume_on_flag = false;
+                break;
+            }
+            case MenuBarFunction::WAVEON:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::WAVEOFF])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                m_onscripterLabel->volume_on_flag = true;
+                break;
+            }
+            case MenuBarFunction::FULL:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::WINDOW])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+
+                break;
+            }
+            case MenuBarFunction::WINDOW:
+            {
+                for (auto& action : m_actionsMap[MenuBarFunction::FULL])
+                    action->setChecked(false);
+
+                for (auto& action : m_actionsMap[function])
+                    action->setChecked(true);
+
+                break;
+            }
+            }
             });
 
-            toReturn.isAction = true;
-            toReturn.m_actionOrMenu.m_action = action;
-            break;
-        }
+        toReturn.isAction = true;
+        toReturn.m_actionOrMenu.m_action = action;
+        break;
+    }
     }
 
     return toReturn;
 }
 
-void QtWindow::CreateMenuBar()
+QMenuBar* QtWindow::CreateMenuBarInternal(MenuBarInput& input)
 {
-    MenuBarInput menuBarTree = ParseMenuBarTree();
-
-    // FIXME: Memory leak? Or will deleting the existing menuBar clean them up?
-    for (auto& actionsEntry : m_actionsMap)
-        actionsEntry.second.clear();
-
     QMenuBar* menuBar = new QMenuBar();
 
-    for (auto& menuBarEntry : menuBarTree.m_children)
+    for (auto& menuBarEntry : input.m_children)
     {
-        ActionOrMenu actionOrMenu = CreateMenuBarInternal(menuBarEntry);
+        ActionOrMenu actionOrMenu = CreateMenuBarPieceInternal(menuBarEntry);
 
         if (actionOrMenu.isAction)
             menuBar->addAction(actionOrMenu.m_actionOrMenu.m_action);
@@ -1011,11 +999,28 @@ void QtWindow::CreateMenuBar()
             menuBar->addMenu(actionOrMenu.m_actionOrMenu.m_menu);
     }
 
+    return menuBar;
+}
+
+void QtWindow::CreateMenuBar()
+{
+    //m_mainWindow->menuBar()->isHidden();
+
+    MenuBarInput menuBarTree = ParseMenuBarTree();
+
+    // FIXME: Memory leak? Or will deleting the existing menuBar clean them up?
+    for (auto& actionsEntry : m_actionsMap)
+        actionsEntry.second.clear();
+
+    m_fullscreenMenubar = CreateMenuBarInternal(menuBarTree);
+    m_fullscreenMenubar->setParent(m_mainWindow);
+    m_normalMenubar = CreateMenuBarInternal(menuBarTree);
+
     // Apple has a global menubar, were we to call `setMenuBar` here, it would disappear
     // when clicking on one of our dialogs, for now, do not set it, so that it's the same
     // across all Windows (the central window, and dialogs).
 #ifndef APPLE
-    m_mainWindow->setMenuBar(menuBar);
+    m_mainWindow->setMenuBar(m_normalMenubar);
 #endif
 }
 

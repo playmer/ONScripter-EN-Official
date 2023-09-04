@@ -21,6 +21,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+#ifdef USE_AVIFILE
+
 #include "FFMpegWrapper.h"
 #include <SDL_mixer.h>
 #include <stdlib.h>
@@ -281,3 +284,5 @@ void FFMpegWrapper::display_frame()
         SDL_Delay(diff);
     }
 }
+
+#endif

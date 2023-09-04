@@ -24,6 +24,8 @@
 #ifndef __FFMPEG_WRAPPER_H__
 #define __FFMPEG_WRAPPER_H__
 
+#ifdef USE_AVIFILE
+
 #include <vector>
 
 #include <SDL.h>
@@ -114,5 +116,7 @@ private:
     int video_width;
     int video_height;
 };
+
+#endif
 
 #endif // __FFMPEG_WRAPPER_H__

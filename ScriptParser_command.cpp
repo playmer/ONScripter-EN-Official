@@ -42,6 +42,7 @@
 #include <direct.h>
 #include <windows.h>
 #endif
+#undef InsertMenu
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -1658,5 +1659,37 @@ int ScriptParser::addCommand()
 int ScriptParser::dsoundCommand()
 {
     //added to remove "unsupported command" warnings for 'dsound'
+    return RET_CONTINUE;
+}
+
+int ScriptParser::deletemenuCommand()
+{
+    m_window->DeleteMenu();
+    return RET_CONTINUE;
+}
+
+int ScriptParser::insertmenuCommand()
+{
+    std::string labelName = script_h.readStr();
+    MenuBarFunction function = functionNameToMenuBarFunction(script_h.readToken(false));
+    int depth = 0;
+    if (script_h.getEndStatus() & ScriptHandler::END_COMMA)
+        depth = script_h.readInt();
+
+    m_window->InsertMenu(function, labelName.c_str(), depth);
+
+    return RET_CONTINUE;
+}
+
+
+int ScriptParser::killmenuCommand()
+{
+    m_window->KillMenu();
+    return RET_CONTINUE;
+}
+
+int ScriptParser::resetmenuCommand()
+{
+    m_window->ResetMenu();
     return RET_CONTINUE;
 }

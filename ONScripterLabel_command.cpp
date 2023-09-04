@@ -4673,38 +4673,3 @@ int ONScripterLabel::allsphideCommand()
     }
     return RET_CONTINUE;
 }
-
-// Haeleth: Stub out some commands to suppress unwanted debug messages
-
-
-int ONScripterLabel::deletemenuCommand()
-{
-    m_window->DeleteMenu();
-    return RET_CONTINUE;
-}
-
-int ONScripterLabel::insertmenuCommand()
-{
-    MenuBarFunction function = functionNameToMenuBarFunction(script_h.readStr());
-    std::string labelName = script_h.readStr();
-    int depth = 0;
-    if (script_h.getEndStatus() & ScriptHandler::END_COMMA)
-        depth = script_h.readInt();
-
-    m_window->InsertMenu(function, labelName.c_str(), depth);
-
-    return RET_CONTINUE;
-}
-
-
-int ONScripterLabel::killmenuCommand()
-{
-    m_window->KillMenu();
-    return RET_CONTINUE;
-}
-
-int ONScripterLabel::resetmenuCommand()
-{
-    m_window->ResetMenu();
-    return RET_CONTINUE;
-}

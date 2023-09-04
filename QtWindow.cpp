@@ -673,30 +673,40 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
 {
     // In both paths here we're doing some additional event processing in between focus requests.
     // This is a best effort attempt to maintain window _and_ widget focus after a fullscreen transition.
+    auto focusSwap = [this]()
+        {
+            m_eventLoop.processEvents(QEventLoop::AllEvents);
+            m_mainWindow->setFocus();
+            m_eventLoop.processEvents(QEventLoop::AllEvents);
+            m_sdlWidget->setFocus();
+            m_eventLoop.processEvents(QEventLoop::AllEvents);
+        };
+
     if (fullscreen)
     {
         m_originalPosition = m_mainWindow->pos();
+        m_wasMaximized = m_mainWindow->isMaximized();
         m_mainWindow->menuBar()->hide();
         m_mainWindow->showFullScreen();
 
-        m_eventLoop.processEvents(QEventLoop::AllEvents);
-        m_mainWindow->setFocus();
-        m_eventLoop.processEvents(QEventLoop::AllEvents);
-        m_sdlWidget->setFocus();
-        m_eventLoop.processEvents(QEventLoop::AllEvents);
+        focusSwap();
+    }
+    else if (m_wasMaximized)
+    {
+        m_mainWindow->menuBar()->show();
+        m_mainWindow->showMaximized();
+
+        focusSwap();
+
+        m_wasMaximized = false;
     }
     else
     {
         m_mainWindow->menuBar()->show();
         m_mainWindow->resize(width, height);
-        m_sdlWidget->resize(width, height);
         m_mainWindow->showNormal();
 
-        m_eventLoop.processEvents(QEventLoop::AllEvents);
-        m_mainWindow->setFocus();
-        m_eventLoop.processEvents(QEventLoop::AllEvents);
-        m_sdlWidget->setFocus();
-        m_eventLoop.processEvents(QEventLoop::AllEvents);
+        focusSwap();
 
         m_mainWindow->move(m_originalPosition);
 
@@ -704,6 +714,8 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
         // size, otherwise the menubar will take some height from it.
         int menubarHeight = m_mainWindow->menuBar()->geometry().height();
         m_mainWindow->resize(width, height + menubarHeight);
+
+        m_wasMaximized = false;
     }
 
     return m_onscripterLabel->screen_surface;

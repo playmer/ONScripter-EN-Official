@@ -5,7 +5,7 @@ if (APPLE)
     enable_language(OBJCXX)
 endif()
 
-if (NOT ANDROID)
+if (NOT ANDROID AND NOT MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
 else ()
@@ -112,56 +112,13 @@ configure_file(version.h.in version.h
 
 ###############
 #SDL CD Rom library adapted from original SDL1 CD Module
-add_library(SDLHelper_CD)
-
-target_sources(SDLHelper_CD 
-PUBLIC
-    SDLHelper_CD/SDL_cdrom.h
-    SDLHelper_CD/cdrom/SDL_syscdrom.h
-    SDLHelper_CD/cdrom/SDL_cdrom.c
-)
-
-target_include_directories(SDLHelper_CD PUBLIC SDLHelper_CD/)
-
-target_link_libraries(SDLHelper_CD
-    PRIVATE
-    $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-)
-
-if (WIN32)
-    target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_WIN32)
-
-    target_sources(SDLHelper_CD 
-    PUBLIC
-        SDLHelper_CD/cdrom/win32/SDL_syscdrom.c
-    )
-elseif (APPLE)
-    target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_MACOSX)
-
-    target_sources(SDLHelper_CD 
-    PUBLIC
-        SDLHelper_CD/cdrom/macosx/AudioFilePlayer.c
-        SDLHelper_CD/cdrom/macosx/AudioFilePlayer.h
-        SDLHelper_CD/cdrom/macosx/AudioFileReaderThread.c
-        SDLHelper_CD/cdrom/macosx/CDPlayer.c
-        SDLHelper_CD/cdrom/macosx/CDPlayer.h
-        SDLHelper_CD/cdrom/macosx/SDL_syscdrom.c
-        SDLHelper_CD/cdrom/macosx/SDL_syscdrom_c.h
-        SDLHelper_CD/cdrom/macosx/SDLOSXCAGuard.c
-        SDLHelper_CD/cdrom/macosx/SDLOSXCAGuard.h
-    )
-else()
-    target_compile_definitions(SDLHelper_CD PRIVATE -DSDL_CDROM_LINUX)
-
-    target_sources(SDLHelper_CD 
-    PUBLIC
-        SDLHelper_CD/cdrom/linux/SDL_syscdrom.c
-    )
-endif()
+add_subdirectory(SDLHelper_CD)
 
 ###############
 # onscripter-en Tools
-add_subdirectory(tools)
+if (NOT ANDROID)
+    add_subdirectory(tools)
+endif()
 
 ###############
 # onscripter-en

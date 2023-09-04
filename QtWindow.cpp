@@ -671,6 +671,8 @@ void QtWindow::SetWindowCaption(const char* title, const char* icon_name)
 
 SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscreen)
 {
+    // In both paths here we're doing some additional event processing in between focus requests.
+    // This is a best effort attempt to maintain window _and_ widget focus after a fullscreen transition.
     if (fullscreen)
     {
         m_originalPosition = m_mainWindow->pos();
@@ -685,8 +687,6 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
     }
     else
     {
-        //SDL_SetWindowSize(m_window, width, height);
-        //SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
         m_mainWindow->menuBar()->show();
         m_mainWindow->resize(width, height);
         m_sdlWidget->resize(width, height);
@@ -699,6 +699,11 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
         m_eventLoop.processEvents(QEventLoop::AllEvents);
 
         m_mainWindow->move(m_originalPosition);
+
+        // Adjust the total height of the window so that the widget we're rendering into is the requested
+        // size, otherwise the menubar will take some height from it.
+        int menubarHeight = m_mainWindow->menuBar()->geometry().height();
+        m_mainWindow->resize(width, height + menubarHeight);
     }
 
     return m_onscripterLabel->screen_surface;

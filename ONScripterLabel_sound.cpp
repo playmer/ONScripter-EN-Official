@@ -41,10 +41,10 @@
 #include <signal.h>
 #endif
 
-//#ifdef USE_AVIFILE
+#ifdef USE_AVIFILE
 //#include "AVIWrapper.h"
-//#endif
 #include "FFMpegWrapper.h"
+#endif
 
 
 extern "C" void waveCallback(int channel);

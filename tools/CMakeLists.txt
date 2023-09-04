@@ -106,6 +106,8 @@ add_executable(sarmake)
 
 if(MSVC)
     target_include_directories(sarmake PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+else()
+    target_include_directories(sarmake PRIVATE ../)
 endif()
 
 target_compile_features(sarmake PUBLIC cxx_std_11)
@@ -203,6 +205,8 @@ add_executable(ns2make)
 
 if(MSVC)
     target_include_directories(ns2make PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+else()
+    target_include_directories(ns2make PRIVATE ../)
 endif()
 
 target_compile_features(ns2make PUBLIC cxx_std_11)
@@ -301,6 +305,8 @@ add_executable(nsamake)
 
 if(MSVC)
     target_include_directories(nsamake PRIVATE ../ ${DIRENT_INCLUDE_DIRS})
+else()
+    target_include_directories(nsamake PRIVATE ../)
 endif()
 
 target_compile_features(nsamake PUBLIC cxx_std_11)

@@ -1,13 +1,13 @@
 {
-    "version": 3,
+    "version": 6,
     "cmakeMinimumRequired": {
         "major": 3,
-        "minor": 21,
+        "minor": 27,
         "patch": 0
     },
     "configurePresets": [
         {
-            "name": "ninja-multi-vcpkg",
+            "name": "ninja",
             "displayName": "Ninja Multi-Config",
             "description": "Configure with vcpkg toolchain and generate Ninja project files for all configurations",
             "binaryDir": "${sourceDir}/builds/${presetName}",
@@ -22,24 +22,40 @@
     ],
     "buildPresets": [
         {
-            "name": "ninja-vcpkg-debug",
-            "configurePreset": "ninja-multi-vcpkg",
+            "name": "ninja-debug",
+            "configurePreset": "ninja",
             "displayName": "Build (Debug)",
             "description": "Build with Ninja/vcpkg (Debug)",
             "configuration": "Debug"
         },
         {
-            "name": "ninja-vcpkg-release",
-            "configurePreset": "ninja-multi-vcpkg",
+            "name": "ninja-release",
+            "configurePreset": "ninja",
             "displayName": "Build (Release)",
             "description": "Build with Ninja/vcpkg (Release)",
             "configuration": "Release"
         },
         {
             "name": "ninja-vcpkg",
-            "configurePreset": "ninja-multi-vcpkg",
+            "configurePreset": "ninja",
             "displayName": "Build",
             "description": "Build with Ninja/vcpkg"
+        }
+    ],
+    "packagePresets": [
+        {
+            "name": "ninja-package-debug",
+            "configurePreset": "ninja",
+            "displayName": "Package (Debug)",
+            "description": "Package with Ninja/vcpkg (Debug)",
+            "generators": ["ZIP"]
+        },
+        {
+            "name": "ninja-package-release",
+            "configurePreset": "ninja",
+            "displayName": "Package (Release)",
+            "description": "Package with Ninja/vcpkg (Release)",
+            "generators": ["ZIP"]
         }
     ]
 }

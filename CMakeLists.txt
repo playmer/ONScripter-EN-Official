@@ -236,8 +236,7 @@ if (ONS_USE_QT_WINDOW)
     else()
         set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:onscripter_en>")
     endif()
-
-    # Helper app, not necessarily built as part of this project.
+    
     # Generate a deployment script to be executed at install time
     qt_generate_deploy_script(
         TARGET onscripter_en
@@ -406,4 +405,8 @@ if (ONS_USE_QT_WINDOW)
     install(SCRIPT ${deploy_script})
 endif()
 
+set(CPACK_PACKAGE_NAME "ONScripter-EN")
+set(CPACK_PACKAGE_VERSION_MAJOR ${Y})
+set(CPACK_PACKAGE_VERSION_MINOR ${M})
+set(CPACK_PACKAGE_VERSION_PATCH ${D})
 include(CPack)

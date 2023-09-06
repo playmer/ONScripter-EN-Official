@@ -144,8 +144,6 @@ Window::Window(ONScripterLabel* onscripterLabel)
     m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Screen settings", 1);
     m_menuBarEntries.emplace_back(MenuBarFunction::FULL, "Fullscreen", 2);
     m_menuBarEntries.emplace_back(MenuBarFunction::WINDOW, "Windowed", 2);
-
-    auto test = ParseMenuBarTree();
 }
 
 
@@ -231,14 +229,14 @@ void Window::ReverseChildren(MenuBarInput& input)
 }
 
 
-Window::MenuBarInput Window::ParseMenuBarTree()
+Window::MenuBarInput Window::ParseMenuBarTree(std::vector<MenuBarInput>& menuBarEntries)
 {
     MenuBarInput toReturn;
     std::vector<size_t> depthTracker; // the size is how many nodes deep we are, the values are how we get there.
 
-    for (size_t i = 0; i < m_menuBarEntries.size(); ++i)
+    for (size_t i = 0; i < menuBarEntries.size(); ++i)
     {
-        const MenuBarInput& currentEntry = m_menuBarEntries[i];
+        const MenuBarInput& currentEntry = menuBarEntries[i];
         if (depthTracker.size() > currentEntry.m_depth)//depthTracker.back()
         {
             depthTracker.pop_back();

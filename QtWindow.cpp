@@ -691,6 +691,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
     if (fullscreen)
     {
         m_originalPosition = m_mainWindow->pos();
+        m_originalGeometry = m_sdlWidget->geometry();
         m_wasMaximized = m_mainWindow->isMaximized();
         m_mainWindow->menuBar()->hide();
         m_mainWindow->showFullScreen();
@@ -944,7 +945,7 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
                         for (auto& action : m_actionsMap[function])
                             action->setChecked(true);
 
-
+                        SetVideoMode(m_sdlWidget->geometry().width(), m_sdlWidget->geometry().height(), 0, true);
                         break;
                     }
                     case MenuBarFunction::WINDOW:
@@ -954,6 +955,9 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
 
                         for (auto& action : m_actionsMap[function])
                             action->setChecked(true);
+
+                        
+                        SetVideoMode(m_originalGeometry.width(), m_originalGeometry.height(), 0, false);
 
                         break;
                     }
@@ -971,7 +975,26 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
 
 void QtWindow::CreateMenuBar()
 {
-    MenuBarInput menuBarTree = ParseMenuBarTree();
+    std::vector<MenuBarInput> menuBarEntriesUtf8 = m_menuBarEntries;
+
+
+    // We should do this at a higher level, but we don't have a cross platform decoder
+    // so briefly we'll do this only in Qt. Actually never mind Qt6 killed proper text 
+    // encoding support, but keeping this in here for later.
+    //QStringDecoder decoder{ "SHIFT-JIS" };
+    //
+    //if (m_onscripterLabel->script_h.enc.getEncoding() == Encoding::CODE_CP932)
+    //{
+    //    for (auto& entry : menuBarEntriesUtf8)
+    //    {
+    //        QString decodedString = decoder.decode(entry.m_label.c_str());
+    //        entry.m_label = decodedString.toStdString();            
+    //    }
+    //}
+
+    MenuBarInput menuBarTree = ParseMenuBarTree(menuBarEntriesUtf8);
+
+
 
     // FIXME: Memory leak? Or will deleting the existing menuBar clean them up?
     for (auto& actionsEntry : m_actionsMap)

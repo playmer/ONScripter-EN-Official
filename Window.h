@@ -140,7 +140,7 @@ protected:
 
     static void ReverseChildren(MenuBarInput& input);
     static MenuBarInput* GetCurrentParent(MenuBarInput& input, std::vector<size_t>& depthTracker);
-    MenuBarInput ParseMenuBarTree();
+    static MenuBarInput ParseMenuBarTree(std::vector<MenuBarInput>& menuBarEntries);
 
     bool IsChecked(MenuBarFunction function);
     

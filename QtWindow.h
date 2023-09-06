@@ -51,6 +51,7 @@ private:
     QWidget* m_sdlWidget = NULL;
 
     QPoint m_originalPosition;
+    QRect m_originalGeometry;
     bool m_wasMaximized = false;
 
     std::map<MenuBarFunction, std::vector<QAction*>> m_actionsMap;

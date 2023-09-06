@@ -527,7 +527,7 @@ protected:
             }
             else if (event->type() == QEvent::Leave && (object == this))
             {
-                m_window->m_mainWindow->menuBar()->hide();
+                menuBar()->hide();
             }
         }
 
@@ -745,33 +745,11 @@ void QtWindow::SendCustomEvent(ONScripterCustomEvent event, int value)
     QCoreApplication::postEvent(static_cast<QtWindow*>(s_window)->m_sdlWindow, new ONScripterCustomQtEvent(event, value));
 }
 
-void QtWindow::MenuImpl_VolumeSlider()
-{
-
-}
-
-void QtWindow::MenuImpl_Version()
-{
-
-}
-
-void QtWindow::MenuImpl_Exit()
-{
-
-}
-
-
-
-
-
 
 std::string QtWindow::Command_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h)
 {
     return InputStrDialog::getInputStr(display, maximumInputLength, forceDoubleByte, NULL, NULL, NULL, NULL, m_sdlWidget);
 }
-
-
-
 
 
 ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)

@@ -37,6 +37,7 @@ extern "C"
 }
 
 class Window;
+class ONScripterLabel;
 
 class FFMpegWrapper
 {
@@ -47,14 +48,15 @@ public:
     FFMpegWrapper() = default;
     ~FFMpegWrapper();
 
-    int initialize(Window* window, const char* filename, bool audio_open_flag, bool debug_flag);
+    int initialize(ONScripterLabel* onscripterLabel, Window* window, const char* filename, bool audio_open_flag, bool debug_flag);
 
     int play( bool click_flag );
+
+    static void mixer_callback(FFMpegWrapper* userdata, Uint8* stream, int length);
 
 private:
     void display_frame();
     void queue_audio();
-    static void mixer_callback(void* userdata, Uint8* stream, int length);
 
     static void CleanupFormatContext(AVFormatContext** format_context)
     {
@@ -109,7 +111,8 @@ private:
 
     std::vector<uint8_t> audio_data;
     SDL_mutex* audio_data_mutex;
-
+    
+    ONScripterLabel* m_onscripterLabel = NULL;
     Window* m_window = NULL;
     SDL_Texture* m_texture = NULL;
 

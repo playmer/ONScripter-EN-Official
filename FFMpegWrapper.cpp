@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ONScripterLabel.h"
 #include "Window.h"
 
 // Referenced https://gist.github.com/mashingan/e94d41e21c6e0ce4c9f19cea72a57dc4
@@ -86,8 +87,11 @@ FFMpegWrapper::~FFMpegWrapper()
     SDL_DestroyTexture(m_texture);
 }
 
-int FFMpegWrapper::initialize(Window* window, const char* filename, bool audio_open_flag, bool debug_flag)
+int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, const char* filename, bool audio_open_flag, bool debug_flag)
 {
+    m_onscripterLabel = onscripterLabel;
+    m_window = window;
+
     format_context.value = avformat_alloc_context();
 
     char bufmsg[1024];
@@ -143,21 +147,32 @@ int FFMpegWrapper::initialize(Window* window, const char* filename, bool audio_o
         return 2;
     }
 
+    if (m_audio_context)
+    {
+        // FIXME: This will hurt your ears currently, something about this setup produces bad audio.
+        //m_onscripterLabel->openAudio(audio_parameters->bit_rate, MIX_DEFAULT_FORMAT, audio_parameters->channels);
+    }
+
     m_video_frame.value = av_frame_alloc();
     m_audio_frame.value = av_frame_alloc();
     m_packet.value = av_packet_alloc();
     video_width = video_parameters->width;
     video_height = video_parameters->height;
 
-    m_window = window;
-    m_texture = SDL_CreateTexture(m_window->GetRenderer(), SDL_PIXELFORMAT_IYUV,
-      SDL_TEXTUREACCESS_STREAMING | SDL_TEXTUREACCESS_TARGET,
-      video_width, video_height);
+    m_texture = SDL_CreateTexture(m_window->GetRenderer(), SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
 
     return 0;
 }
 
-void FFMpegWrapper::mixer_callback(void* userdata, Uint8* stream, int length)
+
+extern "C" static void mixer_callback_external(void* userdata, Uint8 * stream, int len)
+{
+    FFMpegWrapper& ffmpegWrapper = *(FFMpegWrapper*)userdata;
+    ffmpegWrapper.mixer_callback((FFMpegWrapper*)userdata, stream, len);
+}
+
+
+void FFMpegWrapper::mixer_callback(FFMpegWrapper* userdata, Uint8* stream, int length)
 {
     FFMpegWrapper& ffmpegWrapper = *(FFMpegWrapper*)userdata;
 
@@ -165,7 +180,7 @@ void FFMpegWrapper::mixer_callback(void* userdata, Uint8* stream, int length)
 
     // Compute how much we can send to SDL_mixer and copy it (do we need to pad it out?)
     size_t size_to_copy = std::min(ffmpegWrapper.audio_data.size(), static_cast<size_t>(length));
-    memcpy(stream, ffmpegWrapper.audio_data.data(), length);
+    memcpy(stream, ffmpegWrapper.audio_data.data(), size_to_copy);
 
     // Erase what we just copied
     ffmpegWrapper.audio_data.erase(ffmpegWrapper.audio_data.begin(), ffmpegWrapper.audio_data.begin() + size_to_copy);
@@ -207,13 +222,13 @@ int FFMpegWrapper::play(bool click_flag)
 
     if (m_audio_context)
     {
-      Mix_HookMusic(mixer_callback, this);
-      audio_data_mutex = SDL_CreateMutex();
+        Mix_HookMusic(mixer_callback_external, this);
+        audio_data_mutex = SDL_CreateMutex();
     }
 
     bool done_flag = false;
 
-    while (av_read_frame(format_context, m_packet) >= 0)
+    while ((av_read_frame(format_context, m_packet) >= 0) && (ret != 1))
     {
         SDL_Event event;
         while (m_window->PollEvents(event)) {
@@ -274,8 +289,9 @@ void FFMpegWrapper::display_frame()
         m_video_frame->data[1], m_video_frame->linesize[1],
         m_video_frame->data[2], m_video_frame->linesize[2]);
     SDL_RenderClear(m_window->GetRenderer());
-    SDL_RenderCopy(m_window->GetRenderer(), m_texture, NULL, &rect);
-    SDL_RenderPresent(m_window->GetRenderer());
+
+    m_onscripterLabel->DisplayTexture(m_texture);
+    
     time_t end = time(NULL);
     double diffms = difftime(end, start) / 1000.0;
     if (diffms < fpsrendering) {

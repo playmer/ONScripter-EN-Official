@@ -390,26 +390,7 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
     SDL_SaveBMP(accumulation_surface, "Test.bmp");
 
   auto texture = SDL_CreateTextureFromSurface(m_window->GetRenderer(), accumulation_surface);
-
-  Uint32 format;
-  int imageResolutionX, imageResolutionY, access;
-  SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
-
-  int windowResolutionX, windowResolutionY;
-  SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
-
-  float scaleHeight = windowResolutionY / (float)imageResolutionY;
-  float scaleWidth = windowResolutionX / (float)imageResolutionX;
-  float scale = std::min(scaleHeight, scaleWidth);
-
-  SDL_Rect dstRect;
-  dstRect.w = scale * imageResolutionX;
-  dstRect.h = scale * imageResolutionY;
-  dstRect.x = (windowResolutionX - dstRect.w) / 2;
-  dstRect.y = (windowResolutionY - dstRect.h) / 2;
-
-  SDL_RenderCopy(m_window->GetRenderer(), texture, NULL /*&dst_rect*/, &dstRect);
-  SDL_RenderPresent(m_window->GetRenderer());
+  DisplayTexture(texture);
   SDL_DestroyTexture(texture);
 
   //m_window->Repaint();
@@ -417,18 +398,35 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
   //fprintf(stderr, "UpdateScreen\n");
 }
 
+void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
+{
+    Uint32 format;
+    int imageResolutionX, imageResolutionY, access;
+    SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
+
+    int windowResolutionX, windowResolutionY;
+    SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
+
+    float scaleHeight = windowResolutionY / (float)imageResolutionY;
+    float scaleWidth = windowResolutionX / (float)imageResolutionX;
+    float scale = std::min(scaleHeight, scaleWidth);
+
+    SDL_Rect dstRect;
+    dstRect.w = scale * imageResolutionX;
+    dstRect.h = scale * imageResolutionY;
+    dstRect.x = (windowResolutionX - dstRect.w) / 2;
+    dstRect.y = (windowResolutionY - dstRect.h) / 2;
+
+    SDL_RenderCopy(m_window->GetRenderer(), texture, NULL /*&dst_rect*/, &dstRect);
+    SDL_RenderPresent(m_window->GetRenderer());
+}
+
 
 void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
 {
-  // need to replicate SMPEG_scaleXY and SMPEG_move with the following parameters:
-  //  smpeg_scale_x
-  //  smpeg_scale_y
-  //  smpeg_move_x
-  //  smpeg_move_y
-  
-  
-  // display to screen_surface
-  //#error "Unfinished"
+  ONScripterLabel* onscripterLabel = static_cast<ONScripterLabel*> (data);
+  onscripterLabel->frame = frame;
+  ++onscripterLabel->frame_number;
 }
 
 
@@ -518,6 +516,8 @@ void ONScripterLabel::initSDL()
 #else
     m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif
+
+    frame_mutex = SDL_CreateMutex();
 
     //SDL_EnableUNICODE(1);
 
@@ -1132,6 +1132,9 @@ void ONScripterLabel::setGameIdentifier(const char *gameid)
 
 bool ONScripterLabel::file_exists(const char *fileName)
 {
+    if (fileName == NULL)
+        return false;
+
     std::ifstream infile(fileName);
     return infile.good();
 }

@@ -83,7 +83,10 @@ extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, Uint8 *b
  * **************************************** */
 extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
 {
-    if ( SMPEG_playAudio( (SMPEG*)userdata, stream, len ) == 0 ){
+    SMPEG* mpeg_sample = (SMPEG*)userdata;
+    int returned = SMPEG_playAudio(mpeg_sample, stream, len);
+    
+    if (returned == 0 ){
         Window::SendCustomEventStatic(ONS_SOUND_EVENT);
     }
 }

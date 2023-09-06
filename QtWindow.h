@@ -45,12 +45,7 @@ public:
 private:
     ActionOrMenu CreateMenuBarInternal(MenuBarInput& input);
 
-
-    void MenuImpl_VolumeSlider();
-    void MenuImpl_Version();
-    void MenuImpl_Exit();
-
-    QMainWindow* m_mainWindow = NULL;
+    SdlMainWindow* m_mainWindow = NULL;
     QToolBar* m_toolbar = NULL;
     QSdlWindow* m_sdlWindow = NULL;
     QWidget* m_sdlWidget = NULL;

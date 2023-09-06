@@ -165,7 +165,7 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
 }
 
 
-extern "C" static void mixer_callback_external(void* userdata, Uint8 * stream, int len)
+extern "C" void mixer_callback_external(void* userdata, Uint8 * stream, int len)
 {
     FFMpegWrapper& ffmpegWrapper = *(FFMpegWrapper*)userdata;
     ffmpegWrapper.mixer_callback((FFMpegWrapper*)userdata, stream, len);

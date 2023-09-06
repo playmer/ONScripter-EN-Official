@@ -60,6 +60,8 @@
 #include <smpeg.h>
 #endif
 
+#include "SDL2/SDL_mutex.h"
+
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
 #define DEFAULT_BLIT_FLAG (0)
@@ -104,6 +106,7 @@
 
 #define KEYPRESS_NULL ((SDL_Keycode)(SDLK_AUDIOFASTFORWARD+1)) // "null" for keypress variables
 
+class FFMpegWrapper;
 
 class ONScripterLabel : public ScriptParser
 {
@@ -454,8 +457,13 @@ protected:
     void openAudio(int freq=DEFAULT_AUDIO_RATE, Uint16 format=MIX_DEFAULT_FORMAT, int channels=MIX_DEFAULT_CHANNELS);
 
     void UpdateScreen(SDL_Rect dst_rect);
+    void DisplayTexture(SDL_Texture* texture);
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
     static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
+    SMPEG_Frame* frame;
+    size_t frame_number = 0;
+    SDL_mutex* frame_mutex;
+    SDL_Texture* frame_texture;
 
     int smpeg_scale_x;
     int smpeg_scale_y;
@@ -1167,6 +1175,7 @@ private:
     void setupLookbackButton();
     void executeSystemLookback();
 
+    friend FFMpegWrapper;
     friend Window;
     friend BasicWindow;
 

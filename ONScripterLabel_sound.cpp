@@ -744,8 +744,15 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
         } else {
             different_spec = false;
         }
+
+        int texture_width = (info.width + 15) & ~15;
+        int texture_height = (info.height + 15) & ~15;
+        frame_texture = SDL_CreateTexture(m_window->GetRenderer(), SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, texture_width, texture_height);
+        int frame_number_local = frame_number = 0;
+
         SMPEG_enablevideo( mpeg_sample, 1 );
-        SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, NULL );
+        SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, frame_mutex);
+
         if (use_pos) {
             smpeg_scale_x = width;
             smpeg_scale_y = height;
@@ -773,7 +780,8 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 #endif
 
         if (info.has_audio){
-            SMPEG_setvolume( mpeg_sample, !volume_on_flag? 0 : music_volume );
+            int volume = !volume_on_flag ? 0 : music_volume;
+            SMPEG_setvolume( mpeg_sample, volume);
             Mix_HookMusic( mp3callback, mpeg_sample );
         }
 
@@ -870,7 +878,19 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
                   default:
                     break;
                 }
-                SDL_Delay( 5 );
+                //SDL_Delay( 5 );
+            }
+
+
+            if (frame_number_local < frame_number) {
+                SDL_mutexP(frame_mutex);
+                SDL_assert(frame->image_width == texture_width);
+                SDL_assert(frame->image_height == texture_height);
+                SDL_UpdateTexture(frame_texture, NULL, frame->image, frame->image_width);
+                frame_number = frame_number;
+                SDL_mutexV(frame_mutex);
+
+                DisplayTexture(frame_texture);
             }
         }
         ctrl_pressed_status = 0;
@@ -904,7 +924,7 @@ int ONScripterLabel::playAVI( const char *filename, bool click_flag )
     if ( audio_open_flag ) Mix_CloseAudio();
 
     FFMpegWrapper avi;
-    if ( avi.initialize(m_window, filename, audio_open_flag, false) == 0) {
+    if ( avi.initialize(this, m_window, filename, audio_open_flag, false) == 0) {
         if (avi.play( click_flag )) return 1;
     }
     //delete[] absolute_filename;

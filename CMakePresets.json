@@ -18,6 +18,55 @@
                     "value": "${sourceDir}/extlib/vcpkg/scripts/buildsystems/vcpkg.cmake"
                 }
             }
+        },
+        {
+            "name": "android",
+            "displayName": "Ninja Multi-Config",
+            "description": "Configure with vcpkg toolchain and generate Ninja project files for all android configuration",
+            "binaryDir": "${sourceDir}/builds/${presetName}",
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "${sourceDir}/extlib/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                },
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
+                },
+                "CMAKE_C_COMPILER": {
+                    "type": "string",
+                    "value": "clang"
+                },
+                "CMAKE_CXX_COMPILER": {
+                    "type": "string",
+                    "value": "clang++"
+                },
+                "VCPKG_TARGET_TRIPLET": {
+                    "type": "string",
+                    "value": "x64-android"
+                },
+                "CMAKE_ANDROID_ARCH_ABI": {
+                    "type": "string",
+                    "value": "x86_64"
+                },
+                "ANDROID_ABI": {
+                    "type": "string",
+                    "value": "x86_64"
+                },
+                "CMAKE_SYSTEM_VERSION": {
+                    "type": "string",
+                    "value": "$env{ANDROID_PLATFORM}"
+                },
+                "ANDROID_PLATFORM": {
+                    "type": "string",
+                    "value": "android-$env{ANDROID_PLATFORM}"
+                },
+                "CMAKE_SYSTEM_NAME": {
+                    "type": "string",
+                    "value": "Android"
+                }
+            }
         }
     ],
     "buildPresets": [
@@ -40,6 +89,26 @@
             "configurePreset": "ninja",
             "displayName": "Build",
             "description": "Build with Ninja/vcpkg"
+        },
+        {
+            "name": "android-debug",
+            "configurePreset": "android",
+            "displayName": "Build (Debug)",
+            "description": "Build with Ninja/vcpkg for Android (Debug)",
+            "configuration": "Debug"
+        },
+        {
+            "name": "android-release",
+            "configurePreset": "android",
+            "displayName": "Build (Release)",
+            "description": "Build with Ninja/vcpkg for Android (Release)",
+            "configuration": "Release"
+        },
+        {
+            "name": "android-vcpkg",
+            "configurePreset": "android",
+            "displayName": "Build",
+            "description": "Build with Ninja/vcpkg for Android"
         }
     ],
     "packagePresets": [

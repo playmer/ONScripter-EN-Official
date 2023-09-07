@@ -1,5 +1,27 @@
+
+message(Before:)
+message("CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
+message("CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
+message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+message("CMAKE_ANDROID_ARCH_ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+message("CMAKE_SYSTEM_VERSION: ${CMAKE_SYSTEM_VERSION}")
+message("ANDROID_PLATFORM: ${ANDROID_PLATFORM}")
+message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+
 cmake_minimum_required(VERSION 3.20.0 FATAL_ERROR) 
 project(onscripter_en LANGUAGES C CXX)
+
+
+message(After:)
+message("CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
+message("CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
+message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+message("CMAKE_ANDROID_ARCH_ABI: ${CMAKE_ANDROID_ARCH_ABI}")
+message("CMAKE_SYSTEM_VERSION: ${CMAKE_SYSTEM_VERSION}")
+message("ANDROID_PLATFORM: ${ANDROID_PLATFORM}")
+message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+
+
 
 if (APPLE)
     enable_language(OBJCXX)
@@ -11,7 +33,7 @@ if (NOT ANDROID AND NOT MINGW)
 elseif (MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-else()
+else() # Android
     option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
 endif()
@@ -47,8 +69,6 @@ find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Freetype REQUIRED)
-find_package(Ogg CONFIG REQUIRED)
-find_package(Vorbis CONFIG REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
 find_package(SDL2_mixer CONFIG REQUIRED)
@@ -128,7 +148,7 @@ endif()
 
 # Qt is a little weird
 if (ANDROID)
-    add_library(onscripter_en)
+    add_library(onscripter_en SHARED)
 elseif (ONS_USE_QT_WINDOW)
     qt_add_executable(onscripter_en)
     qt_disable_unicode_defines(onscripter_en)
@@ -210,7 +230,18 @@ endif()
 #########
 # Ogg Vorbis Support
 if (ONS_USE_OGG_VORBIS)
+    find_package(Ogg CONFIG REQUIRED)
+    find_package(Vorbis CONFIG REQUIRED)
+
     target_compile_definitions(onscripter_en PRIVATE -DUSE_OGG_VORBIS)
+
+    target_link_libraries(onscripter_en
+    PRIVATE
+        Ogg::ogg
+        Vorbis::vorbis
+        Vorbis::vorbisfile
+        Vorbis::vorbisenc
+    )
 endif()
 
 target_include_directories(onscripter_en 
@@ -255,11 +286,7 @@ PRIVATE
     ZLIB::ZLIB
     PNG::PNG
     Freetype::Freetype
-    Ogg::ogg
     smpeg2
-    Vorbis::vorbis
-    Vorbis::vorbisfile
-    Vorbis::vorbisenc
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>

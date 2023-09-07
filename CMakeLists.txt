@@ -95,6 +95,20 @@ endif()
 # onscripter-en Build Tools
 
 # embed
+include (cmake/ResourceGenerator.cmake)
+
+
+generate_resources_file(${CMAKE_CURRENT_BINARY_DIR}/resources_2.cpp ons-en.ico gamecontrollerdb.txt)
+
+
+
+
+
+
+
+
+
+
 add_executable(onscripter_embed embed.cpp)
 
 target_compile_features(onscripter_embed PUBLIC cxx_std_11)

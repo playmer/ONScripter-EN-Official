@@ -101,11 +101,7 @@ public:
         CreateMenuBar();
     }
 
-    void InsertMenu(MenuBarFunction function, const char* label, int depth)
-    {
-        m_menuBarEntries.emplace_back(function, label, depth);
-        CreateMenuBar();
-    }
+    void InsertMenu(MenuBarFunction function, const char* label, int depth);
 
     template <typename SDLEvent>
     bool TranslateMouse(SDLEvent& event)
@@ -114,6 +110,8 @@ public:
     }
 
     bool IgnoreContinuousMouseMove = true;
+
+    void InitMenuIfGameDidNot();
 protected:
     virtual void CreateMenuBar() = 0;
     static void ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m);
@@ -121,6 +119,13 @@ protected:
     struct MenuBarInput
     {
         MenuBarInput(MenuBarFunction function, const char* label, int depth)
+            : m_function(function)
+            , m_label(label)
+            , m_depth(depth)
+        {
+        }
+
+        MenuBarInput(MenuBarFunction function, std::string label, int depth)
             : m_function(function)
             , m_label(label)
             , m_depth(depth)
@@ -149,8 +154,8 @@ protected:
     SDL_Renderer* m_renderer = NULL;
     ONScripterLabel* m_onscripterLabel = NULL;
     std::vector<SDL_Event> m_events;
-
     std::vector<MenuBarInput> m_menuBarEntries;
+    bool m_menuWasInitByGame = false;
 
     static Window* s_window;
 };

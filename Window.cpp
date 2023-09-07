@@ -278,3 +278,20 @@ void Window::ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, in
     y_m = (y_m * scale) + dstRect.y;
 }
 
+void Window::InsertMenu(MenuBarFunction function, const char* label, int depth)
+{
+    if (m_onscripterLabel->script_h.enc.getEncoding() == Encoding::CODE_CP932) {
+        std::string shiftJisLabel = label;
+        std::string transcodedLabel;
+        transcodedLabel.resize(shiftJisLabel.length() * 2 + 3);
+        DirectReader::convertFromSJISToUTF8(transcodedLabel.data(), shiftJisLabel.c_str());
+
+        m_menuBarEntries.emplace_back(function, transcodedLabel, depth);
+    }
+    else {
+        m_menuBarEntries.emplace_back(function, label, depth);
+    }
+
+    CreateMenuBar();
+}
+

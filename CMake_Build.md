@@ -16,8 +16,8 @@ Requirements: Visual Studio 2022 Community (or similar, the Build Tools will lik
 ```bash
 git clone --recurse-submodules https://github.com/playmer/ONScripter-EN-Official.git
 cd onscripter-en-official
-cmake --preset=ninja-multi-vcpkg .
-cmake --build --preset ninja-vcpkg-debug
+cmake --preset=ninja .
+cmake --build --preset ninja-debug
 
 ```
 

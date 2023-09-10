@@ -95,10 +95,61 @@ endif()
 # onscripter-en Build Tools
 
 # embed
-include (cmake/ResourceGenerator.cmake)
+
+# We should make some sort of detection variable to determine if we should use a script vs the embed program,
+# Things get complicated on Apple under the XCode generator for example, these docs will help:
+# https://cmake.org/cmake/help/latest/variable/CMAKE_CROSSCOMPILING.html
+if (ANDROID)
+    find_program(TOOL_POWERSHELL NAMES powershell powershell.exe)
+    find_program(TOOL_PYTHON NAMES python python3)
+
+    message(STATUS "Powershell: ${TOOL_POWERSHELL}")
+    message(STATUS "Powershell: ${TOOL_PYTHON}")
+
+    if (TOOL_POWERSHELL)
+        add_custom_command(
+            OUTPUT resources.cpp
+            COMMAND ${TOOL_POWERSHELL} cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+            COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+            VERBATIM
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+    elseif(TOOL_PYTHON)
+        add_custom_command(
+            OUTPUT resources.cpp
+            COMMAND ${TOOL_PYTHON} cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+            COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+            VERBATIM
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+    else()
+        message(STATUS "We're cross compiling, and couldn't find Powershell or Python 3, we're going to use CMake to generate the Resources file, but it'll be prohibitively slow (~15 minutes). Consider installing one of the above.")
+        add_custom_command(
+            OUTPUT resources.cpp
+            COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+            COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+            VERBATIM
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        )
+    endif()
+else()
+    add_executable(onscripter_embed embed.cpp)
+
+    target_compile_features(onscripter_embed PUBLIC cxx_std_11)
+    add_custom_command(
+        OUTPUT resources.cpp
+        COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp
+        DEPENDS onscripter_embed ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+        COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+        VERBATIM
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
 
 
-generate_resources_file(${CMAKE_CURRENT_BINARY_DIR}/resources_2.cpp ons-en.ico gamecontrollerdb.txt)
 
 
 
@@ -109,17 +160,21 @@ generate_resources_file(${CMAKE_CURRENT_BINARY_DIR}/resources_2.cpp ons-en.ico g
 
 
 
-add_executable(onscripter_embed embed.cpp)
 
-target_compile_features(onscripter_embed PUBLIC cxx_std_11)
-add_custom_command(
-    OUTPUT resources.cpp
-    COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp
-    DEPENDS onscripter_embed ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-    VERBATIM
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 set(I \"ons-en.ico\")
@@ -293,6 +348,11 @@ if (ONS_USE_QT_WINDOW)
         VERBOSE
     )")
 endif()
+
+
+
+#########
+# onScripter_en settings and libraries
 
 target_link_libraries(onscripter_en
 PRIVATE

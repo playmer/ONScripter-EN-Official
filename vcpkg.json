@@ -10,7 +10,7 @@
     {
       "name": "ffmpeg",
       "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ],
-      "platform": "(windows|osx|ios|linux)&(!mingw)"
+      "platform": "(windows|osx|ios|linux|android)&(!mingw)"
     },
     "freetype",
     "libjpeg-turbo",

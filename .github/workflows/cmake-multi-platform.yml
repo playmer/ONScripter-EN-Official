@@ -16,9 +16,9 @@
 name: hosted-ninja-vcpkg_submod-autocache
 on:
   push:
-    branches: [ "master", "extensions", "Qt_window_wrapper" ]
+    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork" ]
   pull_request:
-    branches: [ "master", "extensions", "Qt_window_wrapper" ]
+    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork" ]
   workflow_dispatch:
   schedule:
   - cron: '0 1 * * *'
@@ -71,9 +71,58 @@ jobs:
       - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
         uses: lukka/run-cmake@v10
         with:
-          configurePreset: 'ninja-multi-vcpkg'
+          configurePreset: 'ninja'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=g++','-DCMAKE_C_COMPILER=gcc','-DCMAKE_MAKE_PROGRAM=ninja']"
-          buildPreset: 'ninja-vcpkg-release'
+          buildPreset: 'ninja-release'
+          
+  linux_android:
+    name: ubuntu-build-android
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
+    env:
+      CMAKE_MAKE_PROGRAM: ninja
+    steps:
+      - run: sudo apt update
+      - run: sudo apt install -y apt autoconf automake build-essential build-essential cmake cmake fcitx-libs-dev git gnome-desktop-testing libasound2-dev libaudio-dev libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libfreetype-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libmad0-dev libogg-dev libpipewire-0.3-dev libpng-dev libpulse-dev libsamplerate0-dev libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsmpeg-dev libsndio-dev libtool libudev-dev libvorbis-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make nasm ninja-build pkg-config zlib1g-dev
+      - run: ninja --version
+      - run: nasm -v
+      
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.6.0'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'gcc_64'
+
+      - name: Restore from cache and setup vcpkg executable and data files.
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: 'vcpkg.json'
+          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+
+      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+      # configuration with the additional `--config` flag, e.g.:
+      #   buildPreset: 'ninja-vcpkg'
+      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+      #   testPreset: 'ninja-vcpkg'
+      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'android'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=g++','-DCMAKE_C_COMPILER=gcc','-DCMAKE_MAKE_PROGRAM=ninja']"
+          buildPreset: 'android-release'
   
   mac:
     name: macos-build
@@ -122,9 +171,9 @@ jobs:
       - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
         uses: lukka/run-cmake@v10
         with:
-          configurePreset: 'ninja-multi-vcpkg'
+          configurePreset: 'ninja'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++','-DCMAKE_C_COMPILER=clang','-DCMAKE_MAKE_PROGRAM=ninja']"
-          buildPreset: 'ninja-vcpkg-release'
+          buildPreset: 'ninja-release'
   
   windows:
     name: windows-build-msvc
@@ -168,9 +217,9 @@ jobs:
       - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
         uses: lukka/run-cmake@v10
         with:
-          configurePreset: 'ninja-multi-vcpkg'
+          configurePreset: 'ninja'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=cl','-DCMAKE_C_COMPILER=cl','-DCMAKE_MAKE_PROGRAM=ninja']"
-          buildPreset: 'ninja-vcpkg-release'
+          buildPreset: 'ninja-release'
   
   windows_msys2:
     name: windows-build-msys2

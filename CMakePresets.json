@@ -34,14 +34,6 @@
                     "type": "FILEPATH",
                     "value": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
                 },
-                "CMAKE_C_COMPILER": {
-                    "type": "string",
-                    "value": "clang"
-                },
-                "CMAKE_CXX_COMPILER": {
-                    "type": "string",
-                    "value": "clang++"
-                },
                 "VCPKG_TARGET_TRIPLET": {
                     "type": "string",
                     "value": "x64-android"

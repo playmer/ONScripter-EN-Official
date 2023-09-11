@@ -30,13 +30,24 @@ android {
             //    abiFilters 'arm64-v8a'
             //}
             
+            //ndkBuild {
+            //    arguments "APP_PLATFORM=android-16"
+            //    // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            //    abiFilters 'x86_64'
+            //}
+            //cmake {
+            //    arguments "-DANDROID_APP_PLATFORM=android-16", "-DANDROID_STL=c++_static", "-DCMAKE_TOOLCHAIN_FILE=extlib/vcpkg/scripts/buildsystems/vcpkg.cmake", "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$System.env.ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake", "-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++", "-DVCPKG_TARGET_TRIPLET=x64-android"
+            //    // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            //    abiFilters 'x86_64'
+            //}
+            
             ndkBuild {
-                arguments "APP_PLATFORM=android-16"
+                arguments "APP_PLATFORM=android-33"
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 abiFilters 'x86_64'
             }
             cmake {
-                arguments "-DANDROID_APP_PLATFORM=android-16", "-DANDROID_STL=c++_static", "-DCMAKE_TOOLCHAIN_FILE=extlib/vcpkg/scripts/buildsystems/vcpkg.cmake", "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$System.env.ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake", "-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++", "-DVCPKG_TARGET_TRIPLET=x64-android"
+                arguments "--preset=android_x86_64"
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 abiFilters 'x86_64'
             }

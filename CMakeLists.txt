@@ -1,27 +1,7 @@
 
-message(Before:)
-message("CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
-message("CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
-message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
-message("CMAKE_ANDROID_ARCH_ABI: ${CMAKE_ANDROID_ARCH_ABI}")
-message("CMAKE_SYSTEM_VERSION: ${CMAKE_SYSTEM_VERSION}")
-message("ANDROID_PLATFORM: ${ANDROID_PLATFORM}")
-message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
-
+include(cmake/ProjectVariablePreparation.cmake)
 cmake_minimum_required(VERSION 3.20.0 FATAL_ERROR) 
 project(onscripter_en LANGUAGES C CXX)
-
-
-message(After:)
-message("CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
-message("CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
-message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
-message("CMAKE_ANDROID_ARCH_ABI: ${CMAKE_ANDROID_ARCH_ABI}")
-message("CMAKE_SYSTEM_VERSION: ${CMAKE_SYSTEM_VERSION}")
-message("ANDROID_PLATFORM: ${ANDROID_PLATFORM}")
-message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
-
-
 
 if (APPLE)
     enable_language(OBJCXX)
@@ -104,51 +84,34 @@ if (ANDROID)
     find_program(TOOL_PYTHON NAMES python python3)
 
     message(STATUS "Powershell: ${TOOL_POWERSHELL}")
-    message(STATUS "Powershell: ${TOOL_PYTHON}")
+    message(STATUS "Python: ${TOOL_PYTHON}")
 
     if (TOOL_POWERSHELL)
-        add_custom_command(
-            OUTPUT resources.cpp
-            COMMAND ${TOOL_POWERSHELL} cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt
-            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-            COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-            VERBATIM
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )
+        set(EMBED_COMMAND ${TOOL_POWERSHELL} cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
     elseif(TOOL_PYTHON)
-        add_custom_command(
-            OUTPUT resources.cpp
-            COMMAND ${TOOL_PYTHON} cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt
-            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-            COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-            VERBATIM
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )
+        set(EMBED_COMMAND ${TOOL_PYTHON} cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
     else()
         message(STATUS "We're cross compiling, and couldn't find Powershell or Python 3, we're going to use CMake to generate the Resources file, but it'll be prohibitively slow (~15 minutes). Consider installing one of the above.")
-        add_custom_command(
-            OUTPUT resources.cpp
-            COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt
-            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-            COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-            VERBATIM
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )
+        set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
     endif()
+    
+    set(ADDITIONAL_EMBED_DEPENDENCIES "")
 else()
     add_executable(onscripter_embed embed.cpp)
-
     target_compile_features(onscripter_embed PUBLIC cxx_std_11)
-    add_custom_command(
-        OUTPUT resources.cpp
-        COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp
-        DEPENDS onscripter_embed ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-        COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-        VERBATIM
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
+
+    set(EMBED_COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp)
+    set(ADDITIONAL_EMBED_DEPENDENCIES onscripter_embed)
 endif()
 
+add_custom_command(
+    OUTPUT resources.cpp
+    COMMAND ${EMBED_COMMAND}
+    DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 
 

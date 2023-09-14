@@ -1,16 +1,73 @@
-use std::{process::Command, path::Path};
+use std::{process::Command, path::{Path, PathBuf}, collections::HashMap, io::Write};
 use walkdir::WalkDir;
+use zip::write::FileOptions;
 
 struct Configuration
 {
-    cmakeliststxt_dir : String,
-    tools_dir : String,
-    java_code_dir : String,
-    android_build_dir : String,
-    android_jar_path : String
+    cmakeliststxt_dir : PathBuf,
+    java_code_dir : PathBuf,
+    android_tools_dir : PathBuf,
+    android_build_dir : PathBuf,
+    android_platform_path : PathBuf
 }
 
-fn run_cmake_configure_preset(config : &Configuration, presets : &Vec<(String, String)>)
+impl Configuration
+{
+    fn new() -> Configuration
+    {
+        let android_ndk_home = std::env::var("ANDROID_NDK_HOME").expect("Couldn't retrieve env variable ANDROID_NDK_HOME, please set it");
+        let android_platform_version = std::env::var("ANDROID_PLATFORM").expect("Couldn't retrieve env variable ANDROID_PLATFORM, please set it");
+        let android_sdk_path = Path::new(&android_ndk_home).join("..").join("..");
+
+        // Prefer to use the platform jar of the preferred version, otherwise use latest.
+        let mut android_platform_path = android_sdk_path.join("platforms").join(format!("android-{android_platform_version}"));
+        let metadata = std::fs::metadata(&android_platform_path);
+        if metadata.is_err() || !metadata.unwrap().is_dir() {
+            let mut android_platforms = Vec::new();
+
+            for entry in std::fs::read_dir(&android_sdk_path.join("platforms")).unwrap() {
+                let entry = entry.unwrap();
+                let path = entry.path();
+                let path = path.file_name().unwrap().to_str().unwrap();
+                let version = path.split_at("android-".len()).1;
+
+                android_platforms.push(version.parse::<i32>().unwrap());
+            }
+            android_platforms.sort();
+            android_platform_path = android_sdk_path.join("platforms").join(format!("android-{}", android_platforms.last().unwrap()));
+        }
+
+        // Find the latest version of the android tools
+        let mut android_tools_versions = Vec::new();
+        
+        for entry in std::fs::read_dir(&android_sdk_path.join("build-tools")).unwrap() {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            let metadata = std::fs::metadata(&path).unwrap();
+
+            if metadata.is_dir() {
+                let path = path.file_name().unwrap().to_str().unwrap();
+                android_tools_versions.push(semver::Version::parse(path).unwrap());
+            }
+        }
+
+        android_tools_versions.sort();
+        let ver : &semver::Version = android_tools_versions.last().unwrap();
+        let android_tools_dir = android_sdk_path.join("build-tools").join(format!("{}.{}.{}", ver.major, ver.minor, ver.patch));
+
+        println!("{}", android_tools_dir.to_str().unwrap());
+        
+        return Configuration { 
+            cmakeliststxt_dir: Path::new("../").to_owned(),
+            android_tools_dir: android_tools_dir,
+            java_code_dir: Path::new("src").to_owned(),
+            android_build_dir: Path::new("build").to_owned(),
+            android_platform_path: android_platform_path
+        };
+    }
+}
+
+fn run_cmake_configure_preset(config : &Configuration, presets : &Vec<(String, String)>) -> bool
 {
     for (configure_preset, build_preset) in presets
     {
@@ -25,7 +82,7 @@ fn run_cmake_configure_preset(config : &Configuration, presets : &Vec<(String, S
         if status.code().is_none() || (status.code().unwrap() != 0)
         {
             println!("Failed to configure preset {configure_preset}");
-            continue;
+            return false;
         }
 
         let status = Command::new("cmake")
@@ -39,9 +96,11 @@ fn run_cmake_configure_preset(config : &Configuration, presets : &Vec<(String, S
         if status.code().is_none() || (status.code().unwrap() != 0)
         {
             println!("Failed to configure preset {build_preset}");
-            continue;
+            return false;;
         }
     }
+
+    return true;
 }
 
 fn run_javac(config : &Configuration)
@@ -69,7 +128,7 @@ fn run_javac(config : &Configuration)
         .arg("-encoding")
         .arg("utf8")
         .arg("-classpath")
-        .arg(&config.android_jar_path)
+        .arg(config.android_platform_path.join("android.jar"))
         .arg("-d")
         .arg(&config.android_build_dir);
 
@@ -98,10 +157,10 @@ fn run_d8(config : &Configuration)
         }
     }
     
-    let mut binding = Command::new(Path::new(&config.tools_dir).join("d8.bat"));
+    let mut binding = Command::new(config.android_tools_dir.join("d8.bat"));
     let mut binding = binding
         .arg("--classpath")
-        .arg(&config.android_jar_path)
+        .arg(&config.android_platform_path.join("android.jar"))
         .arg("--output")
         .arg(&config.android_build_dir);
 
@@ -115,52 +174,80 @@ fn run_d8(config : &Configuration)
 
 fn make_apk(config : &Configuration, presets : &Vec<(String, String)>)
 {
+    let mut configToAbiMap : HashMap<&str, &str> = HashMap::new();
+    configToAbiMap.insert("android_arm64", "arm64-v8a");
+    configToAbiMap.insert("android_armNeon", "armeabi-v7a");
+    configToAbiMap.insert("android_x86_64", "x86_64");
+    configToAbiMap.insert("android_x86", "x86");
+    configToAbiMap.insert("android_armv6", "armeabi"); // FIXME
+    let configToAbiMap = configToAbiMap;
+
+
+
     // Create the initial Apk
     // $TOOLS_DIR/aapt2 link -o build/unaligned.apk --manifest AndroidManifest.xml -I $PLATFORM_DIR/android.jar --emit-ids ids.txt $res || exit
-    let mut status = Command::new(Path::new(&config.tools_dir).join("aapt2"))
+    let mut status = Command::new(config.android_tools_dir.join("aapt2"))
         .arg("link")
         .arg("-o")
-        .arg(Path::new(&config.tools_dir).join("unaligned.apk"))
+        .arg(config.android_build_dir.join("unaligned.apk"))
         .arg("--manifest")
         .arg("AndroidManifest.xml")
         .arg("-I")
-        .arg(&config.android_jar_path)
+        .arg(config.android_platform_path.join("android.jar"))
         .arg("--emit-ids")
         .arg("ids.txt")
         .status()
         .expect("Failed to run aapt2");
 
-    // Append classes file, libraries onto the apk.
+    // Open the unaligned apk file as a zip
     let file = std::fs::File::create(Path::new(&config.android_build_dir).join("unaligned.apk")).unwrap();
-    let mut zip = zip::ZipWriter::new(file);
+    let mut zip = zip::ZipWriter::new_append(file).unwrap();
 
+    // Append classes file onto the apk
+    let options = FileOptions::default()
+        .compression_method(zip::CompressionMethod::Stored)
+        .compression_level(None);
 
+    zip.start_file_aligned("classes.dex", options, 4).unwrap();
+    let classes_file = config.android_build_dir.join("classes.dex");
+    let file_data = std::fs::read(classes_file).unwrap();
+    zip.write(file_data.as_ref()).unwrap();
+    
+    // Append the native libraries onto the apk.
     for (configure_preset, _build_preset) in presets
     {
+        let options = FileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored)
+            .compression_level(None);
+
+        zip.start_file_aligned(format!("lib/{}/libonscripter_en.so", configToAbiMap.get(configure_preset.as_str()).unwrap()), options, 4).unwrap();
+        let lib_file = config.cmakeliststxt_dir.join("builds").join(configure_preset).join("lib").join("Release").join("libonscripter_en.so");
+        let file_data = std::fs::read(lib_file).unwrap();
+        zip.write(file_data.as_ref()).unwrap();
     }
 
-    //zip.start_file_aligned(name, options, 4);
+    zip.finish().unwrap();
 }
 
 fn main()
 {
     std::env::set_current_dir("../").unwrap();
 
-    let config : Configuration = Configuration { 
-        cmakeliststxt_dir: "../".to_string(),
-        tools_dir: "C:/Users/jofisher/AppData/Local/Android/Sdk/build-tools/34.0.0".to_string(),
-        java_code_dir: "src".to_string(),
-        android_build_dir: "build".to_string(),
-        android_jar_path: "C:/Users/jofisher/AppData/Local/Android/Sdk/platforms/android-33/android.jar".to_string()
-    };
+    let config = Configuration::new();
 
     let mut presets : Vec<(String, String)> = Vec::new();
-    presets.push(("android-x86_64".to_string(), "android-x86_64-release".to_string()));
-    presets.push(("android-x86".to_string(), "android-x86-release".to_string()));
-    presets.push(("android-arm64".to_string(), "android-arm64-release".to_string()));
-    presets.push(("android-armNeon".to_string(), "android-armNeon-release".to_string()));
+    presets.push(("android_x86_64".to_string(), "android-x86_64-release".to_string()));
+    presets.push(("android_x86".to_string(), "android-x86-release".to_string()));
+    presets.push(("android_arm64".to_string(), "android-arm64-release".to_string()));
+    presets.push(("android_armNeon".to_string(), "android-armNeon-release".to_string()));
+    if !run_cmake_configure_preset(&config, &presets) {
+        println!("Failed to run CMake");
+        return;
+    }
+    
+    std::fs::remove_dir_all(&config.android_build_dir).unwrap_or_default();
 
-    //run_cmake_configure_preset(&config, &presets);
     run_javac(&config);
     run_d8(&config);
+    make_apk(&config, &presets);
 }

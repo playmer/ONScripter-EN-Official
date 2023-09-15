@@ -182,10 +182,46 @@ fn make_apk(config : &Configuration, presets : &Vec<(String, String)>)
     configToAbiMap.insert("android_armv6", "armeabi"); // FIXME
     let configToAbiMap = configToAbiMap;
 
+    let mut status = Command::new(config.android_tools_dir.join("aapt2"))
+        .arg("compile")
+        .arg("-o")
+        .arg(config.android_build_dir.join("res.zip"))
+        .arg("--dir")
+        .arg("res")
+        .status()
+        .expect("Failed to run aapt2 to build resources file");
+
+
+
+
+    for (configure_preset, _build_preset) in presets
+    {
+        let native_lib_dir = Path::new("build").join("native").join("lib").join(&configToAbiMap.get(configure_preset.as_str()).unwrap());
+        let lib_file = native_lib_dir.join("libonscripter_en.so", );
+        let lib_file_path = config.cmakeliststxt_dir.join("builds").join(configure_preset).join("lib").join("Release").join("libonscripter_en.so");
+        std::fs::create_dir_all(native_lib_dir).unwrap();
+        std::fs::copy(lib_file_path, lib_file).unwrap();
+    }
+    
+    let mut status = Command::new(config.android_tools_dir.join("aapt2"))
+        .arg("compile")
+        .arg("-o")
+        .arg(config.android_build_dir.join("native_resources.zip"))
+        .arg("--dir")
+        .arg("build/native")
+        .status()
+        .expect("Failed to run aapt2 to build resources file");
+
+
+
+
+
+
+
+
 
 
     // Create the initial Apk
-    // $TOOLS_DIR/aapt2 link -o build/unaligned.apk --manifest AndroidManifest.xml -I $PLATFORM_DIR/android.jar --emit-ids ids.txt $res || exit
     let mut status = Command::new(config.android_tools_dir.join("aapt2"))
         .arg("link")
         .arg("-o")
@@ -196,37 +232,33 @@ fn make_apk(config : &Configuration, presets : &Vec<(String, String)>)
         .arg(config.android_platform_path.join("android.jar"))
         .arg("--emit-ids")
         .arg("ids.txt")
+        .arg(config.android_build_dir.join("res.zip"))
         .status()
-        .expect("Failed to run aapt2");
+        .expect("Failed to run aapt2 to build initial APK");
 
-    // Open the unaligned apk file as a zip
-    let file = std::fs::File::create(Path::new(&config.android_build_dir).join("unaligned.apk")).unwrap();
-    let mut zip = zip::ZipWriter::new_append(file).unwrap();
-
-    // Append classes file onto the apk
-    let options = FileOptions::default()
-        .compression_method(zip::CompressionMethod::Stored)
-        .compression_level(None);
-
-    zip.start_file_aligned("classes.dex", options, 4).unwrap();
-    let classes_file = config.android_build_dir.join("classes.dex");
-    let file_data = std::fs::read(classes_file).unwrap();
-    zip.write(file_data.as_ref()).unwrap();
-    
-    // Append the native libraries onto the apk.
-    for (configure_preset, _build_preset) in presets
-    {
-        let options = FileOptions::default()
-            .compression_method(zip::CompressionMethod::Stored)
-            .compression_level(None);
-
-        zip.start_file_aligned(format!("lib/{}/libonscripter_en.so", configToAbiMap.get(configure_preset.as_str()).unwrap()), options, 4).unwrap();
-        let lib_file = config.cmakeliststxt_dir.join("builds").join(configure_preset).join("lib").join("Release").join("libonscripter_en.so");
-        let file_data = std::fs::read(lib_file).unwrap();
-        zip.write(file_data.as_ref()).unwrap();
-    }
-
-    zip.finish().unwrap();
+    //// Open the unaligned apk file as a zip
+    //let file = std::fs::File::create(Path::new(&config.android_build_dir).join("unaligned.apk")).unwrap();
+    //let mut zip = zip::ZipWriter::new_append(file).unwrap();
+    //// Append classes file onto the apk
+    //let options = FileOptions::default()
+    //    .compression_method(zip::CompressionMethod::Stored)
+    //    .compression_level(None);
+    //zip.start_file_aligned("classes.dex", options, 4).unwrap();
+    //let classes_file = config.android_build_dir.join("classes.dex");
+    //let file_data = std::fs::read(classes_file).unwrap();
+    //zip.write(file_data.as_ref()).unwrap();
+    //// Append the native libraries onto the apk.
+    //for (configure_preset, _build_preset) in presets
+    //{
+    //    let options = FileOptions::default()
+    //        .compression_method(zip::CompressionMethod::Stored)
+    //        .compression_level(None);
+    //    zip.start_file_aligned(format!("lib/{}/libonscripter_en.so", configToAbiMap.get(configure_preset.as_str()).unwrap()), options, 4).unwrap();
+    //    let lib_file = config.cmakeliststxt_dir.join("builds").join(configure_preset).join("lib").join("Release").join("libonscripter_en.so");
+    //    let file_data = std::fs::read(lib_file).unwrap();
+    //    zip.write(file_data.as_ref()).unwrap();
+    //}
+    //zip.finish().unwrap();
 }
 
 fn main()

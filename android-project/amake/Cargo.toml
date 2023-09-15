@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 semver = "1.0.18"
 walkdir = "2.4.0"
-zip = { version = "0.6.6", default-features = false , features = ["deflate"] }
+zip_next = { version = "0.10.3", default-features = false , features = ["deflate"] }

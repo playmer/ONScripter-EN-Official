@@ -2,7 +2,6 @@ build*/
 .vs/
 .DS_Store
 .idea/
-
 *.o
 *.lo
 *.a

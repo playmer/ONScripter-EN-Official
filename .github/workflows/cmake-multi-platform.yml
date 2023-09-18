@@ -47,6 +47,15 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.6.0'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'gcc_64'
+
       - name: Restore from cache and setup vcpkg executable and data files.
         uses: lukka/run-vcpkg@v11
         with:
@@ -89,6 +98,15 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.6.0'
+          host: 'mac'
+          target: 'desktop'
+          arch: 'clang_64'
+
       - name: Restore from cache and setup vcpkg executable and data files.
         uses: lukka/run-vcpkg@v11
         with:
@@ -125,6 +143,15 @@ jobs:
           submodules: true
 
       - uses: lukka/get-cmake@latest
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.6.0'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
 
       - name: Restore from cache and setup vcpkg executable and data files.
         uses: lukka/run-vcpkg@v11

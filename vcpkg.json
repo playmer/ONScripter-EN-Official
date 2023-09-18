@@ -23,6 +23,10 @@
     "libpng",
     "libvorbis",
     "lua",
+    {
+      "name": "qtbase",
+      "platform": "(windows|osx|linux)&(!mingw)"
+    },
     "sdl2",
     {
       "name": "sdl2",

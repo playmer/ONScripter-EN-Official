@@ -640,6 +640,7 @@ protected:
 
 #ifdef USE_QT_WINDOW
     friend QtWindow;
+    friend QtBasicWindow;
 #endif
 
 #ifdef USE_IMGUIWINDOW

@@ -49,10 +49,10 @@
 #ifdef MACOSX
 #include "cocoa_alertbox.h"
 #include "cocoa_directories.h"
-#import <CoreFoundation/CoreFoundation.h>
-#import <Foundation/NSString.h>
-#import <Foundation/NSObject.h>
-#import <Foundation/NSFileManager.h>
+//#import <CoreFoundation/CoreFoundation.h>
+//#import <Foundation/NSString.h>
+//#import <Foundation/NSObject.h>
+//#import <Foundation/NSFileManager.h>
 
 #ifdef USE_PPC_GFX
 #include <sys/types.h>
@@ -410,9 +410,11 @@ void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
     int windowResolutionX, windowResolutionY;
     SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
 
-    float scaleHeight = windowResolutionY / (float)imageResolutionY;
     float scaleWidth = windowResolutionX / (float)imageResolutionX;
+    float scaleHeight = windowResolutionY / (float)imageResolutionY;
     float scale = std::min(scaleHeight, scaleWidth);
+
+    fprintf(stderr, "%f; (%d, %d); (%d, %d)\n", scale, imageResolutionX, imageResolutionY, windowResolutionX, windowResolutionY);
 
     SDL_Rect dstRect;
     dstRect.w = scale * imageResolutionX;
@@ -515,7 +517,8 @@ void ONScripterLabel::initSDL()
     // pushing the top window frame offscreen.
 #ifdef USE_QT_WINDOW
     //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
-    m_window = CreateQtWindow(this, 800, 600, 50, 50);
+    //m_window = CreateQtWindow(this, 800, 600, 50, 50);
+    m_window = CreateQtBasicWindow(this, 800, 600, 50, 50);
 #else
     m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif
@@ -1182,16 +1185,11 @@ int ONScripterLabel::init()
                 char tmp[strlen(path) + 4];
                 sprintf(tmp, "%s%c%s", path, DELIMITER, "..");
                 archive_path.add(tmp);
-            } else {
-                //if we couldn't find the application path, we still need
-                //something - use current dir and parent (default)
-                archive_path.add(default_path);
             }
         }
-        else {
-            // Not in a bundle: just use current dir and parent as normal.
-            archive_path.add(default_path);
-        }
+
+        // Check current dir and parent as normal.
+        archive_path.add(default_path);
 #else
         // On Linux, the path is unpredictable and should be set by
         // using "-r PATH" or "--root PATH" in a launcher script.
@@ -1340,6 +1338,7 @@ int ONScripterLabel::init()
     char* archive_default_font_otc = create_filepath(archive_path, "default.otc");
 
 #if defined(MACOSX)
+    /*
     char* macos_font_file;
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸ゴ ProN W4.ttc";
@@ -1348,6 +1347,7 @@ int ONScripterLabel::init()
         macos_font_file = new char[ strlen([hiraginoPath UTF8String]) + 1 ];
         strcpy(macos_font_file, [hiraginoPath UTF8String]);
     }
+     */
 #endif
 
     if(file_exists("default.ttf")) font_picker = FONT_DEFAULT_TTF;
@@ -1363,7 +1363,7 @@ int ONScripterLabel::init()
     else if(file_exists("C:\\Windows\\Fonts\\msgothic.ttf")) font_picker = FONT_WIN32_MSGOTHIC_TTF;
 #endif
 #if defined(MACOSX)
-    else if([fm fileExistsAtPath:hiraginoPath]) font_picker = FONT_MACOS_HIRAGINO;
+    //else if([fm fileExistsAtPath:hiraginoPath]) font_picker = FONT_MACOS_HIRAGINO;
 #endif
 
     switch(font_picker)
@@ -1415,10 +1415,12 @@ int ONScripterLabel::init()
             break;
 #endif
 #if defined(MACOSX)
+            /*
         case FONT_MACOS_HIRAGINO:
             font_file = macos_font_file;
             fprintf( stderr, "no font file detected; using system fallback (Hiragino Gothic)\n" );
             break;
+             */
 #endif
         default:
             font_picker = -1;

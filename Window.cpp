@@ -150,8 +150,9 @@ Window::Window(ONScripterLabel* onscripterLabel)
 bool Window::TranslateMouse(int& x, int& y, bool toScreenSize)
 {
     int windowResolutionX, windowResolutionY;
-    SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
-    //SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
+    //SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
+    //SDL_GetRendererOutputSize(m_renderer, &windowResolutionX, &windowResolutionY);
+    SDL_GetWindowSize(m_window, &windowResolutionX, &windowResolutionY);
     int windowPointsW, windowPointsH;
 
     if (toScreenSize)
@@ -196,6 +197,9 @@ bool Window::TranslateMouse(int& x, int& y, bool toScreenSize)
 
         if (new_y > windowPointsH)
             y = windowPointsH;
+
+
+        fprintf(stderr, "oob Warping Orig: {%d, %d}; New: {%d, %d}\n", x, y, new_x, new_y);
 
         return false;
     }

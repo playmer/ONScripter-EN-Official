@@ -133,7 +133,8 @@ elseif (ONS_USE_QT_WINDOW)
     qt_add_executable(onscripter_en)
     qt_disable_unicode_defines(onscripter_en)
 else()    
-    add_executable(onscripter_en)
+    add_executable(onscripter_en
+            QtDialogs.cpp)
 endif()
 
 #########
@@ -227,6 +228,10 @@ if (ONS_USE_QT_WINDOW)
 
     target_sources(onscripter_en
     PRIVATE
+        QtBasicWindow.cpp
+        QtBasicWindow.h
+        QtDialogs.cpp
+        QtDialogs.h
         QtWindow.cpp
         QtWindow.h
     )
@@ -369,6 +374,13 @@ if(WIN32)
 endif()
 
 if(APPLE)
+    if (IOS)
+    else() # Technically, WatchOS, TvOS, and iPadOS might fall into this to...
+        target_compile_definitions(onscripter_en PUBLIC MACOSX)
+        target_include_directories(onscripter_en PUBLIC macosx)
+    endif()
+
+
     target_sources(onscripter_en
     PRIVATE
         macosx/cocoa_alertbox.h

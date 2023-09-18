@@ -1028,12 +1028,14 @@ bool ONScripterLabel::keyDownEvent( SDL_KeyboardEvent *event )
         shift_pressed_status |= 0x02;
         break;
 #ifdef MACOSX
+        /*
       case SDLK_LMETA:
         apple_pressed_status |= 1;
         break;
       case SDLK_RMETA:
         apple_pressed_status |= 1;
         break;
+         */
 #endif
       default:
         break;
@@ -1061,12 +1063,14 @@ void ONScripterLabel::keyUpEvent( SDL_KeyboardEvent *event )
         shift_pressed_status &= ~0x02;
         break;
 #ifdef MACOSX
+        /*
       case SDLK_LMETA:
         apple_pressed_status &= ~1;
         break;
       case SDLK_RMETA:
         apple_pressed_status &= ~2;
         break;
+         */
 #endif
       default:
         break;

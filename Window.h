@@ -170,7 +170,13 @@ Window* CreateBasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int 
 #ifdef USE_QT_WINDOW
 class QtWindow;
 Window* CreateQtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
+
+class QtBasicWindow;
+Window* CreateQtBasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
 #endif
+
+
+
 
 #ifdef USE_IMGUIWINDOW
 class ImguiWindow;

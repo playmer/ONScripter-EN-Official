@@ -512,6 +512,7 @@ int ScriptParser::open()
     return 0;
 }
 
+
 #ifdef MACOSX
 void ScriptParser::checkBundled()
 {
@@ -522,6 +523,7 @@ void ScriptParser::checkBundled()
     is_bundled = true; // always bundled on OS X
 }
 #endif
+
 
 unsigned char ScriptParser::convHexToDec( char ch )
 {

@@ -39,16 +39,21 @@ public:
     virtual void Repaint();
     virtual void SendCustomEvent(ONScripterCustomEvent event, int value);
     virtual void CreateMenuBar();
+    virtual WindowSize GetWindowSize();
+    virtual WindowSize GetDesktopSize();
 
     std::string Command_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h);
 
 private:
+    QMenuBar* MenuBar();
+
     ActionOrMenu CreateMenuBarInternal(MenuBarInput& input);
 
     SdlMainWindow* m_mainWindow = NULL;
     QToolBar* m_toolbar = NULL;
     QSdlWindow* m_sdlWindow = NULL;
     QWidget* m_sdlWidget = NULL;
+    QMenuBar* m_menuBar = NULL;
 
     QPoint m_originalPosition;
     QRect m_originalGeometry;
@@ -62,6 +67,7 @@ private:
     QApplication m_qtapplication;
     QEventLoop m_eventLoop;
 
+    friend QSdlWindow;
     friend SdlMainWindow;
 };
 

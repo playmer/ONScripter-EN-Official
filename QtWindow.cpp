@@ -324,133 +324,202 @@ public:
     int m_value;
 };
 
+
+class SdlMainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    SdlMainWindow(QtWindow* window)
+        : m_window(window)
+    {
+
+    }
+
+protected:
+    void closeEvent(QCloseEvent* event)
+    {
+        Window::SendCustomEventStatic(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
+    }
+
+    bool eventFilter(QObject* object, QEvent* event)
+    {
+        if (m_window->m_qtapplication.activePopupWidget() == NULL && m_window->m_mainWindow->isFullScreen())
+        {
+            if (event->type() == QEvent::MouseMove)
+            {
+                QMouseEvent* mouseMoveEvent = static_cast<QMouseEvent*>(event);
+                if (m_window->MenuBar()->isHidden())
+                {
+                    QRect rect = geometry();
+                    rect.setHeight(25);
+
+                    if (rect.contains(mouseMoveEvent->globalPos()))
+                    {
+                        m_window->MenuBar()->show();
+                    }
+                }
+                else
+                {
+                    QRect rect = QRect(m_window->MenuBar()->mapToGlobal(QPoint(0, 0)), m_window->MenuBar()->size());
+
+                    if (!rect.contains(mouseMoveEvent->globalPos()))
+                    {
+                        m_window->MenuBar()->hide();
+                    }
+                }
+            }
+            else if (event->type() == QEvent::Leave && (object == this))
+            {
+                m_window->MenuBar()->hide();
+            }
+        }
+
+        return QMainWindow::eventFilter(object, event);
+    }
+
+    QtWindow* m_window;
+};
+
+
 class QSdlWindow : public QWindow
 {
 public:
     QSdlWindow(QtWindow* owner, Renderer renderer)
-        : m_owner(owner)
+            : m_owner(owner)
     {
-        switch (renderer)
-        {
-            case Renderer::Dx11:
-                setSurfaceType(QSurface::Direct3DSurface);
-                break;
-            case Renderer::Metal: 
-                setSurfaceType(QSurface::MetalSurface);
-                break;
-            case Renderer::OpenGl:
-                SDL_SetHint(SDL_HINT_VIDEO_FOREIGN_WINDOW_OPENGL, "1");
-                setSurfaceType(QSurface::OpenGLSurface);
-                break;
-            default: 
-                break;
-        }
+      switch (renderer)
+      {
+        case Renderer::Dx11:
+          setSurfaceType(QSurface::Direct3DSurface);
+          break;
+        case Renderer::Metal:
+          setSurfaceType(QSurface::MetalSurface);
+          break;
+        case Renderer::OpenGl:
+          SDL_SetHint(SDL_HINT_VIDEO_FOREIGN_WINDOW_OPENGL, "1");
+          setSurfaceType(QSurface::OpenGLSurface);
+          break;
+        default:
+          break;
+      }
     }
 
     virtual ~QSdlWindow() = default;
 
     SDL_Window* Initialize(int w, int h, int x, int y)
     {
-        void*  windowId = reinterpret_cast<void*>(winId());
-        m_window = SDL_CreateWindowFrom(windowId);
+      void*  windowId = reinterpret_cast<void*>(winId());
+      m_window = SDL_CreateWindowFrom(windowId);
 
-        setBaseSize(QSize(w, h));
-        setPosition(QPoint(x, y));
-        //requestUpdate();
+      setBaseSize(QSize(w, h));
+      setPosition(QPoint(x, y));
+      //requestUpdate();
 
-        return m_window;
+      return m_window;
     }
 
     void Update()
     {
-        //requestUpdate();
+      //requestUpdate();
     }
 
     virtual bool event(QEvent* event)
     {
-        static_assert((QEvent::User < ONS_USEREVENT_START) && (ONS_USEREVENT_END < QEvent::MaxUser));
+      static_assert((QEvent::User < ONS_USEREVENT_START) && (ONS_USEREVENT_END < QEvent::MaxUser));
 
-        //if (m_window == NULL)
-        //    return QWindow::event(event);
+      //if (m_window == NULL)
+      //    return QWindow::event(event);
 
-        //fprintf(stderr, "QtEvent %d\n", event->type());
-        switch (event->type())
+      //fprintf(stderr, "QtEvent %d\n", event->type());
+      switch (event->type())
+      {
+        case QEvent::User:
         {
-            case QEvent::User:
-            {
-                ONScripterCustomQtEvent* qtEvent = static_cast<ONScripterCustomQtEvent*>(event);
-                SDL_Event event;
-                event.type = qtEvent->m_customEvent;
-                event.user.code = qtEvent->m_value;
+          ONScripterCustomQtEvent* qtEvent = static_cast<ONScripterCustomQtEvent*>(event);
+          SDL_Event event;
+          event.type = qtEvent->m_customEvent;
+          event.user.code = qtEvent->m_value;
 
-                m_events.push_back(event);
-                return true;
-            }
-            case QEvent::Move:
-            {
-                QMoveEvent* qtEvent = static_cast<QMoveEvent*>(event);
-                SDL_Event sdlEvent;
-                sdlEvent.type = SDL_WINDOWEVENT;
-                sdlEvent.window.event = SDL_WINDOWEVENT_MOVED;
-                sdlEvent.window.data1 = qtEvent->pos().x();
-                sdlEvent.window.data2 = qtEvent->pos().y();
-
-                m_events.push_back(sdlEvent);
-                return true;
-            }
-            case QEvent::Resize:
-            {
-                QResizeEvent* qtEvent = static_cast<QResizeEvent*>(event);
-
-                SDL_Event sdlEvent;
-                sdlEvent.type = SDL_WINDOWEVENT;
-
-                sdlEvent.window.event = SDL_WINDOWEVENT_SIZE_CHANGED;
-                sdlEvent.window.data1 = qtEvent->size().width();
-                sdlEvent.window.data2 = qtEvent->size().height();
-
-                m_events.push_back(sdlEvent);
-
-                sdlEvent.window.event = SDL_WINDOWEVENT_RESIZED;
-                sdlEvent.window.data1 = qtEvent->size().width();
-                sdlEvent.window.data2 = qtEvent->size().height();
-
-                m_events.push_back(sdlEvent);//SDL_PushEvent(&sdlEvent);
-                return true;
-            }
-            case QEvent::Close:
-            {
-                QCloseEvent* qtEvent = static_cast<QCloseEvent*>(event);
-                SDL_Event sdlEvent;
-                sdlEvent.type = SDL_QUIT;
-
-                m_events.push_back(sdlEvent);
-                return QWindow::event(event);
-            }
-            default:
-            {
-                return QWindow::event(event);
-            }
+          m_events.push_back(event);
+          return true;
         }
-        //if (event->type() == QEvent::UpdateRequest)
-        //{
-        //    Update();
-        //    return false;
-        //}
-        //else 
+        case QEvent::Move:
+        {
+          QMoveEvent* qtEvent = static_cast<QMoveEvent*>(event);
+          SDL_Event sdlEvent;
+          sdlEvent.type = SDL_WINDOWEVENT;
+          sdlEvent.window.event = SDL_WINDOWEVENT_MOVED;
+          sdlEvent.window.data1 = qtEvent->pos().x();
+          sdlEvent.window.data2 = qtEvent->pos().y();
+
+          m_events.push_back(sdlEvent);
+          return true;
+        }
+        case QEvent::Resize:
+        {
+
+          QResizeEvent* qtEvent = static_cast<QResizeEvent*>(event);
+
+          SDL_Event sdlEvent;
+          sdlEvent.type = SDL_WINDOWEVENT;
+
+          float ratio = m_owner->m_mainWindow->devicePixelRatio();
+
+          sdlEvent.window.event = SDL_WINDOWEVENT_SIZE_CHANGED;
+          sdlEvent.window.data1 = ratio * qtEvent->size().width();
+          sdlEvent.window.data2 = ratio * qtEvent->size().height();
+
+          //sdlEvent.window.data1 = qtEvent->size().width();
+          //sdlEvent.window.data2 = qtEvent->size().height();
+
+          m_events.push_back(sdlEvent);
+
+          sdlEvent.window.event = SDL_WINDOWEVENT_RESIZED;
+          sdlEvent.window.data1 = ratio * qtEvent->size().width();
+          sdlEvent.window.data2 = ratio * qtEvent->size().height();
+
+          //sdlEvent.window.data1 = qtEvent->size().width();
+          //sdlEvent.window.data2 = qtEvent->size().height();
+
+          m_events.push_back(sdlEvent);//SDL_PushEvent(&sdlEvent);
+
+          qtEvent->accept();
+          return true;
+        }
+        case QEvent::Close:
+        {
+          QCloseEvent* qtEvent = static_cast<QCloseEvent*>(event);
+          SDL_Event sdlEvent;
+          sdlEvent.type = SDL_QUIT;
+
+          m_events.push_back(sdlEvent);
+          return QWindow::event(event);
+        }
+        default:
+        {
+          return QWindow::event(event);
+        }
+      }
+      //if (event->type() == QEvent::UpdateRequest)
+      //{
+      //    Update();
+      //    return false;
+      //}
+      //else
     }
 
     virtual void closeEvent(QCloseEvent*)
     {
-        SDL_Event sdlEvent;
-        sdlEvent.type = SDL_QUIT;
+      SDL_Event sdlEvent;
+      sdlEvent.type = SDL_QUIT;
 
-        m_events.push_back(sdlEvent);
+      m_events.push_back(sdlEvent);
     }
 
     virtual void exposeEvent(QExposeEvent*)
     {
-        //requestUpdate();
+      //requestUpdate();
     }
 
     //virtual void resizeEvent(QResizeEvent* aEvent)
@@ -477,73 +546,15 @@ public:
     std::vector<SDL_Event> m_events;
 
 private:
-    QtWindow* m_owner = NULL;
-    SDL_Window* m_window = NULL;
+    QtWindow* m_owner = nullptr;
+    SDL_Window* m_window = nullptr;
 };
-
-class SdlMainWindow : public QMainWindow
-{
-    Q_OBJECT
-
-public:
-    SdlMainWindow(QtWindow* window)
-        : m_window(window)
-    {
-
-    }
-
-protected:
-    void closeEvent(QCloseEvent* event)
-    {
-        Window::SendCustomEventStatic(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
-    }
-
-    bool eventFilter(QObject* object, QEvent* event)
-    {
-        if (m_window->m_qtapplication.activePopupWidget() == NULL && m_window->m_mainWindow->isFullScreen())
-        {
-            if (event->type() == QEvent::MouseMove)
-            {
-                QMouseEvent* mouseMoveEvent = static_cast<QMouseEvent*>(event);
-                if (menuBar()->isHidden())
-                {
-                    QRect rect = geometry();
-                    rect.setHeight(25);
-
-                    if (rect.contains(mouseMoveEvent->globalPos()))
-                    {
-                        menuBar()->show();
-                    }
-                }
-                else
-                {
-                    QRect rect = QRect(menuBar()->mapToGlobal(QPoint(0, 0)), menuBar()->size());
-
-                    if (!rect.contains(mouseMoveEvent->globalPos()))
-                    {
-                        menuBar()->hide();
-                    }
-                }
-            }
-            else if (event->type() == QEvent::Leave && (object == this))
-            {
-                menuBar()->hide();
-            }
-        }
-
-        return QMainWindow::eventFilter(object, event);
-    }
-
-    QtWindow* m_window;
-};
-
-
 
 QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
-    : Window(m_onscripterLabel)
+    : Window(onscripter)
     , m_qtapplication(argc, &argv)
 {
-    if (s_window != NULL)
+    if (s_window != nullptr)
         fprintf(stderr, "Game has created two instances of Window, there should only be one.");
     s_window = this;
     m_onscripterLabel = onscripter;
@@ -576,6 +587,7 @@ QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
     m_mainWindow = new SdlMainWindow(this);
     m_sdlWindow = new QSdlWindow(this, preferredRenderer);
     m_sdlWidget = QWidget::createWindowContainer(m_sdlWindow);
+    m_sdlWidget->setMinimumSize(10, 10);
     m_sdlWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_window = m_sdlWindow->Initialize(w, h, x, y);
     m_mainWindow->setCentralWidget(m_sdlWidget);
@@ -693,14 +705,14 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
         m_originalPosition = m_mainWindow->pos();
         m_originalGeometry = m_sdlWidget->geometry();
         m_wasMaximized = m_mainWindow->isMaximized();
-        m_mainWindow->menuBar()->hide();
+        MenuBar()->hide();
         m_mainWindow->showFullScreen();
 
         focusSwap();
     }
     else if (m_wasMaximized)
     {
-        m_mainWindow->menuBar()->show();
+        MenuBar()->show();
         m_mainWindow->showMaximized();
 
         focusSwap();
@@ -709,7 +721,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
     }
     else
     {
-        m_mainWindow->menuBar()->show();
+        MenuBar()->show();
         m_mainWindow->resize(width, height);
         m_mainWindow->showNormal();
 
@@ -719,7 +731,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscr
 
         // Adjust the total height of the window so that the widget we're rendering into is the requested
         // size, otherwise the menubar will take some height from it.
-        int menubarHeight = m_mainWindow->menuBar()->geometry().height();
+        int menubarHeight = MenuBar()->geometry().height();
         m_mainWindow->resize(width, height + menubarHeight);
 
         m_wasMaximized = false;
@@ -975,26 +987,7 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
 
 void QtWindow::CreateMenuBar()
 {
-    std::vector<MenuBarInput> menuBarEntriesUtf8 = m_menuBarEntries;
-
-
-    // We should do this at a higher level, but we don't have a cross platform decoder
-    // so briefly we'll do this only in Qt. Actually never mind Qt6 killed proper text 
-    // encoding support, but keeping this in here for later.
-    //QStringDecoder decoder{ "SHIFT-JIS" };
-    //
-    //if (m_onscripterLabel->script_h.enc.getEncoding() == Encoding::CODE_CP932)
-    //{
-    //    for (auto& entry : menuBarEntriesUtf8)
-    //    {
-    //        QString decodedString = decoder.decode(entry.m_label.c_str());
-    //        entry.m_label = decodedString.toStdString();            
-    //    }
-    //}
-
-    MenuBarInput menuBarTree = ParseMenuBarTree(menuBarEntriesUtf8);
-
-
+    MenuBarInput menuBarTree = ParseMenuBarTree(m_menuBarEntries);
 
     // FIXME: Memory leak? Or will deleting the existing menuBar clean them up?
     for (auto& actionsEntry : m_actionsMap)
@@ -1016,9 +1009,38 @@ void QtWindow::CreateMenuBar()
     // when clicking on one of our dialogs, for now, do not set it, so that it's the same
     // across all Windows (the central window, and dialogs).
 #ifndef APPLE
-    m_mainWindow->setMenuBar(menuBar);
+    //m_mainWindow->setMenuBar(menuBar);
 #endif
 }
 
+
+WindowSize QtWindow::GetWindowSize()
+{
+  WindowSize size = Window::GetWindowSize();
+  size.w = m_sdlWidget->geometry().width();
+  size.h = m_sdlWidget->geometry().height();
+  //size.w *= m_mainWindow->devicePixelRatio();
+  //size.h *= m_mainWindow->devicePixelRatio();
+  return size;
+}
+
+
+WindowSize QtWindow::GetDesktopSize()
+{
+  WindowSize size = Window::GetDesktopSize();
+  //float ratio = m_mainWindow->screen()->devicePixelRatio();
+  //size.w *= ratio;
+  //size.h *= ratio;
+  return size;
+}
+
+
+QMenuBar* QtWindow::MenuBar()
+{
+  if (m_menuBar)
+    return m_menuBar;
+
+  return m_mainWindow->menuBar();
+}
 
 #include "QtWindow.moc"

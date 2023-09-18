@@ -48,6 +48,10 @@ enum class MenuBarFunction
     UNKNOWN,
 };
 
+struct WindowSize
+{
+    int w, h;
+};
 
 MenuBarFunction functionNameToMenuBarFunction(const char* functionName);
 bool IsCheckable(MenuBarFunction function);
@@ -107,6 +111,23 @@ public:
     bool TranslateMouse(SDLEvent& event)
     {
         return TranslateMouse(event.x, event.y, true);
+    }
+
+    virtual WindowSize GetWindowSize()
+    {
+      WindowSize size;
+      SDL_GetRendererOutputSize(m_renderer, &size.w, &size.h);
+      return size;
+    }
+
+    virtual WindowSize GetDesktopSize()
+    {
+      WindowSize size;
+      SDL_DisplayMode DM;
+      SDL_GetDesktopDisplayMode(0, &DM);
+      size.w = DM.w;
+      size.h = DM.h;
+      return size;
     }
 
     bool IgnoreContinuousMouseMove = true;

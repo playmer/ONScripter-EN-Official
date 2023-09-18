@@ -385,9 +385,9 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
   SDL_SetRenderDrawColor(m_window->GetRenderer(), 0, 0, 0, 255);
   SDL_RenderClear(m_window->GetRenderer());
 
-  bool doIt = false;
-  if (doIt)
+  {
     SDL_SaveBMP(accumulation_surface, "Test.bmp");
+  }
 
   auto texture = SDL_CreateTextureFromSurface(m_window->GetRenderer(), accumulation_surface);
   DisplayTexture(texture);
@@ -404,12 +404,18 @@ void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
     int imageResolutionX, imageResolutionY, access;
     SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
 
-    int windowResolutionX, windowResolutionY;
-    SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
+    //int windowResolutionX, windowResolutionY;
+    //SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
+    WindowSize size = m_window->GetWindowSize();
+    int windowResolutionX = size.w;
+    int windowResolutionY = size.h;
+
 
     float scaleHeight = windowResolutionY / (float)imageResolutionY;
     float scaleWidth = windowResolutionX / (float)imageResolutionX;
     float scale = std::min(scaleHeight, scaleWidth);
+
+    fprintf(stderr, "%f; (%d, %d); (%d, %d)\n", scale, imageResolutionX, imageResolutionY, windowResolutionX, windowResolutionY);
 
     SDL_Rect dstRect;
     dstRect.w = scale * imageResolutionX;
@@ -417,7 +423,15 @@ void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
     dstRect.x = (windowResolutionX - dstRect.w) / 2;
     dstRect.y = (windowResolutionY - dstRect.h) / 2;
 
-    SDL_RenderCopy(m_window->GetRenderer(), texture, NULL /*&dst_rect*/, &dstRect);
+
+    dstRect.w = imageResolutionX;
+    dstRect.h = imageResolutionY;
+    dstRect.x = 0;
+    dstRect.y = 0;
+
+    fprintf(stderr, "%(%d, %d); (%d, %d)\n", dstRect.x, dstRect.y, dstRect.w, dstRect.h);
+
+    SDL_RenderCopy(m_window->GetRenderer(), texture, NULL /*srcrect*/, &dstRect);
     SDL_RenderPresent(m_window->GetRenderer());
 }
 
@@ -629,10 +643,15 @@ void ONScripterLabel::initSDL()
     scr_stretch_y = 1.0;
 #endif
       if (scaled_flag) {
-        SDL_DisplayMode DM;
-        SDL_GetDesktopDisplayMode(0, &DM);
-        int native_width = DM.w;
-        int native_height = DM.h;
+
+        //SDL_DisplayMode DM;
+        //SDL_GetDesktopDisplayMode(0, &DM);
+        //int native_width = DM.w;
+        //int native_height = DM.h;
+
+        WindowSize size = m_window->GetDesktopSize();
+        int native_width = size.w;
+        int native_height = size.h;
         
         // Resize up to fill screen
 #ifndef RCA_SCALE

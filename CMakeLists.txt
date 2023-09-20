@@ -472,14 +472,13 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT o
 
 ###############
 # Install
-install(TARGETS onscripter_en
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin/$<CONFIG>/"
+    DESTINATION .
 )
 
-if (ONS_USE_QT_WINDOW)
-    install(SCRIPT ${deploy_script})
-endif()
+#if (ONS_USE_QT_WINDOW)
+#    install(SCRIPT ${deploy_script})
+#endif()
 
 set(CPACK_PACKAGE_NAME "ONScripter-EN")
 set(CPACK_PACKAGE_VERSION_MAJOR ${Y})

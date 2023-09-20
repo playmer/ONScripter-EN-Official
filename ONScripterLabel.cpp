@@ -388,6 +388,10 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
   SDL_SetRenderDrawColor(m_window->GetRenderer(), 0, 0, 0, 255);
   SDL_RenderClear(m_window->GetRenderer());
 
+  // If you need to check the output of the surface before rendering it out, you can debug break
+  // just before the if and move the stack pointer just past the conditional. However due to it
+  // being unreachable, it's likely this is considered Undefined Behavior, and thus I've only found
+  // this to work on MSVC. I plan to just make this a hotkeyable thing in the future.
   bool doIt = false;
   if (doIt)
     SDL_SaveBMP(accumulation_surface, "Test.bmp");

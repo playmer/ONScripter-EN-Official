@@ -1,3 +1,5 @@
+
+include(cmake/ProjectVariablePreparation.cmake)
 cmake_minimum_required(VERSION 3.20.0 FATAL_ERROR) 
 project(onscripter_en LANGUAGES C CXX)
 
@@ -11,7 +13,7 @@ if (NOT ANDROID AND NOT MINGW)
 elseif (MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-else()
+else() # Android
     option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
 endif()
@@ -47,8 +49,6 @@ find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Freetype REQUIRED)
-find_package(Ogg CONFIG REQUIRED)
-find_package(Vorbis CONFIG REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
 find_package(SDL2_mixer CONFIG REQUIRED)
@@ -75,17 +75,69 @@ endif()
 # onscripter-en Build Tools
 
 # embed
-add_executable(onscripter_embed embed.cpp)
 
-target_compile_features(onscripter_embed PUBLIC cxx_std_11)
+# We should make some sort of detection variable to determine if we should use a script vs the embed program,
+# Things get complicated on Apple under the XCode generator for example, these docs will help:
+# https://cmake.org/cmake/help/latest/variable/CMAKE_CROSSCOMPILING.html
+if (ANDROID)
+    find_program(TOOL_POWERSHELL NAMES powershell powershell.exe)
+    find_program(TOOL_PYTHON NAMES python python3)
+
+    message(STATUS "Powershell: ${TOOL_POWERSHELL}")
+    message(STATUS "Python: ${TOOL_PYTHON}")
+
+    if (TOOL_POWERSHELL)
+        set(EMBED_COMMAND ${TOOL_POWERSHELL} cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+    elseif(TOOL_PYTHON)
+        set(EMBED_COMMAND ${TOOL_PYTHON} cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+    else()
+        message(STATUS "We're cross compiling, and couldn't find Powershell or Python 3, we're going to use CMake to generate the Resources file, but it'll be prohibitively slow (~15 minutes). Consider installing one of the above.")
+        set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+    endif()
+    
+    set(ADDITIONAL_EMBED_DEPENDENCIES "")
+else()
+    add_executable(onscripter_embed embed.cpp)
+    target_compile_features(onscripter_embed PUBLIC cxx_std_11)
+
+    set(EMBED_COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp)
+    set(ADDITIONAL_EMBED_DEPENDENCIES onscripter_embed)
+endif()
+
 add_custom_command(
     OUTPUT resources.cpp
-    COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp
-    DEPENDS onscripter_embed ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+    COMMAND ${EMBED_COMMAND}
+    DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
     COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
     VERBATIM
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 set(I \"ons-en.ico\")
@@ -128,7 +180,7 @@ endif()
 
 # Qt is a little weird
 if (ANDROID)
-    add_library(onscripter_en)
+    add_library(onscripter_en SHARED)
 elseif (ONS_USE_QT_WINDOW)
     qt_add_executable(onscripter_en)
     qt_disable_unicode_defines(onscripter_en)
@@ -210,7 +262,18 @@ endif()
 #########
 # Ogg Vorbis Support
 if (ONS_USE_OGG_VORBIS)
+    find_package(Ogg CONFIG REQUIRED)
+    find_package(Vorbis CONFIG REQUIRED)
+
     target_compile_definitions(onscripter_en PRIVATE -DUSE_OGG_VORBIS)
+
+    target_link_libraries(onscripter_en
+    PRIVATE
+        Ogg::ogg
+        Vorbis::vorbis
+        Vorbis::vorbisfile
+        Vorbis::vorbisenc
+    )
 endif()
 
 target_include_directories(onscripter_en 
@@ -236,8 +299,7 @@ if (ONS_USE_QT_WINDOW)
     else()
         set(executable_path "\${QT_DEPLOY_BIN_DIR}/$<TARGET_FILE_NAME:onscripter_en>")
     endif()
-
-    # Helper app, not necessarily built as part of this project.
+    
     # Generate a deployment script to be executed at install time
     qt_generate_deploy_script(
         TARGET onscripter_en
@@ -250,17 +312,18 @@ if (ONS_USE_QT_WINDOW)
     )")
 endif()
 
+
+
+#########
+# onScripter_en settings and libraries
+
 target_link_libraries(onscripter_en
 PRIVATE
     BZip2::BZip2
     ZLIB::ZLIB
     PNG::PNG
     Freetype::Freetype
-    Ogg::ogg
     smpeg2
-    Vorbis::vorbis
-    Vorbis::vorbisfile
-    Vorbis::vorbisenc
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
@@ -406,4 +469,8 @@ if (ONS_USE_QT_WINDOW)
     install(SCRIPT ${deploy_script})
 endif()
 
+set(CPACK_PACKAGE_NAME "ONScripter-EN")
+set(CPACK_PACKAGE_VERSION_MAJOR ${Y})
+set(CPACK_PACKAGE_VERSION_MINOR ${M})
+set(CPACK_PACKAGE_VERSION_PATCH ${D})
 include(CPack)

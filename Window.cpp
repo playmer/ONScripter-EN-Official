@@ -284,7 +284,7 @@ void Window::InsertMenu(MenuBarFunction function, const char* label, int depth)
         std::string shiftJisLabel = label;
         std::string transcodedLabel;
         transcodedLabel.resize(shiftJisLabel.length() * 2 + 3);
-        DirectReader::convertFromSJISToUTF8(transcodedLabel.data(), shiftJisLabel.c_str());
+        DirectReader::convertFromSJISToUTF8(&transcodedLabel[0], shiftJisLabel.c_str());
 
         m_menuBarEntries.emplace_back(function, transcodedLabel, depth);
     }

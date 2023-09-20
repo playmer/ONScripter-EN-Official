@@ -1,0 +1,6 @@
+com.test.game:mipmap/ic_launcher = 0x7f020000
+com.test.game:color/colorPrimaryDark = 0x7f010002
+com.test.game:string/app_name = 0x7f030000
+com.test.game:style/AppTheme = 0x7f040000
+com.test.game:color/colorPrimary = 0x7f010001
+com.test.game:color/colorAccent = 0x7f010000

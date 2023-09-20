@@ -7,19 +7,29 @@ if (APPLE)
     enable_language(OBJCXX)
 endif()
 
-if (NOT ANDROID AND NOT MINGW)
-    option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" ON)
-    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-elseif (MINGW)
-    option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
-    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-else() # Android
-    option(ONS_USE_AVIFILE "Choose whether to enable Lua support or not" OFF)
+if(EMSCRIPTEN)
+    option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
+    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
+    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" OFF)
+elseif(MINGW)
+    option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
+    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
+elseif(ANDROID) # Android
+    option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
+    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
+    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
+else()
+    option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
+    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
 endif()
 
 option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
-option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
 option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 option(ONS_USE_MESSAGEBOX "Determines whether Message Boxes are create on Windows" ON)
 option(ONS_USE_OGG_VORBIS "Choose whether to enable Lua support or not" ON)
@@ -30,20 +40,28 @@ endif()
 
 ###############
 # onscripter-en required Libraries/Packages
-find_library(SMPEG2_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-find_library(SMPEG2_DEBUG_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-#find_file(SMPEG2_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
-#find_file(SMPEG2_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
 
-add_library(smpeg2 STATIC IMPORTED [GLOBAL])
-# set the location that we are going to import the library from
-set_target_properties(
-    smpeg2 
-    PROPERTIES
-        IMPORTED_LOCATION_DEBUG ${SMPEG2_DEBUG_LIBRARY}
-        IMPORTED_LOCATION_RELEASE ${SMPEG2_LIBRARY}
-        IMPORTED_LOCATION ${SMPEG2_LIBRARY}
-)
+if (ONS_USE_SMPEG)
+    find_library(SMPEG2_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+    find_library(SMPEG2_DEBUG_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+    #find_file(SMPEG2_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
+    #find_file(SMPEG2_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
+
+    add_library(smpeg2 STATIC IMPORTED [GLOBAL])
+    # set the location that we are going to import the library from
+    set_target_properties(
+        smpeg2 
+        PROPERTIES
+            IMPORTED_LOCATION_DEBUG ${SMPEG2_DEBUG_LIBRARY}
+            IMPORTED_LOCATION_RELEASE ${SMPEG2_LIBRARY}
+            IMPORTED_LOCATION ${SMPEG2_LIBRARY}
+    )
+
+    message(STATUS SMPEG2_SHARED_DEBUG_LIBRARY: ${SMPEG2_SHARED_DEBUG_LIBRARY})
+    message(STATUS SMPEG2_DEBUG_LIBRARY: ${SMPEG2_DEBUG_LIBRARY})
+    message(STATUS SMPEG2_SHARED_LIBRARY: ${SMPEG2_SHARED_LIBRARY})
+    message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
+endif()
 
 find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -57,11 +75,6 @@ find_package(SDL2_ttf CONFIG REQUIRED)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-message(STATUS SMPEG2_SHARED_DEBUG_LIBRARY: ${SMPEG2_SHARED_DEBUG_LIBRARY})
-message(STATUS SMPEG2_DEBUG_LIBRARY: ${SMPEG2_DEBUG_LIBRARY})
-message(STATUS SMPEG2_SHARED_LIBRARY: ${SMPEG2_SHARED_LIBRARY})
-message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
 
 
 #########
@@ -79,7 +92,7 @@ endif()
 # We should make some sort of detection variable to determine if we should use a script vs the embed program,
 # Things get complicated on Apple under the XCode generator for example, these docs will help:
 # https://cmake.org/cmake/help/latest/variable/CMAKE_CROSSCOMPILING.html
-if (ANDROID)
+if (ANDROID OR EMSCRIPTEN)
     find_program(TOOL_POWERSHELL NAMES powershell powershell.exe)
     find_program(TOOL_PYTHON NAMES python python3)
 
@@ -171,7 +184,7 @@ add_subdirectory(SDLHelper_CD)
 
 ###############
 # onscripter-en Tools
-if (NOT ANDROID)
+if (NOT ANDROID AND NOT EMSCRIPTEN)
     add_subdirectory(tools)
 endif()
 
@@ -185,8 +198,13 @@ elseif (ONS_USE_QT_WINDOW)
     qt_add_executable(onscripter_en)
     qt_disable_unicode_defines(onscripter_en)
 else()    
-    add_executable(onscripter_en
-            QtDialogs.cpp)
+    add_executable(onscripter_en)
+
+    if (EMSCRIPTEN)
+        #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY")
+        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY")
+        set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    endif ()
 endif()
 
 #########
@@ -229,6 +247,8 @@ if (ONS_USE_LIB_MAD)
             IMPORTED_LOCATION_DEBUG ${LIBMAD_DEBUG_LIBRARY}
             IMPORTED_LOCATION ${LIBMAD_LIBRARY}
     )
+    
+    target_compile_definitions(onscripter_en PUBLIC MP3_MAD)
 
     target_link_libraries(onscripter_en PRIVATE libmad)
     
@@ -321,6 +341,11 @@ endif()
 
 #########
 # onScripter_en settings and libraries
+
+
+if (ONS_USE_SMPEG)
+    target_link_libraries(onscripter_en PRIVATE smpeg2)
+endif()
 
 target_link_libraries(onscripter_en
 PRIVATE

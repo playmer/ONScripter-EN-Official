@@ -20,6 +20,27 @@
             }
         },
         {
+            "name": "emscripten",
+            "displayName": "Ninja Multi-Config",
+            "description": "Configure with vcpkg toolchain and generate Ninja project files for all configurations",
+            "binaryDir": "${sourceDir}/builds/${presetName}",
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "${sourceDir}/extlib/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                },
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+                },
+                "VCPKG_TARGET_TRIPLET": {
+                    "type": "string",
+                    "value": "wasm32-emscripten"
+                }
+            }
+        },
+        {
             "name": "android_x86_64",
             "displayName": "Android x86_64",
             "description": "Configure with vcpkg toolchain and generate Ninja project files for all android configuration",
@@ -170,6 +191,26 @@
         {
             "name": "ninja-vcpkg",
             "configurePreset": "ninja",
+            "displayName": "Build",
+            "description": "Build with Ninja/vcpkg"
+        },
+        {
+            "name": "emscripten-debug",
+            "configurePreset": "emscripten",
+            "displayName": "Build (Debug)",
+            "description": "Build with Ninja/vcpkg (Debug)",
+            "configuration": "Debug"
+        },
+        {
+            "name": "emscripten-release",
+            "configurePreset": "emscripten",
+            "displayName": "Build (Release)",
+            "description": "Build with Ninja/vcpkg (Release)",
+            "configuration": "Release"
+        },
+        {
+            "name": "emscripten-vcpkg",
+            "configurePreset": "emscripten",
             "displayName": "Build",
             "description": "Build with Ninja/vcpkg"
         },

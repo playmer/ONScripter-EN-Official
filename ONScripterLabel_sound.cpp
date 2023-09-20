@@ -966,6 +966,7 @@ int ONScripterLabel::playAVI( const char *filename, bool click_flag )
 
 void ONScripterLabel::stopMovie(SMPEG *mpeg)
 {
+#ifndef MP3_MAD
     if (mpeg) {
         SMPEG_Info info;
         SMPEG_getinfo(mpeg, &info);
@@ -982,6 +983,7 @@ void ONScripterLabel::stopMovie(SMPEG *mpeg)
     movie_buffer = NULL;
     if (surround_rects) delete[] surround_rects;
     surround_rects = NULL;
+#endif
 }
 
 void ONScripterLabel::stopBGM( bool continue_flag )

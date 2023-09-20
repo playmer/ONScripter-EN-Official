@@ -40,7 +40,10 @@
     },
     "sdl2-mixer",
     "sdl2-ttf",
-    "smpeg2",
+    {
+      "name": "smpeg2",
+      "platform": "(windows|osx|ios|linux|android)"
+    },
     "zlib"
   ]
 }

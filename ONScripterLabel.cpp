@@ -513,9 +513,16 @@ void ONScripterLabel::initSDL()
     // We're about to resize up to roughly the display size, we should try to fill as much of it as possible, without
     // pushing the top window frame offscreen.
 #ifdef USE_QT_WINDOW
-    //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
-    //m_window = CreateQtWindow(this, 800, 600, 50, 50);
+    // We have issues on Mac drawing onto the QtWindow (possibly caused by HiDPI discrepancies between Qt and SDL,
+    // these could be solved with a custom renderer, or possibly by changes in SDL or Qt. Instead, since all we use
+    // Qt for regarding the actual Window itself is the MenuBar, and because on Mac we can use a universal MenuBar,
+    // we instead use a Hybrid QtBasicWindow which only overrides the menubar code. This class is not intended for
+    // any other platform and is not tested on them.
+#ifdef MACOSX
     m_window = CreateQtBasicWindow(this, 800, 600, 50, 50);
+#else
+    m_window = CreateQtWindow(this, 800, 600, 50, 50);
+#endif
 #else
     m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif

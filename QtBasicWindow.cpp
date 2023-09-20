@@ -1,3 +1,5 @@
+#ifdef MACOSX
+
 #include "QInputDialog"
 
 #include "QLabel"
@@ -331,3 +333,5 @@ void QtBasicWindow::CreateMenuBar()
 }
 
 #include "QtBasicWindow.moc"
+
+#endif

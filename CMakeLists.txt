@@ -201,7 +201,7 @@ else()
     add_executable(onscripter_en)
 
     if (EMSCRIPTEN)
-        target_link_options(onscripter_en PUBLIC -s ASYNCIFY)
+        target_link_options(onscripter_en PUBLIC -s ASYNCIFY "--preload-file" ${CMAKE_CURRENT_LIST_DIR}/game@/)
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
     endif ()
 endif()

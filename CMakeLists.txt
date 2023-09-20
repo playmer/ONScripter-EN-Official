@@ -201,8 +201,7 @@ else()
     add_executable(onscripter_en)
 
     if (EMSCRIPTEN)
-        #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY")
-        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY")
+        target_link_options(onscripter_en PUBLIC -s ASYNCIFY)
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
     endif ()
 endif()
@@ -353,7 +352,6 @@ PRIVATE
     ZLIB::ZLIB
     PNG::PNG
     Freetype::Freetype
-    smpeg2
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>

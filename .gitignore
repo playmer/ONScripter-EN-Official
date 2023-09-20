@@ -1,6 +1,7 @@
 build*/
 .vs/
 .DS_Store
+game/
 .idea/
 *.o
 *.lo

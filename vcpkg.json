@@ -13,21 +13,22 @@
       "platform": "(windows|osx|ios|linux)&(!mingw)"
     },
     "freetype",
-    "libjpeg-turbo",
-    "libmad",
+    {
+      "name": "libjpeg-turbo",
+      "platform": "!emscripten"
+    },
     {
       "name": "libmad",
-      "platform": "windows|osx|ios|linux"
+      "platform": "windows|osx|ios|linux|emscripten"
     },
     "libogg",
     "libpng",
     "libvorbis",
     "lua",
-    "sdl2",
     {
       "name": "sdl2",
       "features": [ "base", "vulkan" ],
-      "platform": "windows|osx|ios|android"
+      "platform": "windows|osx|ios|android|emscripten"
     },
     {
       "name": "sdl2",
@@ -36,7 +37,12 @@
     },
     {
       "name": "sdl2-image",
-      "features": [ "libjpeg-turbo" ]
+      "features": [ "libjpeg-turbo" ],
+      "platform": "!emscripten"
+    },
+    {
+      "name": "sdl2-image",
+      "platform": "emscripten"
     },
     "sdl2-mixer",
     "sdl2-ttf",

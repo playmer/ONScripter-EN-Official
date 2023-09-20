@@ -2,6 +2,10 @@
 #include "ONScripterLabel.h"
 #include "SDL_image.h"
 
+#ifdef __EMSCRIPTEN__
+    #include <emscripten.h>
+#endif
+
 #if defined(WIN32) || defined(APPLE)
     #include "SDL_syswm.h"
 #endif
@@ -23,10 +27,20 @@ BasicWindow::BasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y
 
 int BasicWindow::PollEvents(SDL_Event& event)
 {
-    return SDL_PollEvent(&event);
+    int pending = SDL_PollEvent(&event);
+
+#ifdef __EMSCRIPTEN__
+    if (pending)
+    {
+        emscripten_sleep(1);
+    }
+#endif
+    return pending;
 }
+
 int BasicWindow::WaitEvents(SDL_Event& event)
 {
+    emscripten_sleep(1);
     auto ret = SDL_WaitEvent(&event);
     SDL_Event temp_event;
     while (IgnoreContinuousMouseMove && event.type == SDL_MOUSEMOTION) {

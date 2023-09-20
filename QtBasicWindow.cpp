@@ -230,7 +230,7 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
             }
             case MenuBarFunction::VERSION:
             {
-              VersionDialog::showVersion("NETANNAD\nCopyright 2004.Team Netannad", NULL);
+              VersionDialog::showVersion(m_onscripterLabel->version_str, NULL);
               break;
             }
             case MenuBarFunction::WAVEOFF:

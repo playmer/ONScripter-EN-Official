@@ -40,7 +40,9 @@ int BasicWindow::PollEvents(SDL_Event& event)
 
 int BasicWindow::WaitEvents(SDL_Event& event)
 {
+#ifdef __EMSCRIPTEN__
     emscripten_sleep(1);
+#endif
     auto ret = SDL_WaitEvent(&event);
     SDL_Event temp_event;
     while (IgnoreContinuousMouseMove && event.type == SDL_MOUSEMOTION) {

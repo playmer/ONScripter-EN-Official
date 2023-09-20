@@ -79,7 +79,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: Linux Build
-          path: ${{ github.workspace }}builds/ninja/ONScripter-EN-*.zip
+          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
           
 #  linux_android:
 #    name: ubuntu-build-android
@@ -185,7 +185,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: Mac Build
-          path: ${{ github.workspace }}builds/ninja/ONScripter-EN-*.zip
+          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
   
   windows:
     name: windows-build-msvc
@@ -237,7 +237,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: Windows-MSVC Build
-          path: ${{ github.workspace }}builds/ninja/ONScripter-EN-*.zip
+          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
   
   windows_msys2:
     name: windows-build-msys2
@@ -306,4 +306,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: Windows-MinGW64-Msys2 Build
-          path: ${{ github.workspace }}builds/ninja/ONScripter-EN-*.zip
+          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip

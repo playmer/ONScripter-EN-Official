@@ -456,6 +456,8 @@ protected:
     void UpdateScreen(SDL_Rect dst_rect);
     void DisplayTexture(SDL_Texture* texture);
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
+
+
     static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
     SMPEG_Frame* frame;
     size_t frame_number = 0;

@@ -43,7 +43,7 @@ Requirements: XCode (with Command Line tools), CMake, Qt (Some env variables nee
 brew install nasm
 git clone --recurse-submodules https://github.com/playmer/ONScripter-EN-Official.git
 cd ONScripter-EN-Official
-cmake -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCMAKE_MAKE_PROGRAM=ninja --preset=ninja .
+cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_MAKE_PROGRAM=ninja --preset=ninja .
 cmake --build --preset ninja-release
 cpack --preset=ninja-package-release
 ```
@@ -56,4 +56,16 @@ Requirements: Working NDK toolchain (Some env variables needed, need to fill thi
 git clone --recurse-submodules https://github.com/playmer/ONScripter-EN-Official.git
 cd ONScripter-EN-Official/android-project
 ./BuildApk.ps1
+```
+
+## Emscripten Build
+
+Requirements: XCode (with Command Line tools), CMake, Qt (Some env variables needed, need to fill this out)
+
+```bash
+git clone --recurse-submodules https://github.com/playmer/ONScripter-EN-Official.git
+cd ONScripter-EN-Official
+cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_MAKE_PROGRAM=ninja --preset=emscripten .
+cmake --build --preset emscripten-release
+cpack --preset=emscripten-package-release
 ```

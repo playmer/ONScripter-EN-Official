@@ -89,8 +89,9 @@ MAD_WRAPPER* MAD_WRAPPER_new( const char *file, void* info, int sdl_audio )
     return init( src );
 }
 
-MAD_WRAPPER* MAD_WRAPPER_new_rwops( SDL_RWops *src, void* info, int sdl_audio )
+MAD_WRAPPER* MAD_WRAPPER_new_rwops( SDL_RWops *src, void* info, int free_src, int sdl_audio )
 {
+    // FIXME: init should respect free_src
     return init( src );
 }
 

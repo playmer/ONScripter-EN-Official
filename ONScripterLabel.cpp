@@ -426,11 +426,12 @@ void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
 
 void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
 {
+#ifndef MP3_MAD
   ONScripterLabel* onscripterLabel = static_cast<ONScripterLabel*> (data);
   onscripterLabel->frame = frame;
   ++onscripterLabel->frame_number;
+#endif
 }
-
 
 void ONScripterLabel::SetMusicVolume(int volume)
 {

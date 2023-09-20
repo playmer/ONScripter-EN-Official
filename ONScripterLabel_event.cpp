@@ -143,6 +143,8 @@ extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param )
 
 extern "C" Uint32 SDLCALL silentmovieCallback( Uint32 interval, void *param )
 {
+
+#ifndef MP3_MAD
     SMPEG **mpeg = (SMPEG **)param;
     if (*mpeg && (SMPEG_status(*mpeg) != SMPEG_PLAYING)){
         SMPEG_play( *mpeg );
@@ -150,6 +152,7 @@ extern "C" Uint32 SDLCALL silentmovieCallback( Uint32 interval, void *param )
         ONScripterLabel::clearTimer( timer_silentmovie_id );
         return 0;
     }
+#endif
 
     return interval;
 }
@@ -312,8 +315,10 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
     //event related to streaming media
     if ( event.type == ONS_SOUND_EVENT ){
         if (async_movie) {
+#ifndef MP3_MAD
             if ((SMPEG_status(async_movie) != SMPEG_PLAYING) && (movie_loop_flag))
                 SMPEG_play( async_movie );
+#endif
         } else if ( music_play_loop_flag ||
              (cd_play_loop_flag && !cdaudio_flag ) ){
             stopBGM( true );

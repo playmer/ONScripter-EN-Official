@@ -34,7 +34,7 @@
 typedef struct _MAD_WRAPPER MAD_WRAPPER;
 
 MAD_WRAPPER* MAD_WRAPPER_new( const char *file, void* info, int sdl_audio );
-MAD_WRAPPER* MAD_WRAPPER_new_rwops( SDL_RWops *src, void* info, int sdl_audio );
+MAD_WRAPPER* MAD_WRAPPER_new_rwops( SDL_RWops *src, void* info, int free_src, int sdl_audio );
 int MAD_WRAPPER_playAudio( void *userdata, Uint8 *stream, int len );
 void MAD_WRAPPER_stop( MAD_WRAPPER *mad );
 void MAD_WRAPPER_play( MAD_WRAPPER *mad );
@@ -51,6 +51,7 @@ const char* MAD_WRAPPER_error( MAD_WRAPPER *mad );
 #define SMPEG_setvolume MAD_WRAPPER_setvolume
 #define SMPEG MAD_WRAPPER
 #define SMPEG_error MAD_WRAPPER_error
+struct SMPEG_Frame;
 
 #endif
 

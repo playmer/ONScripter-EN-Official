@@ -1,7 +1,6 @@
 #ifndef __QT_BASICWINDOW_H__
 #define __QT_BASICWINDOW_H__
 
-#ifdef MACOSX
 #include <map>
 
 #include "QWindow"
@@ -46,5 +45,4 @@ private:
     QEventLoop m_eventLoop;
 };
 
-#endif
 #endif

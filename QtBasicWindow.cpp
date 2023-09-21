@@ -1,5 +1,3 @@
-#ifdef MACOSX
-
 #include "QInputDialog"
 
 #include "QLabel"
@@ -113,9 +111,9 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                 action->setChecked(IsChecked(input.m_function));
             }
 
-            QObject::connect(action, &QAction::triggered, [this, function = input.m_function]() {
-                    switch (function)
-                    {
+            QObject::connect(action, &QAction::triggered, [this, window_rect, function = input.m_function]() {
+                switch (function)
+                {
                     case MenuBarFunction::AUTO:
                     {
                         m_onscripterLabel->automode_flag = true;
@@ -125,10 +123,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::CLICKDEF:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::CLICKPAGE])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
                         m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_TO_EOP;
                         //printf("menu_click_def: disabling page-at-once mode\n");
                         break;
@@ -136,10 +134,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::CLICKPAGE:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::CLICKDEF])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
                         m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_EOP;
                         //printf("menu_click_page: enabling page-at-once mode\n");
                         break;
@@ -154,7 +152,7 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                         std::string output = "Are you sure you want to quit?";
                         if (ExitDialog::shouldExit(window_rect, output, NULL))
                         {
-                        SendCustomEvent(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
+                            SendCustomEvent(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
                         }
                         break;
                     }
@@ -165,10 +163,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::kidokuoff:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::kidokuon])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_TO_WAIT;
                         break;
@@ -176,10 +174,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::kidokuon:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::kidokuoff])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
                         break;
@@ -192,13 +190,13 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::TEXTFAST:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         m_onscripterLabel->text_speed_no = 2;
                         m_onscripterLabel->sentence_font.wait_time = -1;
@@ -207,13 +205,13 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::TEXTMIDDLE:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[MenuBarFunction::TEXTSLOW])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         m_onscripterLabel->text_speed_no = 1;
                         m_onscripterLabel->sentence_font.wait_time = -1;
@@ -222,13 +220,13 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::TEXTSLOW:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::TEXTFAST])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[MenuBarFunction::TEXTMIDDLE])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         m_onscripterLabel->text_speed_no = 0;
                         m_onscripterLabel->sentence_font.wait_time = -1;
@@ -242,10 +240,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::WAVEOFF:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::WAVEON])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         m_onscripterLabel->volume_on_flag = false;
                         break;
@@ -253,10 +251,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::WAVEON:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::WAVEOFF])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         m_onscripterLabel->volume_on_flag = true;
                         break;
@@ -264,10 +262,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::FULL:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::WINDOW])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
                         //SetVideoMode(m_sdlWidget->geometry().width(), m_sdlWidget->geometry().height(), 0, true);
                         break;
@@ -275,10 +273,10 @@ ActionOrMenu QtBasicWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::WINDOW:
                     {
                         for (auto& action : m_actionsMap[MenuBarFunction::FULL])
-                        action->setChecked(false);
+                            action->setChecked(false);
 
                         for (auto& action : m_actionsMap[function])
-                        action->setChecked(true);
+                            action->setChecked(true);
 
 
                         //SetVideoMode(m_originalGeometry.width(), m_originalGeometry.height(), 0, false);
@@ -339,5 +337,3 @@ void QtBasicWindow::CreateMenuBar()
 }
 
 #include "QtBasicWindow.moc"
-
-#endif

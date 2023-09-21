@@ -2604,6 +2604,43 @@ int ONScripterLabel::isdownCommand()
     return RET_CONTINUE;
 }
 
+int ONScripterLabel::inputstrCommand()
+{
+    script_h.readStr();
+
+    if (script_h.current_variable.type != ScriptHandler::VAR_STR)
+        errorAndExit("input: no string variable.");
+    int no = script_h.current_variable.var_no;
+
+    std::string description = script_h.readStr();
+    int maxInputLength = script_h.readInt();
+    int doubleByteInput = script_h.readInt();
+
+    bool setOptionals = false;
+    int windowHeight;
+    int windowWidth;
+    int inputAreaWidth;
+    int inputAreaHeight;
+    if (script_h.getEndStatus() & ScriptHandler::END_COMMA) {
+        windowHeight = script_h.readInt();
+        windowWidth = script_h.readInt();
+        inputAreaWidth = script_h.readInt();
+        inputAreaHeight = script_h.readInt();
+        setOptionals = true;
+    }
+
+    std::string userInput = m_window->Dialog_InputStr(description, maxInputLength, doubleByteInput,
+        setOptionals ? &windowWidth : NULL,
+        setOptionals ? &windowHeight : NULL,
+        setOptionals ? &inputAreaWidth : NULL,
+        setOptionals ? &inputAreaHeight : NULL
+    );
+    
+    setStr(&script_h.getVariableData(no).str, userInput.c_str(), userInput.size());
+
+    return RET_CONTINUE;
+}
+
 int ONScripterLabel::inputCommand()
 {
     script_h.readStr();

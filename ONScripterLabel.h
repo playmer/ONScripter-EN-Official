@@ -294,6 +294,7 @@ public:
     int isfullCommand();
     int isskipCommand();
     int isdownCommand();
+    int inputstrCommand();
     int inputCommand();
     int indentCommand();
     int humanorderCommand();

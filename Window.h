@@ -65,6 +65,12 @@ public:
     virtual void* GetWindowHandle() = 0;
     virtual void Repaint() {};
 
+
+    virtual std::string Dialog_InputStr(std::string& /*display*/, int /*maximumInputLength*/, bool /*forceDoubleByte*/, const int* /*w*/, const int* /*h*/, const int* /*input_w*/, const int* /*input_h*/)
+    {
+        return std::string();
+    };
+
     SDL_Window* GetWindow()
     {
         return m_window;

@@ -106,13 +106,13 @@ class InputStrDialog : public QDialog
 {
     Q_OBJECT
 public:
-    static std::string getInputStr(const std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h, QWidget* parent = nullptr)
+    static std::string getInputStr(const std::string& display, int maximumInputLength, bool forceDoubleByte, int x, int y, const int* w, const int* h, const int* input_w, const int* input_h, QWidget* parent = nullptr)
     {
       std::string toReturn;
       int err = 0;
       while (err == 0)
       {
-        InputStrDialog* dialog = new InputStrDialog(display, maximumInputLength, forceDoubleByte, w, h, input_w, input_h, parent);
+        InputStrDialog* dialog = new InputStrDialog(display, maximumInputLength, forceDoubleByte, x, y, w, h, input_w, input_h, parent);
         dialog->setModal(true);
         dialog->show();
         dialog->setWindowFlag(Qt::WindowType::WindowCloseButtonHint, false);
@@ -132,7 +132,7 @@ public:
 
 
 private:
-    explicit InputStrDialog(const std::string& label, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h, QWidget* parent = nullptr)
+    explicit InputStrDialog(const std::string& label, int maximumInputLength, bool forceDoubleByte, int x, int y, const int* w, const int* h, const int* input_w, const int* input_h, QWidget* parent = nullptr)
             : QDialog(parent)
     {
       QString display = "Input String Dialog";
@@ -160,12 +160,12 @@ private:
       mainLayout->addLayout(inputLayout);
       setLayout(mainLayout);
 
-      // NOTE: These probably need to be relative to the parent window.
-      int width = w == NULL ? 0 : *w;
-      int height = h == NULL ? 0 : *h;
+      move(x, y);
 
-      move(width, height);
-      //setBaseSize()
+      if (w != NULL) {
+          setFixedSize(*w, *h);
+          m_lineEdit->setFixedSize(*input_w, *input_h);
+      }
     }
 
     QLineEdit* m_lineEdit;

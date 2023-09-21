@@ -40,7 +40,7 @@ public:
     virtual void SendCustomEvent(ONScripterCustomEvent event, int value);
     virtual void CreateMenuBar();
 
-    std::string Command_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h);
+    virtual std::string Dialog_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h);
 
 private:
     ActionOrMenu CreateMenuBarInternal(MenuBarInput& input);

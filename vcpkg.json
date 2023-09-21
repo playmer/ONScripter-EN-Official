@@ -44,7 +44,10 @@
       "name": "sdl2-image",
       "platform": "emscripten"
     },
-    "sdl2-mixer",
+    {
+      "name": "sdl2-mixer",
+      "features": [ "mpg123", "fluidsynth" ]
+    },
     "sdl2-ttf",
     {
       "name": "smpeg2",

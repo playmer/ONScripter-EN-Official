@@ -100,7 +100,7 @@
 #endif
 
 #define DEFAULT_WM_TITLE "ONScripter-EN"
-#define DEFAULT_WM_ICON  "Ons-en.ico"
+#define DEFAULT_WM_ICON  "ons-en.ico"
 
 #define NUM_GLYPH_CACHE 30
 
@@ -1014,7 +1014,8 @@ private:
     char *music_file_name;
     unsigned char *music_buffer; // for looped music
     long music_buffer_length;
-    SMPEG *mp3_sample;
+    Mix_Chunk* mp3_sample;
+    int mp3_channel = 0;
     Uint32 mp3fade_start;
     Uint32 mp3fadeout_duration;
     Uint32 mp3fadein_duration;
@@ -1031,7 +1032,7 @@ private:
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
     int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);
-    int playMP3();
+    int playMP3(Mix_Chunk* chunk, int format, int loop_flag, int channel);
     int playOGG(int format, unsigned char *buffer, long length, bool loop_flag, int channel);
     int playExternalMusic(bool loop_flag);
     int playSequencedMusic(bool loop_flag);

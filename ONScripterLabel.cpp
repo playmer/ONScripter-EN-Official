@@ -415,7 +415,7 @@ void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
     float scaleHeight = windowResolutionY / (float)imageResolutionY;
     float scale = std::min(scaleHeight, scaleWidth);
 
-    fprintf(stderr, "%f; (%d, %d); (%d, %d)\n", scale, imageResolutionX, imageResolutionY, windowResolutionX, windowResolutionY);
+    //fprintf(stderr, "%f; (%d, %d); (%d, %d)\n", scale, imageResolutionX, imageResolutionY, windowResolutionX, windowResolutionY);
 
     SDL_Rect dstRect;
     dstRect.w = scale * imageResolutionX;
@@ -475,36 +475,47 @@ void ONScripterLabel::initSDL()
     /* ---------------------------------------- */
     /* Initialize SDL */
 
-    if ( SDL_Init( SDL_INIT_EVERYTHING ) < 0 ){
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         errorAndExit("Couldn't initialize SDL", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
-    if( cdaudio_flag && SDL_CDROMInit() < 0 ){
+    if (cdaudio_flag && SDL_CDROMInit() < 0) {
         errorAndExit("Couldn't initialize CD-ROM", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
 
     SDL_RWops* gamecontrollerdbFile = SDL_RWFromFile("gamecontrollerdb.txt", "r");
     if (gamecontrollerdbFile != NULL) {
-      SDL_GameControllerAddMappingsFromRW(gamecontrollerdbFile, SDL_TRUE);
+        SDL_GameControllerAddMappingsFromRW(gamecontrollerdbFile, SDL_TRUE);
     }
     else {
-      const InternalResource* internal_file = getResource("gamecontrollerdb.txt");
-      SDL_GameControllerAddMappingsFromRW(SDL_RWFromConstMem(internal_file->buffer, internal_file->size), SDL_TRUE);
+        const InternalResource* internal_file = getResource("gamecontrollerdb.txt");
+        SDL_GameControllerAddMappingsFromRW(SDL_RWFromConstMem(internal_file->buffer, internal_file->size), SDL_TRUE);
     }
 
     SDL_GameControllerEventState(SDL_ENABLE);
 
     // Open any controllers that may already be connected.
     for (int i = 0; i < SDL_NumJoysticks(); i++) {
-      if (SDL_IsGameController(i)) {
-        SDL_GameControllerOpen(i);
-      }
+        if (SDL_IsGameController(i)) {
+            SDL_GameControllerOpen(i);
+        }
     }
 
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+    int ret = Mix_Init(MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_MID);
+
+    if (ret != (MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_MID))
+    {
+        fprintf(stderr, "SDL_Mixer initialization issue: %s", SDL_GetError());
+    }
+
+    std::string soundFontPath = SDL_GetBasePath();
+    soundFontPath += "/GeneralUser_GS _1.471.sf2";
+
+    Mix_SetSoundFonts(soundFontPath.c_str());
 
 #if 0
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
@@ -514,6 +525,13 @@ void ONScripterLabel::initSDL()
 #if defined(PSP) || defined(IPODLINUX)
     SDL_ShowCursor(SDL_DISABLE);
 #endif
+
+    fprintf(stdout, "\tAudioDrivers:\n");
+    int audioDrivers = SDL_GetNumAudioDrivers();
+    for (int i = 0; i < audioDrivers; ++i)
+    {
+        fprintf(stdout, "\tAudioDriver: %s\n", SDL_GetAudioDriver(i));
+    }
 
     // We're about to resize up to roughly the display size, we should try to fill as much of it as possible, without
     // pushing the top window frame offscreen.

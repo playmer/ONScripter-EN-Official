@@ -16,7 +16,7 @@
 name: hosted-ninja-vcpkg_submod-autocache
 on:
   push:
-    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork" ]
+    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork", "emscripten" ]
   pull_request:
     branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork" ]
   workflow_dispatch:

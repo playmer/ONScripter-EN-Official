@@ -87,6 +87,7 @@ endif()
 ###############
 # onscripter-en Build Tools
 
+#########
 # embed
 
 # We should make some sort of detection variable to determine if we should use a script vs the embed program,
@@ -126,32 +127,8 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#########
+# Configure version.h
 
 set(I \"ons-en.ico\")
 
@@ -201,7 +178,7 @@ else()
     add_executable(onscripter_en)
 
     if (EMSCRIPTEN)
-        target_link_options(onscripter_en PUBLIC -s ASYNCIFY "--preload-file" ${CMAKE_CURRENT_LIST_DIR}/game@/)
+        target_link_options(onscripter_en PUBLIC -s ASYNCIFY "--preload-file" ${CMAKE_CURRENT_LIST_DIR}/game/netannad@/)
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
     endif ()
 endif()
@@ -340,11 +317,15 @@ endif()
 
 #########
 # onScripter_en settings and libraries
-
-
 if (ONS_USE_SMPEG)
     target_link_libraries(onscripter_en PRIVATE smpeg2)
 endif()
+
+add_custom_command(TARGET onscripter_en POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources/GeneralUser_GS _1.471.sf2"
+        $<TARGET_FILE_DIR:onscripter_en>
+)
 
 target_link_libraries(onscripter_en
 PRIVATE

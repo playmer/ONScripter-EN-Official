@@ -118,6 +118,15 @@ public:
     bool IgnoreContinuousMouseMove = true;
 
     void InitMenuIfGameDidNot();
+
+
+    static SDL_Rect CenterDialog(SDL_Rect dialog_rect, SDL_Rect window_rect)
+    {
+        SDL_Rect new_dialog_rect = dialog_rect;
+        new_dialog_rect.x = window_rect.x + ((window_rect.w - new_dialog_rect.w) / 2);
+        new_dialog_rect.y = window_rect.y + ((window_rect.h - new_dialog_rect.h) / 2);
+        return new_dialog_rect;
+    }
 protected:
     virtual void CreateMenuBar() = 0;
     static void ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m);

@@ -48,12 +48,11 @@
       "name": "sdl2-mixer",
       "features": [ "mpg123", "fluidsynth" ],
       
-      "platform": "(windows|osx|ios|android|emscripten)&(!mingw)"
+      "platform": "(windows|linux|osx|ios|android|emscripten)&(!mingw)"
     },
     {
       "name": "sdl2-mixer",
-      "features": [ "mpg123" ],
-      
+      "features": [ "mpg123" ],      
       "platform": "mingw"
     },
     "sdl2-ttf",

@@ -67,9 +67,10 @@ int QtBasicWindow::PollEvents(SDL_Event& event)
 
 std::string QtBasicWindow::Dialog_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h)
 {
-    int x, y;
-    SDL_GetWindowPosition(m_window, &x, &y);
-    return InputStrDialog::getInputStr(display, maximumInputLength, forceDoubleByte, x, y, w, h, input_w, input_h, NULL);
+    SDL_Rect window_rect;
+    SDL_GetWindowSize(m_window, &window_rect.w, &window_rect.h);
+    SDL_GetWindowPosition(m_window, &window_rect.x, &window_rect.y);
+    return InputStrDialog::getInputStr(window_rect, display, maximumInputLength, forceDoubleByte, w, h, input_w, input_h, NULL);
 }
 
 

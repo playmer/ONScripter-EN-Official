@@ -166,7 +166,7 @@ bool Window::TranslateMouse(int& x, int& y, bool toScreenSize)
     }
 
     if (windowResolutionX == windowPointsW && windowResolutionY == windowPointsH) {
-        printf("same, skipping transform\n");
+        //printf("same, skipping transform\n");
         return true;
     }
 
@@ -199,12 +199,12 @@ bool Window::TranslateMouse(int& x, int& y, bool toScreenSize)
             y = windowPointsH;
 
 
-        fprintf(stderr, "oob Warping Orig: {%d, %d}; New: {%d, %d}\n", x, y, new_x, new_y);
+        //fprintf(stderr, "oob Warping Orig: {%d, %d}; New: {%d, %d}\n", x, y, new_x, new_y);
 
         return false;
     }
 
-    fprintf(stderr, "Warping Orig: {%d, %d}; New: {%d, %d}\n", x, y, new_x, new_y);
+    //fprintf(stderr, "Warping Orig: {%d, %d}; New: {%d, %d}\n", x, y, new_x, new_y);
 
     x = new_x;
     y = new_y;

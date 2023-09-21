@@ -326,76 +326,27 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 
     if ((format & SOUND_MP3) &&
         !(IS_MIDI_HDR(buffer) && (format & SOUND_SEQMUSIC))){ //bypass MIDIs
-        if (music_cmd){
-            FILE *fp;
-            if ( (fp = fopen(TMP_MUSIC_FILE, "wb", true)) == NULL){
-                snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                         "can't open temporary music file %s", TMP_MUSIC_FILE);
-                errorAndCont(script_h.errbuf);
-            }
-            else{
-                if (fwrite(buffer, 1, length, fp) != (size_t)length){
-                    snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                             "can't write to temporary music file %s", TMP_MUSIC_FILE);
-                    errorAndCont(script_h.errbuf);
-                }
-                fclose( fp );
-                ext_music_play_once_flag = !loop_flag;
-                if (playExternalMusic(loop_flag) == 0){
-                    music_buffer = buffer;
-                    music_buffer_length = length;
-                    return SOUND_MP3;
-                }
-            }
+        Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
+        if (chunk == NULL)
+        {
+            fprintf(stderr, "Issue loading mp3 file: %s\n", SDL_GetError());
+            return SOUND_OTHER;
         }
 
-        int id3v2_size = 0;
-        if (HAS_ID3V2_TAG(buffer)) {
-            //found an ID3v2 tag, skipping since SMPEG doesn't
-            for (int i=0; i<4; i++) {
-                if (buffer[6+i] & 0x80) {
-                    id3v2_size = 0;
-                    break;
-                }
-                id3v2_size <<= 7;
-                id3v2_size += buffer[6+i];
-            }
-            if (id3v2_size > 0) {
-                id3v2_size += 10;
-                if (debug_level > 0) printf("Found ID3v2 tag, size %d bytes\n", id3v2_size);
-            }
-        }
-
-        mp3_sample = SMPEG_new_rwops( SDL_RWFromMem( buffer + id3v2_size, length - id3v2_size ), NULL, 1, 0 );
-
-        if (playMP3() == 0){
-            music_buffer = buffer;
-            music_buffer_length = length;
-            return SOUND_MP3;
-        }
+        playWave(chunk, format, loop_flag, channel);
+        return SOUND_SEQMUSIC;
     }
 
     if (format & SOUND_SEQMUSIC){
-        FILE *fp;
-        if ( (fp = fopen(TMP_SEQMUSIC_FILE, "wb", true)) == NULL){
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                     "can't open temporary music file %s", TMP_SEQMUSIC_FILE);
-            errorAndCont(script_h.errbuf);
+        Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
+        if (chunk == NULL)
+        {
+            fprintf(stderr, "Issue loading Midi file: %s\n", SDL_GetError());
+            return SOUND_OTHER;
         }
-        else{
-            if (fwrite(buffer, 1, length, fp) != (size_t)length){
-                snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                         "can't write to temporary music file %s",
-                         TMP_SEQMUSIC_FILE);
-                errorAndCont(script_h.errbuf);
-            }
-            fclose( fp );
-            ext_music_play_once_flag = !loop_flag;
-            if (playSequencedMusic(loop_flag) == 0){
-                delete[] buffer;
-                return SOUND_SEQMUSIC;
-            }
-        }
+
+        playWave(chunk, format, loop_flag, channel);
+        return SOUND_SEQMUSIC;
     }
 
     delete[] buffer;
@@ -456,41 +407,6 @@ int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int 
         Mix_ChannelFinished(waveCallback);
         Mix_PlayChannel(channel, wave_sample[channel], loop_flag ? -1 : 0);
     }
-
-    return 0;
-}
-
-int ONScripterLabel::playMP3()
-{
-    if ( SMPEG_error( mp3_sample ) ){
-        //printf(" failed. [%s]\n",SMPEG_error( mp3_sample ));
-        // The line below fails. ?????
-        //SMPEG_delete( mp3_sample );
-        mp3_sample = NULL;
-        return -1;
-    }
-
-#ifndef MP3_MAD
-    //Mion - SMPEG doesn't handle different audio spec well, so we might
-    // reset the SDL mixer
-    SDL_AudioSpec wanted;
-    SMPEG_wantedSpec( mp3_sample, &wanted );
-    if (( (wanted.format != audio_format.format) ||
-          (wanted.freq != audio_format.freq)) && match_bgm_audio_flag) {
-        Mix_CloseAudio();
-        openAudio(wanted.freq, wanted.format, wanted.channels);
-        if (!audio_open_flag) {
-            // didn't work, use the old settings
-            openAudio();
-       }
-    }
-    SMPEG_enableaudio( mp3_sample, 0 );
-    SMPEG_actualSpec( mp3_sample, &audio_format );
-    SMPEG_enableaudio( mp3_sample, 1 );
-#endif
-    SMPEG_setvolume( mp3_sample, !volume_on_flag? 0 : music_volume );
-    Mix_HookMusic( mp3callback, mp3_sample );
-    SMPEG_play( mp3_sample );
 
     return 0;
 }
@@ -627,7 +543,7 @@ int ONScripterLabel::setCurMusicVolume( int volume )
     if (music_struct.voice_sample && *(music_struct.voice_sample))
         volume /= 2;
     if (Mix_GetMusicHookData() != NULL) { // for streamed MP3 & OGG
-        if ( mp3_sample ) SMPEG_setvolume( mp3_sample, !volume_on_flag? 0 : volume ); // mp3
+        if ( mp3_sample ) Mix_Volume(mp3_channel, !volume_on_flag ? 0 : volume);
         else music_struct.volume = volume; // ogg
     } else if (Mix_Playing(MIX_BGM_CHANNEL) == 1) { // wave
         Mix_Volume( MIX_BGM_CHANNEL, !volume_on_flag? 0 : volume * 128 / 100 );
@@ -646,7 +562,7 @@ int ONScripterLabel::setVolumeMute( bool do_mute )
     if (music_struct.voice_sample && *(music_struct.voice_sample)) //bgmdown
         music_vol /= 2;
     if (Mix_GetMusicHookData() != NULL) { // for streamed MP3 & OGG
-        if ( mp3_sample ) SMPEG_setvolume( mp3_sample, do_mute? 0 : music_vol ); // mp3
+        if ( mp3_sample ) Mix_Volume(mp3_channel, do_mute ? 0 : music_vol); // mp3
         if ( async_movie ) SMPEG_setvolume( async_movie, do_mute? 0 : music_vol ); // async mpeg
         else music_struct.is_mute = do_mute; // ogg
     } else if (Mix_Playing(MIX_BGM_CHANNEL) == 1) { // wave
@@ -997,9 +913,9 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     }
 
     if ( mp3_sample ){
-        SMPEG_stop( mp3_sample );
-        Mix_HookMusic( NULL, NULL );
-        SMPEG_delete( mp3_sample );
+        Mix_Pause(MIX_BGM_CHANNEL);
+        Mix_ChannelFinished(NULL);
+        Mix_FreeChunk(mp3_sample);
         mp3_sample = NULL;
     }
 

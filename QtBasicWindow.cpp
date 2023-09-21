@@ -51,7 +51,7 @@ int QtBasicWindow::WaitEvents(SDL_Event& event)
 
     if (ret)
     {
-      fprintf(stderr, "SDLEvent: %d\n", event.type);
+      //fprintf(stderr, "SDLEvent: %d\n", event.type);
       return 1;
     }
     SDL_Delay(1);

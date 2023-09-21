@@ -476,11 +476,7 @@ void QtWindow::SendCustomEvent(ONScripterCustomEvent event, int value)
 
 std::string QtWindow::Dialog_InputStr(std::string& display, int maximumInputLength, bool forceDoubleByte, const int* w, const int* h, const int* input_w, const int* input_h)
 {
-    QRect geo = m_mainWindow->geometry();
-    int x = geo.x();
-    int y = geo.y();
-
-    return InputStrDialog::getInputStr(display, maximumInputLength, forceDoubleByte, x, y, w, h, input_w, input_h, m_sdlWidget);
+    return InputStrDialog::getInputStr(RectFromWidget(m_mainWindow), display, maximumInputLength, forceDoubleByte, w, h, input_w, input_h, m_sdlWidget);
 }
 
 ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
@@ -552,13 +548,13 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
                     }
                     case MenuBarFunction::DWAVEVOLUME:
                     {
-                        VolumeDialog::adjustVolumeSliders(m_onscripterLabel, m_onscripterLabel->voice_volume, m_onscripterLabel->se_volume, m_onscripterLabel->music_volume, m_sdlWidget);
+                        VolumeDialog::adjustVolumeSliders(RectFromWidget(m_mainWindow), m_onscripterLabel, m_onscripterLabel->voice_volume, m_onscripterLabel->se_volume, m_onscripterLabel->music_volume, m_sdlWidget);
                         break;
                     }
                     case MenuBarFunction::END:
                     {
                         std::string output = "Are you sure you want to quit?";
-                        if (ExitDialog::shouldExit(output, m_sdlWidget))
+                        if (ExitDialog::shouldExit(RectFromWidget(m_mainWindow), output, m_sdlWidget))
                         {
                             SendCustomEvent(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
                         }
@@ -642,7 +638,7 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
                     }
                     case MenuBarFunction::VERSION:
                     {
-                        VersionDialog::showVersion(m_onscripterLabel->version_str, m_sdlWidget);
+                        VersionDialog::showVersion(RectFromWidget(m_mainWindow), m_onscripterLabel->version_str, m_sdlWidget);
                         break;
                     }
                     case MenuBarFunction::WAVEOFF:

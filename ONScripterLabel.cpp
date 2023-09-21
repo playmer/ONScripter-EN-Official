@@ -229,6 +229,7 @@ static struct FuncLUT{
     {"ispage", &ONScripterLabel::ispageCommand},
     {"isdown", &ONScripterLabel::isdownCommand},
     {"insertmenu", &ONScripterLabel::insertmenuCommand},
+    {"inputstr", &ONScripterLabel::inputstrCommand},
     {"input", &ONScripterLabel::inputCommand},
     {"indent", &ONScripterLabel::indentCommand},
     {"humanorder", &ONScripterLabel::humanorderCommand},

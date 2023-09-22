@@ -32,7 +32,6 @@ endif()
 option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
 option(ONS_USE_LUA "Choose whether to enable Lua support or not" ON)
 option(ONS_USE_MESSAGEBOX "Determines whether Message Boxes are create on Windows" ON)
-option(ONS_USE_OGG_VORBIS "Choose whether to enable Lua support or not" ON)
 
 if (MSVC)
     add_compile_options(/MP)
@@ -257,22 +256,6 @@ if (ONS_USE_MESSAGEBOX)
 endif()
 
 #########
-# Ogg Vorbis Support
-if (ONS_USE_OGG_VORBIS)
-    find_package(Ogg CONFIG REQUIRED)
-    find_package(Vorbis CONFIG REQUIRED)
-
-    target_compile_definitions(onscripter_en PRIVATE -DUSE_OGG_VORBIS)
-
-    target_link_libraries(onscripter_en
-    PRIVATE
-        Ogg::ogg
-        Vorbis::vorbis
-        Vorbis::vorbisfile
-        Vorbis::vorbisenc
-    )
-endif()
-
 target_include_directories(onscripter_en 
 PRIVATE 
     .

@@ -33,58 +33,49 @@
 #include "Window.h"
 
 // Referenced https://gist.github.com/mashingan/e94d41e21c6e0ce4c9f19cea72a57dc4
+struct SDL_RWOps_AVIOContext
+{
+    SDL_RWOps_AVIOContext(unsigned char* original_buffer, size_t original_size)
+        : m_original_buffer(original_buffer)
+        , m_original_size(original_size)
+    {
+        m_file = SDL_RWFromMem(original_buffer, original_size);
+        m_ffmpeg_buffer = static_cast<unsigned char*>(av_malloc(4 * 1024));
+        m_context = ::avio_alloc_context(m_ffmpeg_buffer, 4 * 1024, 0, this, ffmpeg_read, NULL, ffmpeg_seek);
+    }
 
+    ~SDL_RWOps_AVIOContext()
+    {
+        av_free(m_context);
+        av_free(m_ffmpeg_buffer);
+        delete[] m_original_buffer;
+    }
 
-// FIXME: "We'll need to implement something like this https://stackoverflow.com/a/20610535 when we load from archives"
-// 
-//class my_iocontext_private
-//{
-//private:
-//    my_iocontext_private(my_iocontext_private const &);
-//    my_iocontext_private& operator = (my_iocontext_private const &);
-//
-//public:
-//    my_iocontext_private(IInputStreamPtr inputStream)
-//       : inputStream_(inputStream)
-//       , buffer_size_(kBufferSize)
-//       , buffer_(static_cast<unsigned char*>(::av_malloc(buffer_size_))) {
-//        ctx_ = ::avio_alloc_context(buffer_, buffer_size_, 0, this,
-//          &my_iocontext_private::read, NULL, &my_iocontext_private::seek); 
-//    }
-//
-//    ~my_iocontext_private() { 
-//        ::av_free(ctx_);
-//        ::av_free(buffer_); 
-//    }
-//
-//    void reset_inner_context() { ctx_ = NULL; buffer_ = NULL; }
-//
-//    static int read(void *opaque, unsigned char *buf, int buf_size) {
-//        my_iocontext_private* h = static_cast<my_iocontext_private*>(opaque);
-//        return h->inputStream_->Read(buf, buf_size); 
-//    }
-//
-//    static int64_t seek(void *opaque, int64_t offset, int whence) {
-//        my_iocontext_private* h = static_cast<my_iocontext_private*>(opaque);
-//
-//        if (0x10000 == whence)
-//            return h->inputStream_->Size();
-//
-//        return h->inputStream_->Seek(offset, whence); 
-//    }
-//
-//    ::AVIOContext *get_avio() { return ctx_; }
-//
-//private:
-//    IInputStreamPtr inputStream_; // abstract stream interface, You can adapt it to TMemoryStream  
-//    int buffer_size_;
-//    unsigned char * buffer_;  
-//    ::AVIOContext * ctx_;
-//};
+    static int ffmpeg_read(void* user, unsigned char* buf, int buf_size) {
+        SDL_RWOps_AVIOContext* data_reader = static_cast<SDL_RWOps_AVIOContext*>(user);
+        size_t bytes_read = SDL_RWread(data_reader->m_file, buf, 1, buf_size);
+        return bytes_read == 0 ? AVERROR_EOF : bytes_read;
+    }
+
+    static int64_t ffmpeg_seek(void* user, int64_t offset, int whence) {
+        SDL_RWOps_AVIOContext* data_reader = static_cast<SDL_RWOps_AVIOContext*>(user);
+        if (0x10000 == whence)
+            return data_reader->m_original_size;
+        return SDL_RWseek(data_reader->m_file, offset, whence);
+    }
+
+    SDL_RWops* m_file;
+    AVIOContext* m_context;
+    unsigned char* m_original_buffer;
+    size_t m_original_size;
+    unsigned char* m_ffmpeg_buffer;
+};
+
 
 FFMpegWrapper::~FFMpegWrapper()
 {
     SDL_DestroyTexture(m_texture);
+    delete m_context;
 }
 
 int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, const char* filename, bool audio_open_flag, bool debug_flag)
@@ -92,7 +83,22 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
     m_onscripterLabel = onscripterLabel;
     m_window = window;
 
+    // Load file
+    unsigned long length = onscripterLabel->script_h.cBR->getFileLength(filename);
+
+    if (length == 0) {
+        snprintf(onscripterLabel->script_h.errbuf, MAX_ERRBUF_LEN,
+            "couldn't load movie '%s'", filename);
+        onscripterLabel->errorAndCont(onscripterLabel->script_h.errbuf);
+        return 0;
+    }
+
+    unsigned char* movie_buffer = new unsigned char[length];
+    onscripterLabel->script_h.cBR->getFile(filename, movie_buffer);
+    m_context = new SDL_RWOps_AVIOContext(movie_buffer, length);
+
     format_context.value = avformat_alloc_context();
+    format_context->pb = m_context->m_context;
 
     char bufmsg[1024];
     if (avformat_open_input(&format_context, filename, NULL, NULL) < 0) {
@@ -132,6 +138,11 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
         return 2;
     }
 
+    if (audio_parameters == NULL) {
+        fprintf(stderr, "Couldn't find a set of audio_parameters when opening video, exiting");
+        return 2;
+    }
+
     m_video_context.value = avcodec_alloc_context3(video_codec);
     m_audio_context.value = avcodec_alloc_context3(audio_codec);
 
@@ -154,8 +165,9 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
 
     if (m_audio_context)
     {
+        m_sample_rate = audio_parameters->sample_rate;
         // FIXME: This will hurt your ears currently, something about this setup produces bad audio.
-        //m_onscripterLabel->openAudio(audio_parameters->bit_rate, MIX_DEFAULT_FORMAT, audio_parameters->channels);
+        //m_onscripterLabel->openAudio(m_sample_rate, MIX_DEFAULT_FORMAT, audio_parameters->channels);
     }
 
     m_video_frame.value = av_frame_alloc();
@@ -203,11 +215,12 @@ void FFMpegWrapper::queue_audio()
         printf("receive frame\n");
         return;
     }
+    
     int size;
     int bufsize = av_samples_get_buffer_size(&size, m_audio_context->channels, m_audio_frame->nb_samples, static_cast<AVSampleFormat>(m_audio_frame->format), 0);
     bool isplanar = av_sample_fmt_is_planar(static_cast<AVSampleFormat>(m_audio_frame->format)) == 1;
+    SDL_LockMutex(audio_data_mutex);
     for (int ch = 0; ch < m_audio_context->channels; ch++) {
-        SDL_LockMutex(audio_data_mutex);
         if (!isplanar) {
             const uint8_t* data_start = m_audio_frame->data[ch];
             audio_data.insert(audio_data.end(), data_start, data_start + m_audio_frame->linesize[ch]);
@@ -216,8 +229,8 @@ void FFMpegWrapper::queue_audio()
             const uint8_t* data_start = m_audio_frame->data[0] + size * ch;
             audio_data.insert(audio_data.end(), data_start, data_start + size);
         }
-        SDL_UnlockMutex(audio_data_mutex);
     }
+    SDL_UnlockMutex(audio_data_mutex);
 }
 
 int FFMpegWrapper::play(bool click_flag)

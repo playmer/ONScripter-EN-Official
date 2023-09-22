@@ -22,7 +22,6 @@
  */
 
 
-#ifdef USE_AVIFILE
 
 #include "FFMpegWrapper.h"
 #include <SDL_mixer.h>
@@ -32,49 +31,10 @@
 #include "ONScripterLabel.h"
 #include "Window.h"
 
-// Referenced https://gist.github.com/mashingan/e94d41e21c6e0ce4c9f19cea72a57dc4
-struct SDL_RWOps_AVIOContext
-{
-    SDL_RWOps_AVIOContext(unsigned char* original_buffer, size_t original_size)
-        : m_original_buffer(original_buffer)
-        , m_original_size(original_size)
-    {
-        m_file = SDL_RWFromMem(original_buffer, original_size);
-        m_ffmpeg_buffer = static_cast<unsigned char*>(av_malloc(4 * 1024));
-        m_context = ::avio_alloc_context(m_ffmpeg_buffer, 4 * 1024, 0, this, ffmpeg_read, NULL, ffmpeg_seek);
-    }
-
-    ~SDL_RWOps_AVIOContext()
-    {
-        delete[] m_original_buffer;
-    }
-
-    static int ffmpeg_read(void* user, unsigned char* buf, int buf_size) {
-        SDL_RWOps_AVIOContext* data_reader = static_cast<SDL_RWOps_AVIOContext*>(user);
-        size_t bytes_read = SDL_RWread(data_reader->m_file, buf, 1, buf_size);
-        return bytes_read == 0 ? AVERROR_EOF : bytes_read;
-    }
-
-    static int64_t ffmpeg_seek(void* user, int64_t offset, int whence) {
-        SDL_RWOps_AVIOContext* data_reader = static_cast<SDL_RWOps_AVIOContext*>(user);
-        if (0x10000 == whence)
-            return data_reader->m_original_size;
-        return SDL_RWseek(data_reader->m_file, offset, whence);
-    }
-
-    SDL_RWops* m_file;
-    AVIOContext* m_context;
-    unsigned char* m_original_buffer;
-    size_t m_original_size;
-    unsigned char* m_ffmpeg_buffer;
-};
 
 
 FFMpegWrapper::~FFMpegWrapper()
 {
-    SDL_DestroyTexture(m_texture);
-    format_context.reset();
-    delete m_context;
 }
 
 int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, const char* filename, bool audio_open_flag, bool debug_flag)
@@ -94,88 +54,52 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
 
     unsigned char* movie_buffer = new unsigned char[length];
     onscripterLabel->script_h.cBR->getFile(filename, movie_buffer);
-    m_context = new SDL_RWOps_AVIOContext(movie_buffer, length);
-
-    format_context.value = avformat_alloc_context();
-    format_context->pb = m_context->m_context;
-
-    char bufmsg[1024];
-    if (avformat_open_input(&format_context, filename, NULL, NULL) < 0) {
-        printf("Cannot open %s", filename);
+    m_source = Kit_CreateSourceFromRW(SDL_RWFromMem(movie_buffer, length));
+    if (m_source == NULL) {
+        fprintf(stderr, "Unable to load file '%s': %s\n", filename, Kit_GetError());
         return 1;
     }
 
-    if (avformat_find_stream_info(format_context, NULL) < 0) {
-        printf("Cannot find stream info %s. Quitting.\n", filename);
+    m_player = Kit_CreatePlayer(
+        m_source,
+        Kit_GetBestSourceStream(m_source, KIT_STREAMTYPE_VIDEO),
+        Kit_GetBestSourceStream(m_source, KIT_STREAMTYPE_AUDIO),
+        Kit_GetBestSourceStream(m_source, KIT_STREAMTYPE_SUBTITLE),
+        0, 0);
+
+    if (m_player == NULL) {
+        fprintf(stderr, "Unable to create player: %s\n", Kit_GetError());
         return 1;
     }
 
-    const AVCodec* video_codec = NULL;
-    const AVCodec* audio_codec = NULL;
-    AVCodecParameters* video_parameters = NULL;
-    AVCodecParameters* audio_parameters = NULL;
-    for (int i = 0; i < format_context->nb_streams; i++) {
-        AVCodecParameters* localparam = format_context->streams[i]->codecpar;
-        const AVCodec* localcodec = avcodec_find_decoder(localparam->codec_id);
-        if (localparam->codec_type == AVMEDIA_TYPE_VIDEO && !video_codec) {
-            video_codec = localcodec;
-            video_parameters = localparam;
-            video_id = i;
-            AVRational rational = format_context->streams[i]->avg_frame_rate;
-            fpsrendering = 1.0 / ((double)rational.num / (double)(rational.den));
-        }
-        else if (localparam->codec_type == AVMEDIA_TYPE_AUDIO && !audio_codec) {
-            audio_codec = localcodec;
-            audio_parameters = localparam;
-            audio_id = i;
-        }
-        if (video_codec && audio_codec) { break; }
+    Kit_PlayerInfo pinfo;
+    Kit_GetPlayerInfo(m_player, &pinfo);
+
+    // Make sure there is video in the file to play first.
+    if (Kit_GetPlayerVideoStream(m_player) == -1) {
+        fprintf(stderr, "File contains no video!\n");
+        return 1;
     }
 
-    if (video_parameters == NULL) {
-        fprintf(stderr, "Couldn't find a set of video_parameters when opening video, exiting");
-        return 2;
+    m_has_audio = Kit_GetPlayerAudioStream(m_player) != -1;
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+    m_video_texture = SDL_CreateTexture(
+        window->GetRenderer(),
+        pinfo.video.output.format,
+        SDL_TEXTUREACCESS_STATIC,
+        pinfo.video.output.width,
+        pinfo.video.output.height);
+
+    if (m_video_texture == NULL) {
+        fprintf(stderr, "Error while attempting to create a video texture\n");
+        return 1;
     }
 
-    if (audio_parameters == NULL) {
-        fprintf(stderr, "Couldn't find a set of audio_parameters when opening video, exiting");
-        return 2;
-    }
+    m_onscripterLabel->openAudio(pinfo.audio.output.samplerate, pinfo.audio.output.format, pinfo.audio.output.channels);
 
-    m_video_context.value = avcodec_alloc_context3(video_codec);
-    m_audio_context.value = avcodec_alloc_context3(audio_codec);
 
-    if (avcodec_parameters_to_context(m_video_context, video_parameters) < 0) {
-        printf("Error at: avcodec_parameters_to_context(m_video_context, video_parameters)\n");
-        return 2;
-    }
-    if (avcodec_parameters_to_context(m_audio_context, audio_parameters) < 0) {
-        printf("Error at: avcodec_parameters_to_context(m_audio_context, audio_parameters)\n");
-        return 2;
-    }
-    if (avcodec_open2(m_video_context, video_codec, NULL) < 0) {
-        printf("Error at: avcodec_open2(m_video_context, video_codec, NULL)\n");
-        return 2;
-    }
-    if (avcodec_open2(m_audio_context, audio_codec, NULL) < 0) {
-        printf("Error at: avcodec_open2(m_audio_context, audio_codec, NULL)\n");
-        return 2;
-    }
 
-    if (m_audio_context)
-    {
-        m_sample_rate = audio_parameters->sample_rate;
-        // FIXME: This will hurt your ears currently, something about this setup produces bad audio.
-        m_onscripterLabel->openAudio(m_sample_rate, MIX_DEFAULT_FORMAT, audio_parameters->channels);
-    }
-
-    m_video_frame.value = av_frame_alloc();
-    m_audio_frame.value = av_frame_alloc();
-    m_packet.value = av_packet_alloc();
-    video_width = video_parameters->width;
-    video_height = video_parameters->height;
-
-    m_texture = SDL_CreateTexture(m_window->GetRenderer(), SDL_PIXELFORMAT_IYUV, SDL_TEXTUREACCESS_STREAMING, video_width, video_height);
 
     return 0;
 }
@@ -185,6 +109,7 @@ extern "C" void mixer_callback_external(void* userdata, Uint8 * stream, int len)
 {
     FFMpegWrapper& ffmpegWrapper = *(FFMpegWrapper*)userdata;
     ffmpegWrapper.mixer_callback((FFMpegWrapper*)userdata, stream, len);
+
 }
 
 
@@ -204,71 +129,29 @@ void FFMpegWrapper::mixer_callback(FFMpegWrapper* userdata, Uint8* stream, int l
     SDL_UnlockMutex(ffmpegWrapper.audio_data_mutex);
 }
 
-void FFMpegWrapper::queue_audio()
-{
-    if (avcodec_send_packet(m_audio_context, m_packet) < 0) {
-        printf("send packet\n");
-        return;
-    }
-    if (avcodec_receive_frame(m_audio_context, m_audio_frame) < 0) {
-        printf("receive frame\n");
-        return;
-    }
-    
-    int size;
-    int bufsize = av_samples_get_buffer_size(&size, m_audio_context->channels, m_audio_frame->nb_samples, static_cast<AVSampleFormat>(m_audio_frame->format), 0);
-    bool isplanar = av_sample_fmt_is_planar(static_cast<AVSampleFormat>(m_audio_frame->format)) == 1;
-
-
-    size_t dst_start_loc = scratch_audio_data.size();
-    scratch_audio_data.resize(scratch_audio_data.size() + bufsize);
-    uint8_t* dst_ptr = scratch_audio_data.data();
-
-    if (isplanar)
-    {
-        const uint8_t* data_start = m_audio_frame->data[0];
-        for (size_t i = 0; i < size; i += 2)
-        {
-            size_t start = (i * 2);
-            dst_ptr[start + 0] = data_start[i + 0];
-            dst_ptr[start + 1] = data_start[i + 1];
-        }
-
-        data_start = m_audio_frame->data[1];
-        for (size_t i = 0; i < size; i += 2)
-        {
-            size_t start = (i * 2);
-            dst_ptr[start + 2] = data_start[i + 0];
-            dst_ptr[start + 3] = data_start[i + 1];
-        }
-    }
-    else
-    {
-
-    }
-
-    SDL_LockMutex(audio_data_mutex);
-    audio_data.insert(audio_data.end(), scratch_audio_data.begin(), scratch_audio_data.end());
-    SDL_UnlockMutex(audio_data_mutex);
-
-    scratch_audio_data.clear();
-}
 
 int FFMpegWrapper::play(bool click_flag)
 {
     SDL_Rect rect;
     int ret = 0;
 
-    if (m_audio_context)
+    Kit_PlayerPlay(m_player);
+    
+    if (m_has_audio)
     {
         Mix_HookMusic(mixer_callback_external, this);
         audio_data_mutex = SDL_CreateMutex();
     }
-
+    
     bool done_flag = false;
-
-    while ((av_read_frame(format_context, m_packet) >= 0) && (ret != 1))
+    
+    while (!done_flag)
     {
+        if (Kit_GetPlayerState(m_player) == KIT_STOPPED) {
+            done_flag = true;
+            continue;
+        }
+
         SDL_Event event;
         while (m_window->PollEvents(event)) {
             switch (event.type) {
@@ -288,56 +171,103 @@ int FFMpegWrapper::play(bool click_flag)
                     break;
             }
         }
+    //
+    //    if (m_packet->stream_index == video_id) {
+    //        display_frame();
+    //    }
+    //    else if (m_packet->stream_index == audio_id) {
+    //        queue_audio();
+    //    }
+    //    av_packet_unref(m_packet);
 
-        if (m_packet->stream_index == video_id) {
-            display_frame();
+
+        //if (m_have_not_hit_audio || m_any_audio_left)
+        {
+            SDL_LockMutex(audio_data_mutex);
+            size_t original_size = audio_data.size();
+            audio_data.resize(audio_data.size() + 32768, 0);
+            int bytes_read = Kit_GetPlayerAudioData(m_player, (unsigned char*)audio_data.data() + original_size, 32768);
+            if (bytes_read > -1)
+            {
+                audio_data.resize(original_size + bytes_read);
+            }
+            else {
+                audio_data.resize(original_size);
+            }
+            SDL_UnlockMutex(audio_data_mutex);
         }
-        else if (m_packet->stream_index == audio_id) {
-            queue_audio();
-        }
-        av_packet_unref(m_packet);
+
+        // Refresh audio
+        // 
+        //int queued = SDL_GetQueuedAudioSize(audio_dev);
+        //if (queued < AUDIOBUFFER_SIZE) {
+        //    int need = AUDIOBUFFER_SIZE - queued;
+        //
+        //    while (need > 0) {
+        //        ret = Kit_GetPlayerAudioData(
+        //            m_player,
+        //            (unsigned char*)audiobuf,
+        //            AUDIOBUFFER_SIZE);
+        //        need -= ret;
+        //        if (ret > 0) {
+        //            SDL_QueueAudio(audio_dev, audiobuf, ret);
+        //        }
+        //        else {
+        //            break;
+        //        }
+        //    }
+        //    // If we now have data, start playback (again)
+        //    if (SDL_GetQueuedAudioSize(audio_dev) > 0) {
+        //        SDL_PauseAudioDevice(audio_dev, 0);
+        //    }
+        //}
+
+        // Refresh videotexture and render it
+        display_frame();
+
+        SDL_Delay(1);
     }
-
-    if (m_audio_context)
-    {
+    
+    if (m_has_audio) {
         Mix_HookMusic(NULL, NULL);
         SDL_DestroyMutex(audio_data_mutex);
         audio_data_mutex = NULL;
         audio_data.clear();
     }
-
+    
     return ret;
 }
 
 void FFMpegWrapper::display_frame()
 {
-    time_t start = time(NULL);
-    if (avcodec_send_packet(m_video_context, m_packet) < 0) {
-        printf("send packet\n");
-        return;
-    }
-    if (avcodec_receive_frame(m_video_context, m_video_frame) < 0) {
-        printf("receive frame\n");
-        return;
-    }
-
-    SDL_Rect rect = { 0, 0, video_width, video_height };
-    
-    SDL_UpdateYUVTexture(m_texture, &rect,
-        m_video_frame->data[0], m_video_frame->linesize[0],
-        m_video_frame->data[1], m_video_frame->linesize[1],
-        m_video_frame->data[2], m_video_frame->linesize[2]);
+    Kit_GetPlayerVideoData(m_player, m_video_texture);
     SDL_RenderClear(m_window->GetRenderer());
-
-    m_onscripterLabel->DisplayTexture(m_texture);
-    
-    time_t end = time(NULL);
-    double diffms = difftime(end, start) / 1000.0;
-    if (diffms < fpsrendering) {
-        uint32_t diff = (uint32_t)((fpsrendering - diffms) * 1000);
-        //printf("diffms: %f, delay time %d ms.\n", diffms, diff);
-        SDL_Delay(diff);
-    }
+    m_onscripterLabel->DisplayTexture(m_video_texture);
+    //time_t start = time(NULL);
+    //if (avcodec_send_packet(m_video_context, m_packet) < 0) {
+    //    printf("send packet\n");
+    //    return;
+    //}
+    //if (avcodec_receive_frame(m_video_context, m_video_frame) < 0) {
+    //    printf("receive frame\n");
+    //    return;
+    //}
+    //
+    //SDL_Rect rect = { 0, 0, video_width, video_height };
+    //
+    //SDL_UpdateYUVTexture(m_texture, &rect,
+    //    m_video_frame->data[0], m_video_frame->linesize[0],
+    //    m_video_frame->data[1], m_video_frame->linesize[1],
+    //    m_video_frame->data[2], m_video_frame->linesize[2]);
+    //SDL_RenderClear(m_window->GetRenderer());
+    //
+    //m_onscripterLabel->DisplayTexture(m_texture);
+    //
+    //time_t end = time(NULL);
+    //double diffms = difftime(end, start) / 1000.0;
+    //if (diffms < fpsrendering) {
+    //    uint32_t diff = (uint32_t)((fpsrendering - diffms) * 1000);
+    //    //printf("diffms: %f, delay time %d ms.\n", diffms, diff);
+    //    SDL_Delay(diff);
+    //}
 }
-
-#endif

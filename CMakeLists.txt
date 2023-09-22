@@ -76,6 +76,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
+
+
 #########
 # Qt Support
 if (ONS_USE_QT_WINDOW)
@@ -153,9 +155,8 @@ configure_file(version.h.in version.h
     @ONLY
 )
 
-
 ###############
-#SDL CD Rom library adapted from original SDL1 CD Module
+# SDL CD Rom library adapted from original SDL1 CD Module
 add_subdirectory(SDLHelper_CD)
 
 ###############
@@ -205,6 +206,95 @@ if (ONS_USE_AVIFILE)
     PRIVATE
         FFMpegWrapper.cpp
         FFMpegWrapper.h
+    )
+
+
+
+
+    
+    ###############
+    # SDL_KitchenSink
+
+
+
+    
+    find_library(ASS_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+    find_library(ASS_DEBUG_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
+    #find_file(ASS_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
+    #find_file(ASS_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
+
+    add_library(ass STATIC IMPORTED [GLOBAL])
+    # set the location that we are going to import the library from
+    set_target_properties(
+        ass 
+        PROPERTIES
+            IMPORTED_LOCATION_DEBUG ${ASS_DEBUG_LIBRARY}
+            IMPORTED_LOCATION_RELEASE ${ASS_LIBRARY}
+            IMPORTED_LOCATION ${ASS_LIBRARY}
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+    add_library(SDL_kitchensink)
+
+    target_include_directories(SDL_kitchensink PUBLIC extlib/SDL_kitchensink/include)
+
+    target_sources(SDL_kitchensink
+    PRIVATE
+        extlib/SDL_kitchensink/src/kiterror.c
+        extlib/SDL_kitchensink/src/kitlib.c
+        extlib/SDL_kitchensink/src/kitplayer.c
+        extlib/SDL_kitchensink/src/kitsource.c
+        extlib/SDL_kitchensink/src/kitutils.c
+        extlib/SDL_kitchensink/src/internal/kitdecoder.c
+        extlib/SDL_kitchensink/src/internal/kitlibstate.c
+        extlib/SDL_kitchensink/src/internal/libass.c
+        extlib/SDL_kitchensink/src/internal/audio/kitaudio.c
+        extlib/SDL_kitchensink/src/internal/subtitle/kitatlas.c
+        extlib/SDL_kitchensink/src/internal/subtitle/kitsubtitle.c
+        extlib/SDL_kitchensink/src/internal/subtitle/kitsubtitlepacket.c
+        extlib/SDL_kitchensink/src/internal/subtitle/renderers/kitsubass.c
+        extlib/SDL_kitchensink/src/internal/subtitle/renderers/kitsubimage.c
+        extlib/SDL_kitchensink/src/internal/subtitle/renderers/kitsubrenderer.c
+        extlib/SDL_kitchensink/src/internal/utils/kitbuffer.c
+        extlib/SDL_kitchensink/src/internal/utils/kithelpers.c
+        extlib/SDL_kitchensink/src/internal/utils/kitringbuffer.c
+        extlib/SDL_kitchensink/src/internal/video/kitvideo.c
+    )
+    
+    target_include_directories(SDL_kitchensink 
+    PRIVATE 
+        ${FFMPEG_INCLUDE_DIRS}
+    )
+    
+    target_link_directories(SDL_kitchensink PRIVATE ${FFMPEG_LIBRARY_DIRS})
+
+    target_link_libraries(SDL_kitchensink PRIVATE BZip2::BZip2
+    PRIVATE
+        ass
+        ${FFMPEG_LIBRARIES}
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+    )
+    
+    set(KIT_VERSION_MAJOR "1")
+    set(KIT_VERSION_MINOR "0")
+    set(KIT_VERSION_PATCH "11")
+    set(KIT_VERSION ${KIT_VERSION_MAJOR}.${KIT_VERSION_MINOR}.${KIT_VERSION_PATCH})
+    target_compile_definitions(SDL_kitchensink
+    PUBLIC
+        -DKIT_VERSION_MAJOR=${KIT_VERSION_MAJOR}
+        -DKIT_VERSION_MINOR=${KIT_VERSION_MINOR}
+        -DKIT_VERSION_PATCH=${KIT_VERSION_PATCH}
     )
 endif()
 
@@ -322,6 +412,7 @@ PRIVATE
     $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
     $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
     SDLHelper_CD
+    SDL_kitchensink
 )
 
 if (WIN32)

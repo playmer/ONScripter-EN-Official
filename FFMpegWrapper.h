@@ -24,17 +24,12 @@
 #ifndef __FFMPEG_WRAPPER_H__
 #define __FFMPEG_WRAPPER_H__
 
-#ifdef USE_AVIFILE
 
 #include <vector>
 
 #include <SDL.h>
 #include <SDL_thread.h>
-extern "C"
-{
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-}
+#include "kitchensink/kitchensink.h"
 
 class Window;
 class ONScripterLabel;
@@ -43,9 +38,6 @@ struct SDL_RWOps_AVIOContext;
 class FFMpegWrapper
 {
 public:
-    enum { AVI_STOP = 0,
-           AVI_PLAYING = 1
-    };
     FFMpegWrapper() = default;
     ~FFMpegWrapper();
 
@@ -58,77 +50,20 @@ public:
 private:
     void display_frame();
     void queue_audio();
+    ONScripterLabel* m_onscripterLabel;
+    Window* m_window;
+    Kit_Source* m_source;
+    Kit_Player* m_player;
+    SDL_Texture* m_video_texture;
 
-    static void CleanupFormatContext(AVFormatContext** format_context)
-    {
-      avformat_close_input(format_context);
-      avformat_free_context(*format_context);
-    }
+    bool m_has_audio = false;
+    bool m_have_not_hit_audio = true;
+    bool m_any_audio_left = true;
 
-    template <typename T, void (tFunc)(T**)>
-    struct AVWrapper
-    {
-        AVWrapper() = default;
-        ~AVWrapper()
-        {
-            reset();
-        }
-
-        void reset()
-        {
-            if (value)
-                tFunc(&value);
-
-            value = NULL;
-        }
-
-        operator T*()
-        {
-          return value;
-        }
-
-        T* operator->()
-        {
-            return value;
-        }
-
-        T* get()
-        {
-            return value;
-        }
-
-        T** operator&()
-        {
-            return &value;
-        }
-
-        T* value = NULL;
-    };
-
-    AVWrapper<AVFormatContext, CleanupFormatContext> format_context;
-    int video_id = -1;
-    int audio_id = -1;
-    double fpsrendering = 0.0;
-    AVWrapper<AVCodecContext, avcodec_free_context> m_video_context;
-    AVWrapper<AVCodecContext, avcodec_free_context> m_audio_context;
-    AVWrapper<AVFrame, av_frame_free> m_video_frame;
-    AVWrapper<AVFrame, av_frame_free> m_audio_frame;
-    AVWrapper<AVPacket, av_packet_free> m_packet;
-
-    std::vector<uint8_t> scratch_audio_data;
+    //std::vector<uint8_t> scratch_audio_data;
     std::vector<uint8_t> audio_data;
     SDL_mutex* audio_data_mutex;
-    
-    ONScripterLabel* m_onscripterLabel = NULL;
-    Window* m_window = NULL;
-    SDL_Texture* m_texture = NULL;
-    SDL_RWOps_AVIOContext* m_context = NULL;
-
-    size_t m_sample_rate;
-    int video_width;
-    int video_height;
 };
 
-#endif
 
 #endif // __FFMPEG_WRAPPER_H__

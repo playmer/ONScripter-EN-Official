@@ -1,3 +1,6 @@
 [submodule "extlib/vcpkg"]
 	path = extlib/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "extlib/SDL_kitchensink"]
+	path = extlib/SDL_kitchensink
+	url = https://github.com/playmer/SDL_kitchensink.git

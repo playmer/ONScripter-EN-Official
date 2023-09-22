@@ -18,6 +18,10 @@
       "platform": "!emscripten"
     },
     {
+      "name": "libass",
+      "platform": "windows|osx|ios|linux|emscripten|android"
+    },
+    {
       "name": "libmad",
       "platform": "windows|osx|ios|linux|emscripten"
     },

@@ -46,8 +46,6 @@ struct SDL_RWOps_AVIOContext
 
     ~SDL_RWOps_AVIOContext()
     {
-        av_free(m_context);
-        av_free(m_ffmpeg_buffer);
         delete[] m_original_buffer;
     }
 
@@ -75,6 +73,7 @@ struct SDL_RWOps_AVIOContext
 FFMpegWrapper::~FFMpegWrapper()
 {
     SDL_DestroyTexture(m_texture);
+    format_context.reset();
     delete m_context;
 }
 
@@ -167,7 +166,7 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
     {
         m_sample_rate = audio_parameters->sample_rate;
         // FIXME: This will hurt your ears currently, something about this setup produces bad audio.
-        //m_onscripterLabel->openAudio(m_sample_rate, MIX_DEFAULT_FORMAT, audio_parameters->channels);
+        m_onscripterLabel->openAudio(m_sample_rate, MIX_DEFAULT_FORMAT, audio_parameters->channels);
     }
 
     m_video_frame.value = av_frame_alloc();
@@ -219,18 +218,40 @@ void FFMpegWrapper::queue_audio()
     int size;
     int bufsize = av_samples_get_buffer_size(&size, m_audio_context->channels, m_audio_frame->nb_samples, static_cast<AVSampleFormat>(m_audio_frame->format), 0);
     bool isplanar = av_sample_fmt_is_planar(static_cast<AVSampleFormat>(m_audio_frame->format)) == 1;
-    SDL_LockMutex(audio_data_mutex);
-    for (int ch = 0; ch < m_audio_context->channels; ch++) {
-        if (!isplanar) {
-            const uint8_t* data_start = m_audio_frame->data[ch];
-            audio_data.insert(audio_data.end(), data_start, data_start + m_audio_frame->linesize[ch]);
+
+
+    size_t dst_start_loc = scratch_audio_data.size();
+    scratch_audio_data.resize(scratch_audio_data.size() + bufsize);
+    uint8_t* dst_ptr = scratch_audio_data.data();
+
+    if (isplanar)
+    {
+        const uint8_t* data_start = m_audio_frame->data[0];
+        for (size_t i = 0; i < size; i += 2)
+        {
+            size_t start = (i * 2);
+            dst_ptr[start + 0] = data_start[i + 0];
+            dst_ptr[start + 1] = data_start[i + 1];
         }
-        else {
-            const uint8_t* data_start = m_audio_frame->data[0] + size * ch;
-            audio_data.insert(audio_data.end(), data_start, data_start + size);
+
+        data_start = m_audio_frame->data[1];
+        for (size_t i = 0; i < size; i += 2)
+        {
+            size_t start = (i * 2);
+            dst_ptr[start + 2] = data_start[i + 0];
+            dst_ptr[start + 3] = data_start[i + 1];
         }
     }
+    else
+    {
+
+    }
+
+    SDL_LockMutex(audio_data_mutex);
+    audio_data.insert(audio_data.end(), scratch_audio_data.begin(), scratch_audio_data.end());
     SDL_UnlockMutex(audio_data_mutex);
+
+    scratch_audio_data.clear();
 }
 
 int FFMpegWrapper::play(bool click_flag)

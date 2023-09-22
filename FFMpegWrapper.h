@@ -71,8 +71,13 @@ private:
         AVWrapper() = default;
         ~AVWrapper()
         {
+            reset();
+        }
+
+        void reset()
+        {
             if (value)
-              tFunc(&value);
+                tFunc(&value);
 
             value = NULL;
         }
@@ -110,6 +115,7 @@ private:
     AVWrapper<AVFrame, av_frame_free> m_audio_frame;
     AVWrapper<AVPacket, av_packet_free> m_packet;
 
+    std::vector<uint8_t> scratch_audio_data;
     std::vector<uint8_t> audio_data;
     SDL_mutex* audio_data_mutex;
     

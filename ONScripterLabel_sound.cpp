@@ -122,85 +122,6 @@ extern SDL_TimerID timer_seqmusic_id;
           (buf[4] == 0)  && (buf[5] == 0) && \
           (buf[6] == 0)  && (buf[7] == 6))
 
-//ID3v2 tag header format
-#define HAS_ID3V2_TAG(buf)                                          \
-         ((buf[0] == 'I') && (buf[1] == 'D') && (buf[2] == '3') &&  \
-          (buf[3] != 0xFF) && (buf[4] != 0xFF) && !(buf[5] & 0x1F))
-
-extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, Uint8 *buf_dst, long len, bool do_rate_conversion)
-{
-    int current_section;
-    long total_len = 0;
-
-    OVInfo *ovi = music_struct->ovi;
-    char *buf = (char*)buf_dst;
-    if (do_rate_conversion && ovi->cvt.needed){
-        len = len * ovi->mult1 / ovi->mult2;
-        if (ovi->cvt_len < len*ovi->cvt.len_mult){
-            if (ovi->cvt.buf) delete[] ovi->cvt.buf;
-            ovi->cvt.buf = new Uint8[len*ovi->cvt.len_mult];
-            ovi->cvt_len = len*ovi->cvt.len_mult;
-        }
-        buf = (char*)ovi->cvt.buf;
-    }
-
-#ifdef USE_OGG_VORBIS
-    while(1){
-#ifdef INTEGER_OGG_VORBIS
-        long src_len = ov_read( &ovi->ovf, buf, len, &current_section);
-#else
-        long src_len = ov_read( &ovi->ovf, buf, len, 0, 2, 1, &current_section);
-#endif
-        if (src_len <= 0) break;
-
-        int vol = music_struct->is_mute ? 0 : music_struct->volume;
-        if (music_struct->voice_sample && *(music_struct->voice_sample))
-            vol /= 2;
-        long dst_len = src_len;
-        if (do_rate_conversion && ovi->cvt.needed){
-            ovi->cvt.len = src_len;
-            SDL_ConvertAudio(&ovi->cvt);
-            memcpy(buf_dst, ovi->cvt.buf, ovi->cvt.len_cvt);
-            dst_len = ovi->cvt.len_cvt;
-
-            if (vol != DEFAULT_VOLUME){
-                // volume change under SOUND_OGG_STREAMING
-                for (int i=0 ; i<dst_len ; i+=2){
-                    short a = *(short*)(buf_dst+i);
-                    a = a*vol/100;
-                    *(short*)(buf_dst+i) = a;
-                }
-            }
-            buf_dst += ovi->cvt.len_cvt;
-        }
-        else{
-            if (do_rate_conversion && vol != DEFAULT_VOLUME){ 
-                // volume change under SOUND_OGG_STREAMING
-                for (int i=0 ; i<dst_len ; i+=2){
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-                    SWAP_SHORT_BYTES( ((short*)(buf_dst+i)) )
-#endif
-                    short a = *(short*)(buf_dst+i);
-                    a = a*vol/100;
-                    *(short*)(buf_dst+i) = a;
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-                    SWAP_SHORT_BYTES( ((short*)(buf_dst+i)) )
-#endif
-                }
-            }
-            buf += dst_len;
-            buf_dst += dst_len;
-        }
-
-        total_len += dst_len;
-        if (src_len == len) break;
-        len -= src_len;
-    }
-#endif
-
-    return total_len;
-}
-
 int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag, int channel)
 {
     if ( !audio_open_flag ) return SOUND_NONE;
@@ -238,8 +159,14 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
     }
 
     if (format & (SOUND_OGG | SOUND_OGG_STREAMING)){
-        int ret = playOGG(format, buffer, length, loop_flag, channel);
-        if (ret & (SOUND_OGG | SOUND_OGG_STREAMING)) return ret;
+        Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
+        if (chunk == NULL)
+        {
+            fprintf(stderr, "Issue loading ogg file: %s\n", SDL_GetError());
+            return SOUND_OTHER;
+        }
+
+        return playWave(chunk, format, loop_flag, channel) == 0 ? SOUND_OGG : SOUND_OTHER;
     }
 
     /* check for WMA (i.e. ASF header format) */
@@ -333,8 +260,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
             return SOUND_OTHER;
         }
 
-        playWave(chunk, format, loop_flag, channel);
-        return SOUND_SEQMUSIC;
+        return playWave(chunk, format, loop_flag, channel) == 0 ? SOUND_SEQMUSIC : SOUND_OTHER;
     }
 
     if (format & SOUND_SEQMUSIC){
@@ -345,8 +271,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
             return SOUND_OTHER;
         }
 
-        playWave(chunk, format, loop_flag, channel);
-        return SOUND_SEQMUSIC;
+        return playWave(chunk, format, loop_flag, channel) == 0 ? SOUND_SEQMUSIC : SOUND_OTHER;
     }
 
     delete[] buffer;
@@ -409,60 +334,6 @@ int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int 
     }
 
     return 0;
-}
-
-int ONScripterLabel::playOGG(int format, unsigned char *buffer, long length, bool loop_flag, int channel)
-{
-    int channels, rate;
-    OVInfo *ovi = openOggVorbis(buffer, length, channels, rate);
-    if (ovi == NULL) return SOUND_OTHER;
-
-    if (format & SOUND_OGG){
-        const unsigned int hdr_size = sizeof(WAVE_HEADER)+sizeof(WAVE_DATA_HEADER);
-        unsigned char *buffer2 = new unsigned char[hdr_size+ovi->decoded_length];
-        
-        MusicStruct ms;
-        ms.ovi = ovi;
-        ms.voice_sample = NULL;
-        ms.volume = channelvolumes[channel];
-        decodeOggVorbis(&ms, (Uint8*)(buffer2+hdr_size), ovi->decoded_length, false);
-        setupWaveHeader(buffer2, channels, 16, rate, ovi->decoded_length);
-        Mix_Chunk *chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer2, hdr_size+ovi->decoded_length), 1);
-        delete[] buffer2;
-        closeOggVorbis(ovi);
-        delete[] buffer;
-
-        playWave(chunk, format, loop_flag, channel);
-
-        return SOUND_OGG;
-    }
-
-    if ( (audio_format.format != AUDIO_S16) ||
-         ((audio_format.freq != rate) && match_bgm_audio_flag) ) {
-        Mix_CloseAudio();
-        openAudio(rate, AUDIO_S16, channels);
-        ovi->cvt.needed = 0;
-        if (!audio_open_flag) {
-            // didn't work, use the old settings
-            openAudio();
-            ovi->cvt_len = 0;
-            SDL_BuildAudioCVT(&ovi->cvt,
-                      AUDIO_S16, channels, rate,
-                      audio_format.format, audio_format.channels, audio_format.freq);
-            ovi->mult1 = 10;
-            ovi->mult2 = (int)(ovi->cvt.len_ratio*10.0);
-       }
-    }
-
-    music_struct.ovi = ovi;
-    music_struct.volume = music_volume;
-    music_struct.is_mute = !volume_on_flag;
-    Mix_HookMusic(oggcallback, &music_struct);
-
-    music_buffer = buffer;
-    music_buffer_length = length;
-
-    return SOUND_OGG_STREAMING;
 }
 
 int ONScripterLabel::playExternalMusic(bool loop_flag)

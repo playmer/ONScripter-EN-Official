@@ -21,9 +21,7 @@
       "name": "libmad",
       "platform": "windows|osx|ios|linux|emscripten"
     },
-    "libogg",
     "libpng",
-    "libvorbis",
     "lua",
     {
       "name": "sdl2",

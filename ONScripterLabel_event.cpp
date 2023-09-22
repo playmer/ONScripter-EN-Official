@@ -76,8 +76,6 @@ void ONScripterLabel::clearTimer(SDL_TimerID &timer_id)
     }
 }
 
-extern long decodeOggVorbis(ONScripterLabel::MusicStruct *music_struct, Uint8 *buf_dst, long len, bool do_rate_conversion);
-
 /* **************************************** *
  * Callback functions
  * **************************************** */
@@ -87,13 +85,6 @@ extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
     int returned = SMPEG_playAudio(mpeg_sample, stream, len);
     
     if (returned == 0 ){
-        Window::SendCustomEventStatic(ONS_SOUND_EVENT);
-    }
-}
-
-extern "C" void oggcallback( void *userdata, Uint8 *stream, int len )
-{
-    if (decodeOggVorbis((ONScripterLabel::MusicStruct*)userdata, stream, len, true) == 0){
         Window::SendCustomEventStatic(ONS_SOUND_EVENT);
     }
 }

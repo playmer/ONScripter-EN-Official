@@ -127,6 +127,11 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
         if (video_codec && audio_codec) { break; }
     }
 
+    if (video_parameters == NULL) {
+        fprintf(stderr, "Couldn't find a set of video_parameters when opening video, exiting");
+        return 2;
+    }
+
     m_video_context.value = avcodec_alloc_context3(video_codec);
     m_audio_context.value = avcodec_alloc_context3(audio_codec);
 

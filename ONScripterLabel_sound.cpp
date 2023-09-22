@@ -456,258 +456,263 @@ int ONScripterLabel::setVolumeMute( bool do_mute )
 int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_pos, int xpos, int ypos, int width, int height )
 {
     int ret = 0;
-#ifndef MP3_MAD
-    bool different_spec = false;
-    if (async_movie) stopMovie(async_movie);
-    async_movie = NULL;
-    if (movie_buffer) delete[] movie_buffer;
-    movie_buffer = NULL;
-    if (surround_rects) delete[] surround_rects;
-    surround_rects = NULL;
 
-    unsigned long length = script_h.cBR->getFileLength( filename );
+    if (audio_open_flag) Mix_CloseAudio();
 
-    if (length == 0) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                 "couldn't load movie '%s'", filename);
-        errorAndCont(script_h.errbuf);
-        return 0;
+    FFMpegWrapper avi;
+    if (avi.initialize(this, m_window, filename, audio_open_flag, false) == 0) {
+        if (avi.play(true)) return 1;
     }
+    //delete[] absolute_filename;
 
-    movie_buffer = new unsigned char[length];
-    script_h.cBR->getFile( filename, movie_buffer );
-
-    /* check for AVI header format */
-    if ( IS_AVI_HDR(movie_buffer) ){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                 "movie file '%s' is in AVI format", filename);
-        errorAndCont(script_h.errbuf);
-        if (movie_buffer) delete[] movie_buffer;
-        movie_buffer = NULL;
-        return 0;
+    if (audio_open_flag) {
+        Mix_CloseAudio();
+        openAudio();
     }
-
-    SMPEG_Info mpeg_info;
-    SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( movie_buffer, length ), NULL, 1, 0 );
-    char *errstr = SMPEG_error( mpeg_sample );
-    if (errstr){
-        
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                 "SMPEG error on '%s'", filename);
-        errorAndCont(script_h.errbuf, errstr);
-        if (movie_buffer) delete[] movie_buffer;
-        movie_buffer = NULL;
-        return 0;
-    }
-    else {
-        SMPEG_Info info;
-        SMPEG_getinfo(mpeg_sample, &info);
-        if (info.has_audio){
-            stopBGM( false );
-            SMPEG_enableaudio( mpeg_sample, 0 );
-
-            if ( audio_open_flag ){
-                //Mion - SMPEG doesn't handle different audio spec well, so
-                // we might reset the SDL mixer for this video playback
-                SDL_AudioSpec wanted;
-                SMPEG_wantedSpec( mpeg_sample, &wanted );
-                //printf("SMPEG wants audio: %d Hz %d bit %s\n", wanted.freq,
-                //       (wanted.format&0xFF),
-                //       (wanted.channels > 1) ? "stereo" : "mono");
-                if ((wanted.format != audio_format.format) ||
-                    (wanted.freq != audio_format.freq)) {
-                    different_spec = true;
-                    Mix_CloseAudio();
-                    openAudio(wanted.freq, wanted.format, wanted.channels);
-                    if (!audio_open_flag) {
-                        // didn't work, use the old settings
-                        openAudio();
-                        different_spec = false;
-                    }
-                }
-                SMPEG_actualSpec( mpeg_sample, &audio_format );
-                SMPEG_enableaudio( mpeg_sample, 1 );
-            }
-        } else {
-            different_spec = false;
-        }
-
-        int texture_width = (info.width + 15) & ~15;
-        int texture_height = (info.height + 15) & ~15;
-        frame_texture = SDL_CreateTexture(m_window->GetRenderer(), SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, texture_width, texture_height);
-        int frame_number_local = frame_number = 0;
-
-        SMPEG_enablevideo( mpeg_sample, 1 );
-        SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, frame_mutex);
-
-        if (use_pos) {
-            smpeg_scale_x = width;
-            smpeg_scale_y = height;
-            smpeg_move_x = xpos;
-            smpeg_move_y = ypos;
-        }
-        else if (nomovieupscale_flag && (info.width < screen_width) &&
-                 (info.height < screen_height)) {
-            //"no-movie-upscale" set, so use its native
-            //width/height & center within the screen
-            smpeg_scale_x = info.width;
-            smpeg_scale_y = info.height;
-            smpeg_move_x = (screen_width - info.width) / 2;
-            smpeg_move_y = (screen_height - info.height) / 2;
-        }
-#ifdef RCA_SCALE
-        //center the movie on the screen, using standard aspect ratio
-        else if ( (scr_stretch_x > 1.0) || (scr_stretch_y > 1.0) ) {
-            width = ExpandPos(script_width);
-            height = ExpandPos(script_height);
-            SMPEG_scaleXY( mpeg_sample, width, height );
-            SMPEG_move( mpeg_sample, (screen_width - width) / 2,
-                       (screen_height - height) / 2 );
-        }
-#endif
-
-        if (info.has_audio){
-            int volume = !volume_on_flag ? 0 : music_volume;
-            SMPEG_setvolume( mpeg_sample, volume);
-            Mix_HookMusic( mp3callback, mpeg_sample );
-        }
-
-        surround_rects = new SDL_Rect[4];
-        for (int i=0; i<4; ++i) {
-            surround_rects[i].x = surround_rects[i].y = 0;
-            surround_rects[i].w = surround_rects[i].h = 0;
-        }
-
-        if (use_pos) {
-            async_movie_rect.x = xpos;
-            async_movie_rect.y = ypos;
-            async_movie_rect.w = width;
-            async_movie_rect.h = height;
-
-            //sur_rect[0] = { 0, 0, screen_width, ypos };
-            //sur_rect[1] = { 0, ypos, xpos, height };
-            //sur_rect[2] = { xpos + width, ypos, screen_width - (xpos + width), height };
-            //sur_rect[3] = { 0, ypos + height, screen_width, screen_height - (ypos + height) };
-            surround_rects[0].w = surround_rects[3].w = screen_width;
-            surround_rects[0].h = surround_rects[1].y = surround_rects[2].y = ypos;
-            surround_rects[1].w = xpos;
-            surround_rects[1].h = surround_rects[2].h = height;
-            surround_rects[2].x = xpos + width;
-            surround_rects[2].w = screen_width - (xpos + width);
-            surround_rects[3].y = ypos + height;
-            surround_rects[3].h = screen_height - (ypos + height);
-        } else {
-            async_movie_rect.x = 0;
-            async_movie_rect.y = 0;
-            async_movie_rect.w = screen_width;
-            async_movie_rect.h = screen_height;
-        }
-
-        if (movie_loop_flag)
-            SMPEG_loop( mpeg_sample, -1 );
-        SMPEG_play( mpeg_sample );
-
-        if (async_flag){
-            async_movie = mpeg_sample;
-            if (!info.has_audio && movie_loop_flag){
-                timer_silentmovie_id = SDL_AddTimer(100, silentmovieCallback,
-                                                    (void*)&async_movie);
-            }
-            return 0;
-        }
-
-        bool done_flag = false;
-        while( !done_flag ){
-            if (SMPEG_status(mpeg_sample) != SMPEG_PLAYING){
-                if (movie_loop_flag)
-                    SMPEG_play( mpeg_sample );
-                else
-                    break;
-            }
-
-            SDL_Event event;
-
-            while (m_window->PollEvents(event)) {
-                switch (event.type){
-                  case SDL_KEYUP:
-                    if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RETURN ||
-                         ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_SPACE ||
-                         ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_ESCAPE )
-                        done_flag = movie_click_flag;
-                    else if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_f ){
-#ifndef PSP
-                        if ( SDL_SetWindowFullscreen(m_window->GetWindow(), SDL_WINDOW_FULLSCREEN_DESKTOP) < 0) {
-                            SMPEG_pause( mpeg_sample );
-                            SDL_FreeSurface(screen_surface);
-                            if ( fullscreen_mode )
-                                screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, false );
-                            else
-                                screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, true );
-                            SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, NULL );
-                            SMPEG_play( mpeg_sample );
-                        }
-#endif
-                        fullscreen_mode = !fullscreen_mode;
-                    }
-                    else if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_m ){
-                        volume_on_flag = !volume_on_flag;
-                        SMPEG_setvolume( mpeg_sample, !volume_on_flag? 0 : music_volume );
-                        printf("turned %s volume mute\n", !volume_on_flag?"on":"off");
-                    }
-                    break;
-                  case SDL_QUIT:
-                    ret = 1;
-                    done_flag = true;
-                    break;
-                  case SDL_MOUSEBUTTONUP:
-                    done_flag = movie_click_flag;
-                    break;
-                  default:
-                    break;
-                }
-                //SDL_Delay( 5 );
-            }
-
-
-            if (frame_number_local < frame_number) {
-                SDL_mutexP(frame_mutex);
-                SDL_assert(frame->image_width == texture_width);
-                SDL_assert(frame->image_height == texture_height);
-                SDL_UpdateTexture(frame_texture, NULL, frame->image, frame->image_width);
-                frame_number = frame_number;
-                SDL_mutexV(frame_mutex);
-
-                DisplayTexture(frame_texture);
-            }
-        }
-        ctrl_pressed_status = 0;
-
-        stopMovie(mpeg_sample);
-
-        if (different_spec) {
-            //restart mixer with the old audio spec
-            Mix_CloseAudio();
-            openAudio();
-        }
-    }
-#else
-    errorAndCont( "mpeg video playback is disabled." );
-#endif
-
+//#ifndef MP3_MAD
+//    bool different_spec = false;
+//    if (async_movie) stopMovie(async_movie);
+//    async_movie = NULL;
+//    if (movie_buffer) delete[] movie_buffer;
+//    movie_buffer = NULL;
+//    if (surround_rects) delete[] surround_rects;
+//    surround_rects = NULL;
+//
+//    unsigned long length = script_h.cBR->getFileLength( filename );
+//
+//    if (length == 0) {
+//        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+//                 "couldn't load movie '%s'", filename);
+//        errorAndCont(script_h.errbuf);
+//        return 0;
+//    }
+//
+//    movie_buffer = new unsigned char[length];
+//    script_h.cBR->getFile( filename, movie_buffer );
+//
+//    /* check for AVI header format */
+//    if ( IS_AVI_HDR(movie_buffer) ){
+//        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+//                 "movie file '%s' is in AVI format", filename);
+//        errorAndCont(script_h.errbuf);
+//        if (movie_buffer) delete[] movie_buffer;
+//        movie_buffer = NULL;
+//        return 0;
+//    }
+//
+//    SMPEG_Info mpeg_info;
+//    SMPEG *mpeg_sample = SMPEG_new_rwops( SDL_RWFromMem( movie_buffer, length ), NULL, 1, 0 );
+//    char *errstr = SMPEG_error( mpeg_sample );
+//    if (errstr){
+//        
+//        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+//                 "SMPEG error on '%s'", filename);
+//        errorAndCont(script_h.errbuf, errstr);
+//        if (movie_buffer) delete[] movie_buffer;
+//        movie_buffer = NULL;
+//        return 0;
+//    }
+//    else {
+//        SMPEG_Info info;
+//        SMPEG_getinfo(mpeg_sample, &info);
+//        if (info.has_audio){
+//            stopBGM( false );
+//            SMPEG_enableaudio( mpeg_sample, 0 );
+//
+//            if ( audio_open_flag ){
+//                //Mion - SMPEG doesn't handle different audio spec well, so
+//                // we might reset the SDL mixer for this video playback
+//                SDL_AudioSpec wanted;
+//                SMPEG_wantedSpec( mpeg_sample, &wanted );
+//                //printf("SMPEG wants audio: %d Hz %d bit %s\n", wanted.freq,
+//                //       (wanted.format&0xFF),
+//                //       (wanted.channels > 1) ? "stereo" : "mono");
+//                if ((wanted.format != audio_format.format) ||
+//                    (wanted.freq != audio_format.freq)) {
+//                    different_spec = true;
+//                    Mix_CloseAudio();
+//                    openAudio(wanted.freq, wanted.format, wanted.channels);
+//                    if (!audio_open_flag) {
+//                        // didn't work, use the old settings
+//                        openAudio();
+//                        different_spec = false;
+//                    }
+//                }
+//                SMPEG_actualSpec( mpeg_sample, &audio_format );
+//                SMPEG_enableaudio( mpeg_sample, 1 );
+//            }
+//        } else {
+//            different_spec = false;
+//        }
+//
+//        int texture_width = (info.width + 15) & ~15;
+//        int texture_height = (info.height + 15) & ~15;
+//        frame_texture = SDL_CreateTexture(m_window->GetRenderer(), SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, texture_width, texture_height);
+//        int frame_number_local = frame_number = 0;
+//
+//        SMPEG_enablevideo( mpeg_sample, 1 );
+//        SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, frame_mutex);
+//
+//        if (use_pos) {
+//            smpeg_scale_x = width;
+//            smpeg_scale_y = height;
+//            smpeg_move_x = xpos;
+//            smpeg_move_y = ypos;
+//        }
+//        else if (nomovieupscale_flag && (info.width < screen_width) &&
+//                 (info.height < screen_height)) {
+//            //"no-movie-upscale" set, so use its native
+//            //width/height & center within the screen
+//            smpeg_scale_x = info.width;
+//            smpeg_scale_y = info.height;
+//            smpeg_move_x = (screen_width - info.width) / 2;
+//            smpeg_move_y = (screen_height - info.height) / 2;
+//        }
+//#ifdef RCA_SCALE
+//        //center the movie on the screen, using standard aspect ratio
+//        else if ( (scr_stretch_x > 1.0) || (scr_stretch_y > 1.0) ) {
+//            width = ExpandPos(script_width);
+//            height = ExpandPos(script_height);
+//            SMPEG_scaleXY( mpeg_sample, width, height );
+//            SMPEG_move( mpeg_sample, (screen_width - width) / 2,
+//                       (screen_height - height) / 2 );
+//        }
+//#endif
+//
+//        if (info.has_audio){
+//            int volume = !volume_on_flag ? 0 : music_volume;
+//            SMPEG_setvolume( mpeg_sample, volume);
+//            Mix_HookMusic( mp3callback, mpeg_sample );
+//        }
+//
+//        surround_rects = new SDL_Rect[4];
+//        for (int i=0; i<4; ++i) {
+//            surround_rects[i].x = surround_rects[i].y = 0;
+//            surround_rects[i].w = surround_rects[i].h = 0;
+//        }
+//
+//        if (use_pos) {
+//            async_movie_rect.x = xpos;
+//            async_movie_rect.y = ypos;
+//            async_movie_rect.w = width;
+//            async_movie_rect.h = height;
+//
+//            //sur_rect[0] = { 0, 0, screen_width, ypos };
+//            //sur_rect[1] = { 0, ypos, xpos, height };
+//            //sur_rect[2] = { xpos + width, ypos, screen_width - (xpos + width), height };
+//            //sur_rect[3] = { 0, ypos + height, screen_width, screen_height - (ypos + height) };
+//            surround_rects[0].w = surround_rects[3].w = screen_width;
+//            surround_rects[0].h = surround_rects[1].y = surround_rects[2].y = ypos;
+//            surround_rects[1].w = xpos;
+//            surround_rects[1].h = surround_rects[2].h = height;
+//            surround_rects[2].x = xpos + width;
+//            surround_rects[2].w = screen_width - (xpos + width);
+//            surround_rects[3].y = ypos + height;
+//            surround_rects[3].h = screen_height - (ypos + height);
+//        } else {
+//            async_movie_rect.x = 0;
+//            async_movie_rect.y = 0;
+//            async_movie_rect.w = screen_width;
+//            async_movie_rect.h = screen_height;
+//        }
+//
+//        if (movie_loop_flag)
+//            SMPEG_loop( mpeg_sample, -1 );
+//        SMPEG_play( mpeg_sample );
+//
+//        if (async_flag){
+//            async_movie = mpeg_sample;
+//            if (!info.has_audio && movie_loop_flag){
+//                timer_silentmovie_id = SDL_AddTimer(100, silentmovieCallback,
+//                                                    (void*)&async_movie);
+//            }
+//            return 0;
+//        }
+//
+//        bool done_flag = false;
+//        while( !done_flag ){
+//            if (SMPEG_status(mpeg_sample) != SMPEG_PLAYING){
+//                if (movie_loop_flag)
+//                    SMPEG_play( mpeg_sample );
+//                else
+//                    break;
+//            }
+//
+//            SDL_Event event;
+//
+//            while (m_window->PollEvents(event)) {
+//                switch (event.type){
+//                  case SDL_KEYUP:
+//                    if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RETURN ||
+//                         ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_SPACE ||
+//                         ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_ESCAPE )
+//                        done_flag = movie_click_flag;
+//                    else if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_f ){
+//#ifndef PSP
+//                        if ( SDL_SetWindowFullscreen(m_window->GetWindow(), SDL_WINDOW_FULLSCREEN_DESKTOP) < 0) {
+//                            SMPEG_pause( mpeg_sample );
+//                            SDL_FreeSurface(screen_surface);
+//                            if ( fullscreen_mode )
+//                                screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, false );
+//                            else
+//                                screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, true );
+//                            SMPEG_setdisplay( mpeg_sample, SmpegDisplayCallback, this, NULL );
+//                            SMPEG_play( mpeg_sample );
+//                        }
+//#endif
+//                        fullscreen_mode = !fullscreen_mode;
+//                    }
+//                    else if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_m ){
+//                        volume_on_flag = !volume_on_flag;
+//                        SMPEG_setvolume( mpeg_sample, !volume_on_flag? 0 : music_volume );
+//                        printf("turned %s volume mute\n", !volume_on_flag?"on":"off");
+//                    }
+//                    break;
+//                  case SDL_QUIT:
+//                    ret = 1;
+//                    done_flag = true;
+//                    break;
+//                  case SDL_MOUSEBUTTONUP:
+//                    done_flag = movie_click_flag;
+//                    break;
+//                  default:
+//                    break;
+//                }
+//                //SDL_Delay( 5 );
+//            }
+//
+//
+//            if (frame_number_local < frame_number) {
+//                SDL_mutexP(frame_mutex);
+//                SDL_assert(frame->image_width == texture_width);
+//                SDL_assert(frame->image_height == texture_height);
+//                SDL_UpdateTexture(frame_texture, NULL, frame->image, frame->image_width);
+//                frame_number = frame_number;
+//                SDL_mutexV(frame_mutex);
+//
+//                DisplayTexture(frame_texture);
+//            }
+//        }
+//        ctrl_pressed_status = 0;
+//
+//        stopMovie(mpeg_sample);
+//
+//        if (different_spec) {
+//            //restart mixer with the old audio spec
+//            Mix_CloseAudio();
+//            openAudio();
+//        }
+//    }
+//#else
+//    errorAndCont( "mpeg video playback is disabled." );
+//#endif
+//
     return ret;
 }
 
 int ONScripterLabel::playAVI( const char *filename, bool click_flag )
 {
 #ifdef USE_AVIFILE
-    // FIXME: "We should be handling pulling files from archives"
-    //char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
-    //sprintf( absolute_filename, "%s%s", archive_path, filename );
-    //for ( unsigned int i=0 ; i<strlen( absolute_filename ) ; i++ )
-    //    if ( absolute_filename[i] == '/' ||
-    //         absolute_filename[i] == '\\' )
-    //        absolute_filename[i] = DELIMITER;
-
     if ( audio_open_flag ) Mix_CloseAudio();
 
     FFMpegWrapper avi;

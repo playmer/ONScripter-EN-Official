@@ -38,6 +38,7 @@ extern "C"
 
 class Window;
 class ONScripterLabel;
+struct SDL_RWOps_AVIOContext;
 
 class FFMpegWrapper
 {
@@ -115,7 +116,9 @@ private:
     ONScripterLabel* m_onscripterLabel = NULL;
     Window* m_window = NULL;
     SDL_Texture* m_texture = NULL;
+    SDL_RWOps_AVIOContext* m_context = NULL;
 
+    size_t m_sample_rate;
     int video_width;
     int video_height;
 };

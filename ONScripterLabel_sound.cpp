@@ -326,7 +326,7 @@ int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int 
     else if (channel == MIX_BGM_CHANNEL)
         Mix_Volume( channel, !volume_on_flag? 0 : music_volume * 128 / 100 );
     else
-        Mix_Volume( channel, !volume_on_flag? 0 : DEFAULT_VOLUME * 128 / 100 );
+        Mix_Volume( channel, !volume_on_flag? 0 : se_volume * 128 / 100 );
 
     if (!(format & SOUND_PRELOAD)) {
         Mix_ChannelFinished(waveCallback);

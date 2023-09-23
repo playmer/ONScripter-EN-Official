@@ -444,7 +444,6 @@ void ONScripterLabel::SetMusicVolume(int volume)
 
     // Music Volume
     setCurMusicVolume(music_volume);
-
 }
 
 void ONScripterLabel::SetSfxVolume(int volume)
@@ -453,17 +452,23 @@ void ONScripterLabel::SetSfxVolume(int volume)
 
     // SFX Volume
     for (int i = 1; i < ONS_MIX_CHANNELS; i++)
+    {
+        channelvolumes[i] = volume;
         if (wave_sample[i])
             Mix_Volume(i, !volume_on_flag ? 0 : se_volume * 128 / 100);
-    if (wave_sample[MIX_LOOPBGM_CHANNEL0])
+    }
+    if (wave_sample[MIX_LOOPBGM_CHANNEL0]) {
         Mix_Volume(MIX_LOOPBGM_CHANNEL0, !volume_on_flag ? 0 : se_volume * 128 / 100);
-    if (wave_sample[MIX_LOOPBGM_CHANNEL1])
+    }
+    if (wave_sample[MIX_LOOPBGM_CHANNEL1]) {
         Mix_Volume(MIX_LOOPBGM_CHANNEL1, !volume_on_flag ? 0 : se_volume * 128 / 100);
+    }
 }
 
 void ONScripterLabel::SetVoiceVolume(int volume)
 {
     voice_volume = volume;
+    channelvolumes[0] = volume;
 
     // Voice Volume
     if (wave_sample[0])

@@ -209,6 +209,7 @@ if (ONS_USE_AVIFILE)
     )
 
 
+    find_package(harfbuzz REQUIRED)
 
 
     
@@ -282,6 +283,7 @@ if (ONS_USE_AVIFILE)
     target_link_libraries(SDL_kitchensink PRIVATE BZip2::BZip2
     PRIVATE
         ass
+        harfbuzz
         ${FFMPEG_LIBRARIES}
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     )

@@ -266,7 +266,8 @@ jobs:
             git
             cmake
             ninja
-            base-devel 
+            base-devel
+            nasm
             mingw-w64-x86_64-toolchain
 
 

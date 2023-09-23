@@ -35,12 +35,7 @@
     },
     {
       "name": "sdl2-image",
-      "features": [ "libjpeg-turbo" ],
-      "platform": "!emscripten"
-    },
-    {
-      "name": "sdl2-image",
-      "platform": "emscripten"
+      "features": [ "libjpeg-turbo" ]
     },
     {
       "name": "sdl2-mixer",

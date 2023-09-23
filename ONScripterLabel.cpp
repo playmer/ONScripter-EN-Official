@@ -506,17 +506,27 @@ void ONScripterLabel::initSDL()
     }
 
     IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
-    int ret = Mix_Init(MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_MID);
 
-    if (ret != (MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_MID))
+
+    int mixer_flags = MIX_INIT_OGG;
+
+#ifndef __EMSCRIPTEN__
+    mixer_flags = mixer_flags | MIX_INIT_MP3 | MIX_INIT_MID;
+#endif // !__EMSCRIPTEN__
+
+    int ret = Mix_Init(mixer_flags);
+
+    if (ret != (mixer_flags))
     {
         fprintf(stderr, "SDL_Mixer initialization issue: %s", SDL_GetError());
     }
 
+#ifndef __EMSCRIPTEN__
     std::string soundFontPath = SDL_GetBasePath();
     soundFontPath += "/GeneralUser_GS _1.471.sf2";
 
     Mix_SetSoundFonts(soundFontPath.c_str());
+#endif // !__EMSCRIPTEN__
 
 #if 0
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)

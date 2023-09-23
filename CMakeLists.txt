@@ -177,7 +177,28 @@ else()
     add_executable(onscripter_en)
 
     if (EMSCRIPTEN)
-        target_link_options(onscripter_en PUBLIC -s ASYNCIFY "--preload-file" ${CMAKE_CURRENT_LIST_DIR}/game/netannad@/)
+        #target_link_options(onscripter_en PUBLIC -s ASYNCIFY  -s "EXPORTED_RUNTIME_METHODS=['autoResumeAudioContext']" "--preload-file" ${CMAKE_CURRENT_LIST_DIR}/game/netannad@/)
+        target_link_options(onscripter_en
+        PRIVATE
+        "SHELL:--bind"
+        "SHELL:-s MALLOC=dlmalloc"
+        "SHELL:-s USE_SDL=2"
+        "SHELL:-s MIN_WEBGL_VERSION=2"
+        "SHELL:-s MAX_WEBGL_VERSION=2"
+        "SHELL:-s FULL_ES2=1"
+        "SHELL:-s ALLOW_MEMORY_GROWTH=1"
+        "SHELL:-s MODULARIZE=1"
+        "SHELL:-s EXPORT_ES6=1"
+        "SHELL:-s FORCE_FILESYSTEM"
+        "SHELL:-s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','FS','autoResumeAudioContext']"
+        "SHELL:-s ASYNCIFY"
+        
+        "SHELL:--preload-file ${CMAKE_CURRENT_LIST_DIR}/game/tsukihime@/"
+        
+        "SHELL:-Os"
+        "SHELL:-g0"
+        )
+
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
     endif ()
 endif()

@@ -9,22 +9,18 @@ endif()
 
 if(EMSCRIPTEN)
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
-    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
     option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" OFF)
 elseif(MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
-    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
     option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
 elseif(ANDROID) # Android
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
-    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
     option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
 else()
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
-    option(ONS_USE_LIB_MAD "Choose whether to use libmad instead of smpeg for mp3 audio" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
     option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
 endif()
@@ -178,7 +174,26 @@ else()
     add_executable(onscripter_en)
 
     if (EMSCRIPTEN)
-        target_link_options(onscripter_en PUBLIC -s ASYNCIFY "--preload-file" ${CMAKE_CURRENT_LIST_DIR}/game/netannad@/)
+        target_link_options(onscripter_en
+        PRIVATE
+            "SHELL:--bind"
+            "SHELL:-s MALLOC=dlmalloc"
+            "SHELL:-s USE_SDL=2"
+            "SHELL:-s MIN_WEBGL_VERSION=2"
+            "SHELL:-s MAX_WEBGL_VERSION=2"
+            "SHELL:-s FULL_ES2=1"
+            "SHELL:-s ALLOW_MEMORY_GROWTH=1"
+            "SHELL:-s MODULARIZE=1"
+            "SHELL:-s EXPORT_ES6=1"
+            "SHELL:-s FORCE_FILESYSTEM"
+            "SHELL:-s EXPORTED_RUNTIME_METHODS=['UTF8ToString','lengthBytesUTF8','stringToUTF8','FS','autoResumeAudioContext']"
+            "SHELL:-s ASYNCIFY"
+            
+            "SHELL:--preload-file ${CMAKE_CURRENT_LIST_DIR}/game@/"
+            
+            "SHELL:-Os"
+            "SHELL:-g0"
+        )
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
     endif ()
 endif()
@@ -215,10 +230,6 @@ if (ONS_USE_AVIFILE)
     
     ###############
     # SDL_KitchenSink
-
-
-
-    
     find_library(ASS_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
     find_library(ASS_DEBUG_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
     #find_file(ASS_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
@@ -233,17 +244,6 @@ if (ONS_USE_AVIFILE)
             IMPORTED_LOCATION_RELEASE ${ASS_LIBRARY}
             IMPORTED_LOCATION ${ASS_LIBRARY}
     )
-
-
-
-
-
-
-
-
-
-
-
 
 
     add_library(SDL_kitchensink)
@@ -297,32 +297,6 @@ if (ONS_USE_AVIFILE)
         -DKIT_VERSION_MAJOR=${KIT_VERSION_MAJOR}
         -DKIT_VERSION_MINOR=${KIT_VERSION_MINOR}
         -DKIT_VERSION_PATCH=${KIT_VERSION_PATCH}
-    )
-endif()
-
-#########
-# Lib Mad Support
-if (ONS_USE_LIB_MAD)
-    find_library(LIBMAD_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-    find_library(LIBMAD_DEBUG_LIBRARY mad.lib libmad.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-
-    add_library(libmad STATIC IMPORTED [GLOBAL])
-    # set the location that we are going to import the library from
-    set_target_properties(
-        libmad 
-        PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${LIBMAD_DEBUG_LIBRARY}
-            IMPORTED_LOCATION ${LIBMAD_LIBRARY}
-    )
-    
-    target_compile_definitions(onscripter_en PUBLIC MP3_MAD)
-
-    target_link_libraries(onscripter_en PRIVATE libmad)
-    
-    target_sources(onscripter_en
-    PRIVATE
-        MadWrapper.cpp
-        MadWrapper.h
     )
 endif()
 

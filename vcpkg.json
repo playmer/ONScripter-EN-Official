@@ -12,19 +12,14 @@
       "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ],
       "platform": "(windows|osx|ios|linux)"
     },
+    {
+      "name": "ffmpeg",
+      "features": [ "avcodec", "avdevice", "avfilter", "avformat" ],
+      "platform": "emscripten"
+    },
     "freetype",
-    {
-      "name": "libjpeg-turbo",
-      "platform": "!emscripten"
-    },
-    {
-      "name": "libass",
-      "platform": "windows|osx|ios|linux|emscripten|android"
-    },
-    {
-      "name": "libmad",
-      "platform": "windows|osx|ios|linux|emscripten"
-    },
+    "libjpeg-turbo",
+    "libass",
     "libpng",
     "lua",
     {
@@ -37,15 +32,7 @@
       "features": [ "base", "vulkan", "wayland", "x11" ],
       "platform": "linux"
     },
-    {
-      "name": "sdl2-image",
-      "features": [ "libjpeg-turbo" ],
-      "platform": "!emscripten"
-    },
-    {
-      "name": "sdl2-image",
-      "platform": "emscripten"
-    },
+    "sdl2-image",
     {
       "name": "sdl2-mixer",
       "features": [ "mpg123", "fluidsynth" ],
@@ -54,11 +41,7 @@
     {
       "name": "sdl2-mixer",
       "features": [ "mpg123" ],
-      "platform": "mingw"
-    },
-    {
-      "name": "sdl2-mixer",
-      "platform": "emscripten"
+      "platform": "mingw|emscripten"
     },
     "sdl2-ttf",
     {

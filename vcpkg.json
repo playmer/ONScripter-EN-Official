@@ -45,11 +45,7 @@
     {
       "name": "sdl2-mixer",
       "features": [ "mpg123" ],
-      "platform": "mingw"
-    },
-    {
-      "name": "sdl2-mixer",
-      "platform": "emscripten"
+      "platform": "mingw|emscripten"
     },
     "sdl2-ttf",
     {

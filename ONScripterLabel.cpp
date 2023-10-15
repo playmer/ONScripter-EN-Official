@@ -542,6 +542,7 @@ void ONScripterLabel::initSDL()
     m_window = CreateQtBasicWindow(this, 800, 600, 50, 50);
 #else
     m_window = CreateQtWindow(this, 800, 600, 50, 50);
+    //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif
 #else
     m_window = CreateBasicWindow(this, 800, 600, 50, 50);

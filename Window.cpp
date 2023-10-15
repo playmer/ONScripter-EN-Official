@@ -100,11 +100,11 @@ bool Window::IsChecked(MenuBarFunction function)
         }
         case MenuBarFunction::kidokuoff:
         {
-            return m_onscripterLabel->skip_mode & ONScripterLabel::SKIP_TO_WAIT;
+            return !m_onscripterLabel->kidokumode_flag;
         }
         case MenuBarFunction::kidokuon:
         {
-            return m_onscripterLabel->skip_mode & ONScripterLabel::SKIP_NORMAL;
+            return m_onscripterLabel->kidokumode_flag;
         }
         case MenuBarFunction::FULL:
         {
@@ -139,8 +139,8 @@ Window::Window(ONScripterLabel* onscripterLabel)
     m_menuBarEntries.emplace_back(MenuBarFunction::TEXTMIDDLE, "Default", 2);
     m_menuBarEntries.emplace_back(MenuBarFunction::TEXTFAST, "Fast", 2);
     m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Skip settings", 1);
-    m_menuBarEntries.emplace_back(MenuBarFunction::kidokuoff, "Skip all messages", 2);
-    m_menuBarEntries.emplace_back(MenuBarFunction::kidokuon, "Skip read text", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::kidokuoff, "Skip until choice", 2);
+    m_menuBarEntries.emplace_back(MenuBarFunction::kidokuon, "Skip to unread", 2);
     m_menuBarEntries.emplace_back(MenuBarFunction::SUB, "Screen settings", 1);
     m_menuBarEntries.emplace_back(MenuBarFunction::FULL, "Fullscreen", 2);
     m_menuBarEntries.emplace_back(MenuBarFunction::WINDOW, "Windowed", 2);

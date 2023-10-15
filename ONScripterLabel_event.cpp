@@ -1569,12 +1569,6 @@ void ONScripterLabel::runEventLoop()
         bool voice_just_ended = false;
         bool had_automode = automode_flag;
 
-        if (automode_flip) {
-            automode_flip = false;
-            automode_flag = !automode_flag;
-            return;
-        }
-
         switch (event.type) {
             // Joypad Events
           case SDL_CONTROLLERDEVICEADDED:
@@ -1803,6 +1797,11 @@ void ONScripterLabel::runEventLoop()
 #endif
           default:
             break;
+        }
+
+        if (return_from_event) {
+            return_from_event = false;
+            return;
         }
     }
 }

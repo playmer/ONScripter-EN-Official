@@ -549,7 +549,7 @@ private:
     // Global definitions
     long internal_timer;
     bool automode_flag;
-    bool automode_flip = false;
+    bool return_from_event = false;
     bool preferred_automode_time_set;
     long preferred_automode_time;
     long automode_time;

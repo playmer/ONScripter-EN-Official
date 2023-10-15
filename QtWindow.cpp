@@ -520,8 +520,18 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
                 {
                     case MenuBarFunction::AUTO:
                     {
-                        m_onscripterLabel->automode_flag = true;
-                        m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_NORMAL;
+                        if (m_onscripterLabel->mode_ext_flag && !m_onscripterLabel->automode_flag) {
+                            m_onscripterLabel->automode_flip = true;
+                            m_onscripterLabel->skip_mode &= ~ONScripterLabel::SKIP_NORMAL;
+                            printf("change to automode\n");
+                            m_onscripterLabel->key_pressed_flag = true;
+                            m_onscripterLabel->current_button_state.set(0);
+                            m_onscripterLabel->volatile_button_state.set(0);
+                            m_onscripterLabel->stopCursorAnimation(ONScripterLabel::CLICK_WAIT);
+
+                            return true;
+                        }
+
                         break;
                     }
                     case MenuBarFunction::CLICKDEF:

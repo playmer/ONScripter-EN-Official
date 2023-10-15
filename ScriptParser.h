@@ -103,12 +103,11 @@ class ScriptParser
 {
 public:
     struct MusicStruct{
-        OVInfo *ovi;
         int volume;
         bool is_mute;
         Mix_Chunk **voice_sample; //Mion: for bgmdownmode
         MusicStruct()
-        : ovi(NULL), volume(0), is_mute(false), voice_sample(NULL) {}
+        : volume(0), is_mute(false), voice_sample(NULL) {}
     };
 
     ScriptParser();

@@ -32,6 +32,7 @@
  */
 
 #include "Encoding.h"
+#include "FFMpegWrapper.h"
 #include "ONScripterLabel.h"
 #include "graphics_resize.h"
 #include "version.h"
@@ -1855,7 +1856,7 @@ int ONScripterLabel::movieCommand()
     } else {
         if ( script_h.compareString( "stop" ) ){
             script_h.readName();
-            if (async_movie) stopMovie(async_movie);
+            if (async_movie) async_movie->stopMovie();
             async_movie = NULL;
 
             return RET_CONTINUE;
@@ -1983,20 +1984,13 @@ int ONScripterLabel::mesboxCommand()
 int ONScripterLabel::menu_windowCommand()
 {
     if ( fullscreen_mode ){
-#ifndef PSP
-#ifndef MP3_MAD
-        if (async_movie) SMPEG_pause( async_movie );
-#endif
+        if (async_movie) async_movie->pause();
         screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, false );
         SDL_Rect rect = {0, 0, screen_width, screen_height};
         flushDirect( rect, refreshMode() );
-#ifndef MP3_MAD
         if (async_movie){
-            SMPEG_setdisplay( async_movie, SmpegDisplayCallback, this, NULL );
-            SMPEG_play( async_movie );
+            async_movie->play();
         }
-#endif
-#endif
         fullscreen_mode = false;
     }
 
@@ -2023,9 +2017,7 @@ int ONScripterLabel::menu_fullCommand()
 {
     if ( !fullscreen_mode ){
 #ifndef PSP
-#ifndef MP3_MAD
-        if (async_movie) SMPEG_pause( async_movie );
-#endif
+        if (async_movie) async_movie->pause();
         screen_surface = m_window->SetVideoMode(screen_width, screen_height, screen_bpp, true);
         if (screen_surface)
             fullscreen_mode = true;
@@ -2036,12 +2028,9 @@ int ONScripterLabel::menu_fullCommand()
         }
         SDL_Rect rect = {0, 0, screen_width, screen_height};
         flushDirect( rect, refreshMode() );
-#ifndef MP3_MAD
         if (async_movie){
-            SMPEG_setdisplay( async_movie, SmpegDisplayCallback, this, NULL );
-            SMPEG_play( async_movie );
+            async_movie->play();
         }
-#endif
 #else
         fullscreen_mode = true;
 #endif

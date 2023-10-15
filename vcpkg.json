@@ -32,16 +32,14 @@
       "features": [ "base", "vulkan", "wayland", "x11" ],
       "platform": "linux"
     },
-    "sdl2-image",
     {
-      "name": "sdl2-mixer",
-      "features": [ "mpg123", "fluidsynth" ],
-      "platform": "(windows|linux|osx|ios|android)&(!mingw)"
+      "name": "sdl2-image",
+      "features": [ "libjpeg-turbo" ]
     },
     {
       "name": "sdl2-mixer",
       "features": [ "mpg123" ],
-      "platform": "mingw|emscripten"
+      "platform": "(windows|linux|osx|ios|android)&(!mingw)"
     },
     "sdl2-ttf",
     {

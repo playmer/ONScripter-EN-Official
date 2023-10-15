@@ -98,12 +98,14 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
 
     m_onscripterLabel->openAudio(pinfo.audio.output.samplerate, pinfo.audio.output.format, pinfo.audio.output.channels);
 
-
-
-
     return 0;
 }
 
+
+bool FFMpegWrapper::hasAudioStream()
+{
+    return Kit_GetPlayerAudioStream(m_player) != -1;
+}
 
 extern "C" void mixer_callback_external(void* userdata, Uint8 * stream, int len)
 {
@@ -130,26 +132,30 @@ void FFMpegWrapper::mixer_callback(FFMpegWrapper* userdata, Uint8* stream, int l
 }
 
 
-int FFMpegWrapper::play(bool click_flag)
+int FFMpegWrapper::playFull(bool click_flag)
 {
     SDL_Rect rect;
     int ret = 0;
 
     Kit_PlayerPlay(m_player);
     
-    if (m_has_audio)
-    {
+    if (m_has_audio) {
         Mix_HookMusic(mixer_callback_external, this);
         audio_data_mutex = SDL_CreateMutex();
     }
     
     bool done_flag = false;
     
-    while (!done_flag)
-    {
+    while (!done_flag) {
         if (Kit_GetPlayerState(m_player) == KIT_STOPPED) {
-            done_flag = true;
-            continue;
+            // If we need to loop, then start the playback again.
+            if (m_onscripterLabel->movie_loop_flag) {
+                Kit_PlayerPlay(m_player);
+            }
+            else {
+                done_flag = true;
+                continue;
+            }
         }
 
         SDL_Event event;
@@ -171,57 +177,22 @@ int FFMpegWrapper::play(bool click_flag)
                     break;
             }
         }
-    //
-    //    if (m_packet->stream_index == video_id) {
-    //        display_frame();
-    //    }
-    //    else if (m_packet->stream_index == audio_id) {
-    //        queue_audio();
-    //    }
-    //    av_packet_unref(m_packet);
 
 
-        //if (m_have_not_hit_audio || m_any_audio_left)
-        {
-            SDL_LockMutex(audio_data_mutex);
-            size_t original_size = audio_data.size();
-            audio_data.resize(audio_data.size() + 32768, 0);
-            int bytes_read = Kit_GetPlayerAudioData(m_player, (unsigned char*)audio_data.data() + original_size, 32768);
-            if (bytes_read > -1)
-            {
-                audio_data.resize(original_size + bytes_read);
-            }
-            else {
-                audio_data.resize(original_size);
-            }
-            SDL_UnlockMutex(audio_data_mutex);
-        }
-
+        
         // Refresh audio
-        // 
-        //int queued = SDL_GetQueuedAudioSize(audio_dev);
-        //if (queued < AUDIOBUFFER_SIZE) {
-        //    int need = AUDIOBUFFER_SIZE - queued;
-        //
-        //    while (need > 0) {
-        //        ret = Kit_GetPlayerAudioData(
-        //            m_player,
-        //            (unsigned char*)audiobuf,
-        //            AUDIOBUFFER_SIZE);
-        //        need -= ret;
-        //        if (ret > 0) {
-        //            SDL_QueueAudio(audio_dev, audiobuf, ret);
-        //        }
-        //        else {
-        //            break;
-        //        }
-        //    }
-        //    // If we now have data, start playback (again)
-        //    if (SDL_GetQueuedAudioSize(audio_dev) > 0) {
-        //        SDL_PauseAudioDevice(audio_dev, 0);
-        //    }
-        //}
-
+        SDL_LockMutex(audio_data_mutex);
+        size_t original_size = audio_data.size();
+        audio_data.resize(audio_data.size() + 32768, 0);
+        int bytes_read = Kit_GetPlayerAudioData(m_player, (unsigned char*)audio_data.data() + original_size, 32768);
+        if (bytes_read > -1) {
+            audio_data.resize(original_size + bytes_read);
+        }
+        else {
+            audio_data.resize(original_size);
+        }
+        SDL_UnlockMutex(audio_data_mutex);
+        
         // Refresh videotexture and render it
         display_frame();
 
@@ -238,36 +209,58 @@ int FFMpegWrapper::play(bool click_flag)
     return ret;
 }
 
+void FFMpegWrapper::playFrame()
+{
+    if ((Kit_GetPlayerState(m_player) == KIT_STOPPED) && m_onscripterLabel->movie_loop_flag) {
+        Kit_PlayerPlay(m_player);
+    }
+
+    // Refresh audio
+    SDL_LockMutex(audio_data_mutex);
+    size_t original_size = audio_data.size();
+    audio_data.resize(audio_data.size() + 32768, 0);
+    int bytes_read = Kit_GetPlayerAudioData(m_player, (unsigned char*)audio_data.data() + original_size, 32768);
+    if (bytes_read > -1) {
+        audio_data.resize(original_size + bytes_read);
+    }
+    else {
+        audio_data.resize(original_size);
+    }
+    SDL_UnlockMutex(audio_data_mutex);
+
+    // Refresh videotexture and render it
+    display_frame();
+}
+
+void FFMpegWrapper::setVolume(int volume)
+{
+    Mix_VolumeMusic(volume);
+}
+
 void FFMpegWrapper::display_frame()
 {
     Kit_GetPlayerVideoData(m_player, m_video_texture);
     SDL_RenderClear(m_window->GetRenderer());
     m_onscripterLabel->DisplayTexture(m_video_texture);
-    //time_t start = time(NULL);
-    //if (avcodec_send_packet(m_video_context, m_packet) < 0) {
-    //    printf("send packet\n");
-    //    return;
-    //}
-    //if (avcodec_receive_frame(m_video_context, m_video_frame) < 0) {
-    //    printf("receive frame\n");
-    //    return;
-    //}
-    //
-    //SDL_Rect rect = { 0, 0, video_width, video_height };
-    //
-    //SDL_UpdateYUVTexture(m_texture, &rect,
-    //    m_video_frame->data[0], m_video_frame->linesize[0],
-    //    m_video_frame->data[1], m_video_frame->linesize[1],
-    //    m_video_frame->data[2], m_video_frame->linesize[2]);
-    //SDL_RenderClear(m_window->GetRenderer());
-    //
-    //m_onscripterLabel->DisplayTexture(m_texture);
-    //
-    //time_t end = time(NULL);
-    //double diffms = difftime(end, start) / 1000.0;
-    //if (diffms < fpsrendering) {
-    //    uint32_t diff = (uint32_t)((fpsrendering - diffms) * 1000);
-    //    //printf("diffms: %f, delay time %d ms.\n", diffms, diff);
-    //    SDL_Delay(diff);
-    //}
+}
+
+void FFMpegWrapper::play()
+{
+    Kit_PlayerPlay(m_player);
+}
+
+void FFMpegWrapper::pause()
+{
+    Kit_PlayerPause(m_player);
+}
+
+void FFMpegWrapper::stopMovie()
+{
+    Kit_PlayerStop(m_player);
+}
+
+
+Kit_PlayerState FFMpegWrapper::getStatus()
+{
+    return Kit_GetPlayerState(m_player);
 }

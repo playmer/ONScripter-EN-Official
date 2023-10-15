@@ -4,3 +4,6 @@
 [submodule "extlib/SDL_kitchensink"]
 	path = extlib/SDL_kitchensink
 	url = https://github.com/playmer/SDL_kitchensink.git
+[submodule "extlib/SDL_sound"]
+	path = extlib/SDL_sound
+	url = https://github.com/icculus/SDL_sound.git

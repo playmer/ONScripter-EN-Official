@@ -41,6 +41,7 @@
 #include "ONScripterLabel.h"
 #include "graphics_cpu.h"
 #include "graphics_resize.h"
+#include "FFMpegWrapper.h"
 #include <cstdio>
 #include <fstream>
 
@@ -428,16 +429,6 @@ void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
     SDL_RenderPresent(m_window->GetRenderer());
 }
 
-
-void ONScripterLabel::SmpegDisplayCallback(void* data, SMPEG_Frame* frame)
-{
-#ifndef MP3_MAD
-  ONScripterLabel* onscripterLabel = static_cast<ONScripterLabel*> (data);
-  onscripterLabel->frame = frame;
-  ++onscripterLabel->frame_number;
-#endif
-}
-
 void ONScripterLabel::SetMusicVolume(int volume)
 {
     music_volume = volume;
@@ -555,8 +546,6 @@ void ONScripterLabel::initSDL()
 #else
     m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif
-
-    frame_mutex = SDL_CreateMutex();
 
     //SDL_EnableUNICODE(1);
 
@@ -832,8 +821,7 @@ ONScripterLabel::ONScripterLabel()
   cdrom_info(NULL),
   music_file_name(NULL), music_buffer(NULL), mp3_sample(NULL),
   music_info(NULL), music_cmd(NULL), seqmusic_cmd(NULL),
-  async_movie(NULL), movie_buffer(NULL), async_movie_surface(NULL),
-  surround_rects(NULL),
+  async_movie(NULL), surround_rects(NULL),
   text_font(NULL), cached_page(NULL), system_menu_title(NULL)
 {
     //first initialize *everything* (static) to base values
@@ -1585,12 +1573,12 @@ void ONScripterLabel::reset()
     setStr(&getret_str, NULL);
     getret_int = 0;
 
-    if (async_movie) stopMovie(async_movie);
-    async_movie = NULL;
-    if (movie_buffer) delete[] movie_buffer;
-    movie_buffer = NULL;
-    if (surround_rects) delete[] surround_rects;
-    surround_rects = NULL;
+    //if (async_movie) stopMovie(async_movie);
+    //async_movie = NULL;
+    //if (movie_buffer) delete[] movie_buffer;
+    //movie_buffer = NULL;
+    //if (surround_rects) delete[] surround_rects;
+    //surround_rects = NULL;
 
     resetSub();
 
@@ -2746,8 +2734,11 @@ void ONScripterLabel::quit(bool no_error)
 {
     saveAll(no_error);
 
-    if (async_movie) stopMovie(async_movie);
-    async_movie = NULL;
+    if (async_movie)
+    {
+        async_movie->stopMovie();
+        async_movie = NULL;
+    }
 
     if ( cdrom_info ){
         SDL_CDStop( cdrom_info );

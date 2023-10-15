@@ -43,7 +43,17 @@ public:
 
     int initialize(ONScripterLabel* onscripterLabel, Window* window, const char* filename, bool audio_open_flag, bool debug_flag);
 
-    int play( bool click_flag );
+    int playFull( bool click_flag );
+    void play();
+    void pause();
+    void stopMovie();
+    void setVolume(int volume);
+
+    void playFrame();
+
+    bool hasAudioStream();
+
+    Kit_PlayerState getStatus();
 
     static void mixer_callback(FFMpegWrapper* userdata, Uint8* stream, int length);
 

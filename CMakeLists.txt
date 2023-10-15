@@ -10,19 +10,15 @@ endif()
 if(EMSCRIPTEN)
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
-    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" OFF)
 elseif(MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
 elseif(ANDROID) # Android
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
-    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
 else()
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-    option(ONS_USE_SMPEG "Choose whether to enable SMPEG (mpeg and movie commands) support or not" ON)
 endif()
 
 option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
@@ -35,29 +31,6 @@ endif()
 
 ###############
 # onscripter-en required Libraries/Packages
-
-if (ONS_USE_SMPEG)
-    find_library(SMPEG2_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-    find_library(SMPEG2_DEBUG_LIBRARY smpeg2.lib libsmpeg2.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-    #find_file(SMPEG2_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
-    #find_file(SMPEG2_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
-
-    add_library(smpeg2 STATIC IMPORTED [GLOBAL])
-    # set the location that we are going to import the library from
-    set_target_properties(
-        smpeg2 
-        PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${SMPEG2_DEBUG_LIBRARY}
-            IMPORTED_LOCATION_RELEASE ${SMPEG2_LIBRARY}
-            IMPORTED_LOCATION ${SMPEG2_LIBRARY}
-    )
-
-    message(STATUS SMPEG2_SHARED_DEBUG_LIBRARY: ${SMPEG2_SHARED_DEBUG_LIBRARY})
-    message(STATUS SMPEG2_DEBUG_LIBRARY: ${SMPEG2_DEBUG_LIBRARY})
-    message(STATUS SMPEG2_SHARED_LIBRARY: ${SMPEG2_SHARED_LIBRARY})
-    message(STATUS SMPEG2_LIBRARY: ${SMPEG2_LIBRARY})
-endif()
-
 find_package(BZip2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PNG REQUIRED)
@@ -72,7 +45,19 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 
+option(SDLSOUND_DECODER_WAV "Wave"  OFF)
+option(SDLSOUND_DECODER_AIFF "Audio Interchange"  OFF)
+option(SDLSOUND_DECODER_AU "Sun/NeXT audio"  OFF)
+option(SDLSOUND_DECODER_VOC "Creative Labs voice"  OFF)
+option(SDLSOUND_DECODER_FLAC "Free Lossless Audio Codec"  OFF)
+option(SDLSOUND_DECODER_VORBIS "Ogg Vorbis"  OFF)
+option(SDLSOUND_DECODER_RAW "raw PCM audio"  OFF)
+option(SDLSOUND_DECODER_SHN "Shorten"  OFF)
+option(SDLSOUND_DECODER_MODPLUG "ModPlug" OFF)
+option(SDLSOUND_DECODER_MP3 "MPEG-1 Layers I-III" OFF)
+option(SDLSOUND_DECODER_MIDI "Midi"  ON)
 
+add_subdirectory(extlib/SDL_Sound)
 
 #########
 # Qt Support
@@ -232,8 +217,6 @@ if (ONS_USE_AVIFILE)
     # SDL_KitchenSink
     find_library(ASS_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
     find_library(ASS_DEBUG_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-    #find_file(ASS_SHARED_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
-    #find_file(ASS_SHARED_DEBUG_LIBRARY smpeg2.dll PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/bin/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX)
 
     add_library(ass STATIC IMPORTED [GLOBAL])
     # set the location that we are going to import the library from
@@ -366,10 +349,6 @@ endif()
 
 #########
 # onScripter_en settings and libraries
-if (ONS_USE_SMPEG)
-    target_link_libraries(onscripter_en PRIVATE smpeg2)
-endif()
-
 add_custom_command(TARGET onscripter_en POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/resources/GeneralUser_GS _1.471.sf2"
@@ -388,6 +367,7 @@ PRIVATE
     $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
     $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
     SDLHelper_CD
+    $<IF:$<TARGET_EXISTS:SDL2_sound::SDL2_sound>,SDL2_sound::SDL2_sound,SDL2_sound::SDL2_sound-static>
     SDL_kitchensink
 )
 

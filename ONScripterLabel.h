@@ -53,12 +53,7 @@
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 #include "SDL_cdrom.h"
-
-#ifdef MP3_MAD
-#include "MadWrapper.h"
-#else
-#include <smpeg.h>
-#endif
+#include "SDL_sound.h"
 
 #include "SDL2/SDL_mutex.h"
 
@@ -462,16 +457,16 @@ protected:
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
 
 
-    static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
-    SMPEG_Frame* frame;
-    size_t frame_number = 0;
-    SDL_mutex* frame_mutex;
-    SDL_Texture* frame_texture;
-
-    int smpeg_scale_x;
-    int smpeg_scale_y;
-    int smpeg_move_x;
-    int smpeg_move_y;
+    //static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
+    //SMPEG_Frame* frame;
+    //size_t frame_number = 0;
+    //SDL_mutex* frame_mutex;
+    //SDL_Texture* frame_texture;
+    //
+    //int smpeg_scale_x;
+    //int smpeg_scale_y;
+    //int smpeg_move_x;
+    //int smpeg_move_y;
 
 private:
     enum {
@@ -554,6 +549,7 @@ private:
     // Global definitions
     long internal_timer;
     bool automode_flag;
+    bool automode_flip = false;
     bool preferred_automode_time_set;
     long preferred_automode_time;
     long automode_time;
@@ -1033,6 +1029,42 @@ private:
     char *music_cmd;
     char *seqmusic_cmd;
 
+    // Sound decoded by SDL_Sound that we've created a chunk for.
+    struct SoundMusic {
+        ~SoundMusic();
+
+        static SoundMusic* Create(SDL_RWops* file, const char* ext_hint);
+
+
+    private:
+        static void SDLCALL Decode(void* udata, Uint8* stream, int len);
+
+        Sound_Sample* m_sample = NULL;
+        SDL_AudioSpec devformat;
+        Uint8* m_decoded = NULL;
+        Uint32 m_decoded_bytes = 0;
+        bool m_done = false;
+
+        SoundMusic() = default;
+    };
+
+    // Sound decoded by SDL_Sound that we've created a chunk for.
+    struct SoundChunk {
+        ~SoundChunk();
+
+        static SoundChunk* Create(SDL_RWops* file, const char* ext_hint);
+        Mix_Chunk* GetChunk() { return &m_chunk; };
+
+    private:
+        Sound_Sample* m_sample = NULL;
+        Mix_Chunk m_chunk;
+
+        SoundChunk() = default;
+    };
+    SoundChunk* m_soundChunk;
+
+
+
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
     int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);
@@ -1056,15 +1088,16 @@ private:
 
     /* ---------------------------------------- */
     /* Movie related variables */
-    SMPEG *async_movie;
-    unsigned char *movie_buffer;
-    SDL_Surface *async_movie_surface;
+    //SMPEG *async_movie;
+    //unsigned char *movie_buffer;
+    //SDL_Surface *async_movie_surface;
     SDL_Rect async_movie_rect;
+    FFMpegWrapper* async_movie;
     SDL_Rect *surround_rects;
     bool movie_click_flag, movie_loop_flag;
     int playMPEG( const char *filename, bool async_flag, bool use_pos=false, int xpos=0, int ypos=0, int width=0, int height=0 );
     int playAVI( const char *filename, bool click_flag );
-    void stopMovie(SMPEG *mpeg);
+    //void stopMovie(SMPEG *mpeg);
 
     /* ---------------------------------------- */
     /* Text event related variables */

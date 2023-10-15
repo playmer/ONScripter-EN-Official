@@ -34,6 +34,7 @@
 // Modified by Mion, November 2009, to update from
 // Ogapee's 20091115 release source code.
 
+#include "FFMpegWrapper.h"
 #include "ONScripterLabel.h"
 #ifdef LINUX
 #include <sys/types.h>
@@ -79,16 +80,6 @@ void ONScripterLabel::clearTimer(SDL_TimerID &timer_id)
 /* **************************************** *
  * Callback functions
  * **************************************** */
-extern "C" void mp3callback( void *userdata, Uint8 *stream, int len )
-{
-    SMPEG* mpeg_sample = (SMPEG*)userdata;
-    int returned = SMPEG_playAudio(mpeg_sample, stream, len);
-    
-    if (returned == 0 ){
-        Window::SendCustomEventStatic(ONS_SOUND_EVENT);
-    }
-}
-
 extern "C" Uint32 SDLCALL animCallback( Uint32 interval, void *param )
 {
     ONScripterLabel::clearTimer( anim_timer_id );
@@ -134,16 +125,14 @@ extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param )
 
 extern "C" Uint32 SDLCALL silentmovieCallback( Uint32 interval, void *param )
 {
+    FFMpegWrapper** video_player = static_cast<FFMpegWrapper**>(param);
 
-#ifndef MP3_MAD
-    SMPEG **mpeg = (SMPEG **)param;
-    if (*mpeg && (SMPEG_status(*mpeg) != SMPEG_PLAYING)){
-        SMPEG_play( *mpeg );
-    } else if (*mpeg == NULL){
+    if ((*video_player) && (*video_player)->getStatus() != Kit_PlayerState::KIT_PLAYING){
+        (*video_player)->play();
+    } else if (*video_player == NULL){
         ONScripterLabel::clearTimer( timer_silentmovie_id );
         return 0;
     }
-#endif
 
     return interval;
 }
@@ -306,10 +295,8 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
     //event related to streaming media
     if ( event.type == ONS_SOUND_EVENT ){
         if (async_movie) {
-#ifndef MP3_MAD
-            if ((SMPEG_status(async_movie) != SMPEG_PLAYING) && (movie_loop_flag))
-                SMPEG_play( async_movie );
-#endif
+            if ((async_movie->getStatus() != Kit_PlayerState::KIT_PLAYING) && (movie_loop_flag))
+                async_movie->play();
         } else if ( music_play_loop_flag ||
              (cd_play_loop_flag && !cdaudio_flag ) ){
             stopBGM( true );
@@ -1581,6 +1568,12 @@ void ONScripterLabel::runEventLoop()
         bool ctrl_toggle = (ctrl_pressed_status != 0);
         bool voice_just_ended = false;
         bool had_automode = automode_flag;
+
+        if (automode_flip) {
+            automode_flip = false;
+            automode_flag = !automode_flag;
+            return;
+        }
 
         switch (event.type) {
             // Joypad Events

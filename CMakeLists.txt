@@ -455,11 +455,17 @@ if(WIN32)
         onscripter.rc
     )
 
+    target_link_options(onscripter_en 
+    PRIVATE
+        $<IF:$<CONFIG:DEBUG>,/SUBSYSTEM:CONSOLE,/SUBSYSTEM:WINDOWS>
+    )
+
+    #/SUBSYSTEM:WINDOWS
+
     if (ONS_USE_QT_WINDOW)
         # Qt Deployment stuff
         find_program(TOOL_WINDEPLOYQT NAMES windeployqt PATHS ${_qt_cmake_dir}/../../bin)
         message(STATUS Found Qt tools: ${TOOL_WINDEPLOYQT_DEBUG},${TOOL_WINDEPLOYQT})
-
         
         add_custom_command(TARGET onscripter_en POST_BUILD
             COMMAND $<IF:$<CONFIG:DEBUG>,${TOOL_WINDEPLOYQT},${TOOL_WINDEPLOYQT}> 

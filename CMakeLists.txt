@@ -57,6 +57,8 @@ option(SDLSOUND_DECODER_MODPLUG "ModPlug" OFF)
 option(SDLSOUND_DECODER_MP3 "MPEG-1 Layers I-III" OFF)
 option(SDLSOUND_DECODER_MIDI "Midi"  ON)
 
+option(SDLSOUND_BUILD_TEST "Build stdio test program." OFF)
+
 add_subdirectory(extlib/SDL_sound)
 
 #########

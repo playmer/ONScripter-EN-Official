@@ -600,9 +600,6 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
                     }
                     case MenuBarFunction::SKIP:
                     {
-                        //m_onscripterLabel->kidokuskip_flag = true;
-                        //m_onscripterLabel->kidokumode_flag = true;
-                        //m_onscripterLabel->script_h.loadKidokuData();
                         m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
                         break;
                     }

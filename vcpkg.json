@@ -9,13 +9,8 @@
     },
     {
       "name": "ffmpeg",
-      "features": [ "avcodec", "avdevice", "avfilter", "avformat", "openh264" ],
-      "platform": "(windows|osx|ios|linux)"
-    },
-    {
-      "name": "ffmpeg",
       "features": [ "avcodec", "avdevice", "avfilter", "avformat" ],
-      "platform": "emscripten"
+      "platform": "(windows|osx|ios|linux|emscripten)"
     },
     "freetype",
     "libjpeg-turbo",

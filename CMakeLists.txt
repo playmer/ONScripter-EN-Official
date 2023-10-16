@@ -57,6 +57,12 @@ option(SDLSOUND_DECODER_MODPLUG "ModPlug" OFF)
 option(SDLSOUND_DECODER_MP3 "MPEG-1 Layers I-III" OFF)
 option(SDLSOUND_DECODER_MIDI "Midi"  ON)
 
+if (WIN32)
+    option(SDLSOUND_BUILD_SHARED "Build shared library" ON)
+else ()
+    option(SDLSOUND_BUILD_SHARED "Build shared library" OFF)
+endif()
+
 option(SDLSOUND_BUILD_TEST "Build stdio test program." OFF)
 
 add_subdirectory(extlib/SDL_sound)

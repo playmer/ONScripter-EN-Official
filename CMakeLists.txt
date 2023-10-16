@@ -57,7 +57,7 @@ option(SDLSOUND_DECODER_MODPLUG "ModPlug" OFF)
 option(SDLSOUND_DECODER_MP3 "MPEG-1 Layers I-III" OFF)
 option(SDLSOUND_DECODER_MIDI "Midi"  ON)
 
-add_subdirectory(extlib/SDL_Sound)
+add_subdirectory(extlib/SDL_sound)
 
 #########
 # Qt Support

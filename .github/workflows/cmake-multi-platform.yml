@@ -37,7 +37,7 @@ jobs:
       CMAKE_MAKE_PROGRAM: ninja
     steps:
       - run: sudo apt update
-      - run: sudo apt install -y apt autoconf automake build-essential cmake fcitx-libs-dev git gnome-desktop-testing libasound2-dev libaudio-dev libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libfreetype-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libmad0-dev libogg-dev libpipewire-0.3-dev libpng-dev libpulse-dev libsamplerate0-dev libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsmpeg-dev libsndio-dev libtool libudev-dev libvorbis-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make nasm ninja-build pkg-config zlib1g-dev
+      - run: sudo apt install -y apt autoconf automake build-essential cmake fcitx-libs-dev git gnome-desktop-testing libasound2-dev libaudio-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libpipewire-0.3-dev libpulse-dev libsamplerate0-dev libsndio-dev libtool libudev-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make nasm ninja-build pkg-config zlib1g-dev
       - run: ninja --version
       - run: nasm -v
       
@@ -80,6 +80,59 @@ jobs:
         with:
           name: Linux Build
           path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
+          
+#  linux_emscripten:
+#    name: ubuntu-build-emscripten
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [ubuntu-latest]
+#    runs-on: ubuntu-latest
+#    env:
+#      CMAKE_CXX_COMPILER: g++
+#      CMAKE_C_COMPILER: gcc
+#      CMAKE_MAKE_PROGRAM: ninja
+#    steps:
+#      - run: sudo apt update
+#      - run: sudo apt install -y build-essential cmake ninja-build
+#      - run: ninja --version
+#      - run: nasm -v
+#      
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: true
+#
+#      - uses: lukka/get-cmake@latest
+#      
+#      - uses: mymindstorm/setup-emsdk@v11
+#
+#      - name: Verify
+#        run: emcc -v
+#
+#      - name: Restore from cache and setup vcpkg executable and data files.
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          vcpkgJsonGlob: 'vcpkg.json'
+#          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+#
+#      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+#      # configuration with the additional `--config` flag, e.g.:
+#      #   buildPreset: 'ninja-vcpkg'
+#      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+#      #   testPreset: 'ninja-vcpkg'
+#      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+#      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+#        uses: lukka/run-cmake@v10
+#        with:
+#          configurePreset: 'emscripten'
+#          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=g++','-DCMAKE_C_COMPILER=gcc','-DCMAKE_MAKE_PROGRAM=ninja']"
+#          buildPreset: 'emscripten-release'
+#          packagePreset: 'emscripten-package-release'
+#      
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: Emscripten Build
+#          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
           
 #  linux_android:
 #    name: ubuntu-build-android

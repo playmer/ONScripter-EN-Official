@@ -260,9 +260,17 @@ if (ONS_USE_AVIFILE)
     target_link_libraries(SDL_kitchensink PRIVATE BZip2::BZip2
     PRIVATE
         ass
+        harfbuzz
         ${FFMPEG_LIBRARIES}
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     )
+
+    if (LINUX OR APPLE)
+        target_link_libraries(SDL_kitchensink PRIVATE BZip2::BZip2
+        PRIVATE
+            fontconfig
+        )
+    endif()
     
     set(KIT_VERSION_MAJOR "1")
     set(KIT_VERSION_MINOR "0")

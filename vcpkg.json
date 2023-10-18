@@ -12,6 +12,10 @@
       "features": [ "avcodec", "avdevice", "avfilter", "avformat" ],
       "platform": "(windows|osx|ios|linux|emscripten)"
     },
+    {
+      "name": "fontconfig",
+      "platform": "(osx|linux)"
+    },
     "freetype",
     "libjpeg-turbo",
     "libass",

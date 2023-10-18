@@ -257,15 +257,6 @@ if (ONS_USE_AVIFILE)
     
     target_link_directories(SDL_kitchensink PRIVATE ${FFMPEG_LIBRARY_DIRS})
 
-    target_link_libraries(SDL_kitchensink
-    PRIVATE
-        ass
-        harfbuzz
-        Freetype::Freetype
-        ${FFMPEG_LIBRARIES}
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-    )
-
     if (LINUX OR APPLE)
         find_package(Fontconfig REQUIRED)
         find_library(FRIBIDI_LIBRARY NAMES fribidi REQUIRED)
@@ -276,6 +267,15 @@ if (ONS_USE_AVIFILE)
             ${fribidi}
         )
     endif()
+
+    target_link_libraries(SDL_kitchensink
+    PRIVATE
+        harfbuzz
+        Freetype::Freetype
+        ass
+        ${FFMPEG_LIBRARIES}
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+    )
     
     set(KIT_VERSION_MAJOR "1")
     set(KIT_VERSION_MINOR "0")

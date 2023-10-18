@@ -16,7 +16,11 @@
       "name": "fontconfig",
       "platform": "(osx|linux)"
     },
-    "freetype",
+    "fribidi",
+    {
+      "name": "fontconfig",
+      "platform": "(osx|linux)"
+    },
     "libjpeg-turbo",
     "libass",
     "libpng",

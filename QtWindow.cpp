@@ -601,6 +601,7 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
                     case MenuBarFunction::SKIP:
                     {
                         m_onscripterLabel->skip_mode |= ONScripterLabel::SKIP_NORMAL;
+                        m_onscripterLabel->return_from_event = true;
                         break;
                     }
                     case MenuBarFunction::TEXTFAST:

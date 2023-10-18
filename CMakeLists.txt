@@ -223,20 +223,6 @@ if (ONS_USE_AVIFILE)
     
     ###############
     # SDL_KitchenSink
-    find_library(ASS_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-    find_library(ASS_DEBUG_LIBRARY ass.lib libass.lib libass.a PATHS ${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/debug/lib/ NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX REQUIRED)
-
-    add_library(ass STATIC IMPORTED [GLOBAL])
-    # set the location that we are going to import the library from
-    set_target_properties(
-        ass 
-        PROPERTIES
-            IMPORTED_LOCATION_DEBUG ${ASS_DEBUG_LIBRARY}
-            IMPORTED_LOCATION_RELEASE ${ASS_LIBRARY}
-            IMPORTED_LOCATION ${ASS_LIBRARY}
-    )
-
-
     add_library(SDL_kitchensink)
 
     target_include_directories(SDL_kitchensink PUBLIC extlib/SDL_kitchensink/include)
@@ -274,7 +260,6 @@ if (ONS_USE_AVIFILE)
     target_link_libraries(SDL_kitchensink PRIVATE BZip2::BZip2
     PRIVATE
         ass
-        harfbuzz
         ${FFMPEG_LIBRARIES}
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     )

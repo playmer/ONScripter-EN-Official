@@ -267,13 +267,13 @@ if (ONS_USE_AVIFILE)
     )
 
     if (LINUX OR APPLE)
-        find_package(fontconfig REQUIRED)
-        find_package(fribidi REQUIRED)
+        find_package(Fontconfig REQUIRED)
+        find_library(FRIBIDI_LIBRARY NAMES fribidi REQUIRED)
 
         target_link_libraries(SDL_kitchensink
         PRIVATE
             fontconfig
-            fribidi
+            ${fribidi}
         )
     endif()
     

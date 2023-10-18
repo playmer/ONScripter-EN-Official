@@ -16,9 +16,8 @@
       "name": "fontconfig",
       "platform": "(osx|linux)"
     },
-    "fribidi",
     {
-      "name": "fontconfig",
+      "name": "fribidi",
       "platform": "(osx|linux)"
     },
     "libjpeg-turbo",

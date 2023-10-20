@@ -285,6 +285,20 @@
             "displayName": "Package (Release)",
             "description": "Package with Ninja/vcpkg (Release)",
             "generators": ["ZIP"]
+        },
+        {
+            "name": "emscripten-package-debug",
+            "configurePreset": "emscripten",
+            "displayName": "Package (Debug)",
+            "description": "Package with emscripten/vcpkg (Debug)",
+            "generators": ["ZIP"]
+        },
+        {
+            "name": "emscripten-package-release",
+            "configurePreset": "emscripten",
+            "displayName": "Package (Release)",
+            "description": "Package with emscripten/vcpkg (Release)",
+            "generators": ["ZIP"]
         }
     ]
 }

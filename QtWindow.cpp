@@ -512,7 +512,7 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
             for (auto& font : m_onscripterLabel->GetFonts())
             {
                 if (!font.m_availiblePath.empty()) {
-                    QAction* action = new QAction(QString::fromUtf8("Font Selection"));
+                    QAction* action = new QAction(QString::fromStdString(font.m_name));
                     m_actionsMap[input.m_function].emplace_back(action);
 
                     action->setCheckable(true);

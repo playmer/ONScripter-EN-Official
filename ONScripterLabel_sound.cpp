@@ -121,14 +121,13 @@ extern SDL_TimerID timer_seqmusic_id;
           (buf[4] == 0)  && (buf[5] == 0) && \
           (buf[6] == 0)  && (buf[7] == 6))
 
-ONScripterLabel::SoundMusic* ONScripterLabel::SoundMusic::Create(SDL_RWops* file, const char* ext_hint)
+SoundMusic* SoundMusic::s_soundMusic = NULL;
+
+bool SoundMusic::Start(ONScripterLabel* onscripter, unsigned char* buffer, size_t length, const char* ext_hint)
 {
     // Not done yet;
     // - looping needs to be completed
     // - SoundMusic needs to own the buffer the SDL_RWops is wrapping
-    return NULL;
-
-
     int freq;
     Uint16 format;
     int channels;
@@ -137,23 +136,31 @@ ONScripterLabel::SoundMusic* ONScripterLabel::SoundMusic::Create(SDL_RWops* file
     info.channels = channels;
     info.format = format;
     info.rate = freq;
-    Sound_Sample* sample = Sound_NewSample(file, ".mid", &info, 1024 * 1024);
-    Sound_DecodeAll(sample);
+    Sound_Sample* sample = Sound_NewSampleFromMem(buffer, length, ".mid", &info, 1024 * 1024);
 
-    if (sample->flags != SOUND_SAMPLEFLAG_NONE)
-    {
-        // error
-
-        return NULL;
+    if ((NULL == sample) || (sample->flags == SOUND_SAMPLEFLAG_ERROR)) {
+        Sound_FreeSample(sample);
+        delete[] buffer;
+        return false;
     }
 
-    SoundMusic* soundChunk = new SoundMusic();
-    soundChunk->m_sample = sample;
+    if (s_soundMusic) {
+        delete s_soundMusic;
+    }
 
-    Mix_HookMusic(&Decode, soundChunk);
+    s_soundMusic = new SoundMusic();
+    s_soundMusic->m_sample = sample;
+    s_soundMusic->m_buffer = buffer;
+
+    Mix_CloseAudio();
+    onscripter->openAudio(sample->desired.rate, sample->desired.format, sample->desired.channels);
+
+    Mix_HookMusic(&Decode, s_soundMusic);
+
+    return true;
 }
 
-void SDLCALL ONScripterLabel::SoundMusic::Decode(void* self, Uint8* stream, int len)
+void SDLCALL SoundMusic::Decode(void* self, Uint8* stream, int len)
 {
     SoundMusic* data = (SoundMusic*)self;
     Sound_Sample* sample = data->m_sample;
@@ -201,14 +208,20 @@ void SDLCALL ONScripterLabel::SoundMusic::Decode(void* self, Uint8* stream, int 
     } /* while */
 }
 
-ONScripterLabel::SoundMusic::~SoundMusic()
+SoundMusic::~SoundMusic()
 {
     if (m_sample) {
         Sound_FreeSample(m_sample);
+        m_sample = NULL;
+    }
+
+    if (m_buffer) {
+        delete[] m_buffer;
+        m_buffer = NULL;
     }
 }
 
-ONScripterLabel::SoundChunk* ONScripterLabel::SoundChunk::Create(SDL_RWops* file, const char* ext_hint)
+SoundChunk* SoundChunk::Create(unsigned char* buffer, size_t length, const char* ext_hint)
 {
     int freq;
     Uint16 format;
@@ -218,13 +231,13 @@ ONScripterLabel::SoundChunk* ONScripterLabel::SoundChunk::Create(SDL_RWops* file
     info.channels = channels;
     info.format = format;
     info.rate = freq;
-    Sound_Sample* sample = Sound_NewSample(file, ".mid", &info, 1024 * 1024);
+    Sound_Sample* sample = Sound_NewSampleFromMem(buffer, length, ext_hint, &info, 1024 * 1024);
     Sound_DecodeAll(sample);
 
-    if (sample->flags != SOUND_SAMPLEFLAG_NONE)
+    if ((NULL == sample) || (sample->flags == SOUND_SAMPLEFLAG_ERROR))
     {
-        // error
-
+        Sound_FreeSample(sample);
+        delete[] buffer;
         return NULL;
     }
 
@@ -232,14 +245,18 @@ ONScripterLabel::SoundChunk* ONScripterLabel::SoundChunk::Create(SDL_RWops* file
     soundChunk->m_sample = sample;
     soundChunk->m_chunk.abuf = static_cast<Uint8*>(sample->buffer);
     soundChunk->m_chunk.alen = sample->buffer_size;
-    soundChunk->m_chunk.allocated = 0; 
+    soundChunk->m_chunk.volume = 100;
+    soundChunk->m_chunk.allocated = 0;
+    soundChunk->m_buffer = buffer;
 }
 
-ONScripterLabel::SoundChunk::~SoundChunk()
+SoundChunk::~SoundChunk()
 {
     if (m_sample) {
         Sound_FreeSample(m_sample);
     }
+
+    if (m_buffer) delete[] m_buffer;
 }
 
 int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag, int channel)
@@ -259,38 +276,37 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
             return SOUND_NONE;
     }
 
-    unsigned char *buffer;
-
-    if ((format & (SOUND_MP3 | SOUND_OGG_STREAMING)) && 
-        (length == music_buffer_length) &&
-        music_buffer ){
-        buffer = music_buffer;
+    unsigned char *buffer = new(std::nothrow) unsigned char[length];
+    if (buffer == NULL) {
+        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+                    "failed to load sound file [%s] (%lu bytes)",
+                    filename, length);
+        errorAndCont( script_h.errbuf, "unable to allocate buffer", "Memory Issue" );
+        return SOUND_NONE;
     }
-    else{
-        buffer = new(std::nothrow) unsigned char[length];
-        if (buffer == NULL) {
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                     "failed to load sound file [%s] (%lu bytes)",
-                     filename, length);
-            errorAndCont( script_h.errbuf, "unable to allocate buffer", "Memory Issue" );
-            return SOUND_NONE;
-        }
-        script_h.cBR->getFile( filename, buffer );
-    }
+    script_h.cBR->getFile( filename, buffer );
 
     // if (format & SOUND_OGG) should be Mix_Chunk,
     // else should be Mix_Music/Mix_HookMusic
     if (format & (SOUND_OGG | SOUND_OGG_STREAMING)){
-        Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
-        if (chunk == NULL)
+        if (format & SOUND_OGG) {
+            SoundChunk *soundChunk = SoundChunk::Create(buffer, length, ".OGG");
+            if (soundChunk == NULL)
+            {
+                fprintf(stderr, "Issue loading ogg file: %s\n", SDL_GetError());
+                return SOUND_OTHER;
+            }
+
+            return playWave(soundChunk, format, loop_flag, channel) == 0 ? SOUND_OGG : SOUND_OTHER;
+        }
+
+        if (!SoundMusic::Start(this, buffer, length, ".mp3"))
         {
-            fprintf(stderr, "Issue loading ogg file: %s\n", SDL_GetError());
-            delete[] buffer;
+            fprintf(stderr, "Issue loading mp3 file: %s\n", SDL_GetError());
             return SOUND_OTHER;
         }
 
-        delete[] buffer;
-        return playWave(chunk, format, loop_flag, channel) == 0 ? SOUND_OGG : SOUND_OTHER;
+        return SOUND_SEQMUSIC;
     }
 
     /* check for WMA (i.e. ASF header format) */
@@ -313,47 +329,40 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 
     // Should be Mix_Chunk,
     if (format & SOUND_WAVE){
-        Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
-        if (chunk == NULL)
+        SoundChunk *soundChunk = SoundChunk::Create(buffer, length, ".wav");
+        if (soundChunk == NULL)
         {
-            fprintf(stderr, "Issue loading mp3 file: %s\n", SDL_GetError());
-            delete[] buffer;
+            fprintf(stderr, "Issue loading wave file: %s\n", SDL_GetError());
             return SOUND_OTHER;
         }
 
-        delete[] buffer;
-        return playWave(chunk, format, loop_flag, channel) == 0 ? SOUND_WAVE : SOUND_OTHER;
+        return playWave(soundChunk, format, loop_flag, channel) == 0 ? SOUND_WAVE : SOUND_OTHER;
     }
 
     // Should be streaming (Mix_Music/Mix_HookMusic)
     if ((format & SOUND_MP3) &&
         !(IS_MIDI_HDR(buffer) && (format & SOUND_SEQMUSIC))){ //bypass MIDIs
-        Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
-        if (chunk == NULL)
+        if (!SoundMusic::Start(this, buffer, length, ".mp3"))
         {
             fprintf(stderr, "Issue loading mp3 file: %s\n", SDL_GetError());
-            delete[] buffer;
             return SOUND_OTHER;
         }
 
-        delete[] buffer;
-        return playWave(chunk, format, loop_flag, channel) == 0 ? SOUND_SEQMUSIC : SOUND_OTHER;
+        return SOUND_SEQMUSIC;
     }
 
     // Should be streaming (Mix_Music/Mix_HookMusic)
     if (format & SOUND_SEQMUSIC){
 
-        m_soundChunk = SoundChunk::Create(SDL_RWFromMem(buffer, length), ".MID");
+        SoundChunk *soundChunk = SoundChunk::Create(buffer, length, ".MID");
         //Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
-        if (m_soundChunk == NULL)
+        if (soundChunk == NULL)
         {
             fprintf(stderr, "Issue loading Midi file: %s\n", SDL_GetError());
-            delete[] buffer;
             return SOUND_OTHER;
         }
 
-        delete[] buffer;
-        return playWave(m_soundChunk->GetChunk(), format, loop_flag, channel) == 0 ? SOUND_SEQMUSIC : SOUND_OTHER;
+        return playWave(soundChunk, format, loop_flag, channel) == 0 ? SOUND_SEQMUSIC : SOUND_OTHER;
     }
 
     delete[] buffer;
@@ -390,16 +399,17 @@ void ONScripterLabel::playCDAudio()
     }
 }
 
-int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel)
+int ONScripterLabel::playWave(SoundChunk *soundChunk, int format, bool loop_flag, int channel)
 {
     Mix_Pause( channel );
     if ( wave_sample[channel] ) {
       Mix_ChannelFinished(NULL);
-      Mix_FreeChunk( wave_sample[channel] );
+      delete wave_sample[channel];
+      wave_sample[channel] = NULL;
     }
-    wave_sample[channel] = chunk;
+    wave_sample[channel] = soundChunk;
 
-    if (!chunk) return -1;
+    if (!soundChunk) return -1;
 
     if      (channel < ONS_MIX_CHANNELS)
         Mix_Volume( channel, !volume_on_flag? 0 : channelvolumes[channel] * 128 / 100 );
@@ -412,7 +422,7 @@ int ONScripterLabel::playWave(Mix_Chunk *chunk, int format, bool loop_flag, int 
 
     if (!(format & SOUND_PRELOAD)) {
         Mix_ChannelFinished(waveCallback);
-        Mix_PlayChannel(channel, wave_sample[channel], loop_flag ? -1 : 0);
+        Mix_PlayChannel(channel, wave_sample[channel]->GetChunk(), loop_flag ? -1 : 0);
     }
 
     return 0;
@@ -682,17 +692,13 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     if ( wave_sample[MIX_BGM_CHANNEL] ){
         Mix_Pause( MIX_BGM_CHANNEL );
         Mix_ChannelFinished(NULL);
-        Mix_FreeChunk( wave_sample[MIX_BGM_CHANNEL] );
+        delete wave_sample[MIX_BGM_CHANNEL];
         wave_sample[MIX_BGM_CHANNEL] = NULL;
     }
 
     if ( !continue_flag ){
         setStr( &music_file_name, NULL );
         music_play_loop_flag = false;
-        if ( music_buffer ){
-            delete[] music_buffer;
-            music_buffer = NULL;
-        }
     }
 
     if ( seqmusic_info ){
@@ -736,7 +742,7 @@ void ONScripterLabel::stopDWAVE( int channel )
             //always free voice channel, for now - could be
             //messy for bgmdownmode and/or voice-waiting FIXME
             Mix_ChannelFinished(NULL);
-            Mix_FreeChunk( wave_sample[channel] );
+            delete wave_sample[channel];
             wave_sample[channel] = NULL;
             channel_preloaded[channel] = false;
         }
@@ -756,7 +762,7 @@ void ONScripterLabel::stopAllDWAVE()
                 //always free voice channel sample, for now - could be
                 //messy for bgmdownmode and/or voice-waiting FIXME
                 Mix_ChannelFinished(NULL);
-                Mix_FreeChunk( wave_sample[ch] );
+                delete wave_sample[ch];
                 wave_sample[ch] = NULL;
             }
         }

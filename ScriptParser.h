@@ -58,6 +58,8 @@
 #include "LUAHandler.h"
 #endif
 
+#include "SDL_sound.h"
+
 #if defined(USE_OGG_VORBIS)
 #if defined(INTEGER_OGG_VORBIS)
 #include <tremor/ivorbisfile.h>
@@ -99,13 +101,48 @@ struct OVInfo{
 #endif
 };
 
+// Sound decoded by SDL_Sound that we'll stream.
+struct SoundMusic {
+    ~SoundMusic();
+    static bool Start(ONScripterLabel* onscripter, unsigned char* buffer, size_t length, const char* ext_hint);
+
+private:
+    static void SDLCALL Decode(void* udata, Uint8* stream, int len);
+
+    Sound_Sample* m_sample = NULL;
+    unsigned char* m_buffer = NULL;
+    SDL_AudioSpec devformat;
+    Uint8* m_decoded = NULL;
+    Uint32 m_decoded_bytes = 0;
+    bool m_done = false;
+
+    SoundMusic() = default;
+
+    static SoundMusic* s_soundMusic;
+};
+
+// Sound decoded by SDL_Sound that we've created a chunk for.
+struct SoundChunk {
+    ~SoundChunk();
+
+    static SoundChunk* Create(unsigned char* buffer, size_t length, const char* ext_hint);
+    Mix_Chunk* GetChunk() { return &m_chunk; };
+
+private:
+    Sound_Sample* m_sample = NULL;
+    Mix_Chunk m_chunk;
+    unsigned char* m_buffer = NULL;
+
+    SoundChunk() = default;
+};
+
 class ScriptParser
 {
 public:
     struct MusicStruct{
         int volume;
         bool is_mute;
-        Mix_Chunk **voice_sample; //Mion: for bgmdownmode
+        SoundChunk **voice_sample; //Mion: for bgmdownmode
         MusicStruct()
         : volume(0), is_mute(false), voice_sample(NULL) {}
     };

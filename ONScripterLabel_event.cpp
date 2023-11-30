@@ -402,15 +402,17 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
                 //always free voice channel, for now - could be
                 //messy for bgmdownmode and/or voice-waiting FIXME
                 Mix_ChannelFinished(NULL);
-                Mix_FreeChunk( wave_sample[ch] );
+                delete wave_sample[ch];
+
                 wave_sample[ch] = NULL;
             }
             if (ch == MIX_LOOPBGM_CHANNEL0 &&
                 loop_bgm_name[1] &&
-                wave_sample[MIX_LOOPBGM_CHANNEL1])
+                wave_sample[MIX_LOOPBGM_CHANNEL1]) {
                 Mix_ChannelFinished(waveCallback);
                 Mix_PlayChannel(MIX_LOOPBGM_CHANNEL1,
-                                wave_sample[MIX_LOOPBGM_CHANNEL1], -1);
+                    wave_sample[MIX_LOOPBGM_CHANNEL1]->GetChunk(), -1);
+            }
             if (ch == 0) {
                 channel_preloaded[ch] = false;
                 if (bgmdownmode_flag)

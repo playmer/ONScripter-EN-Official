@@ -481,6 +481,10 @@ void ONScripterLabel::initSDL()
     }
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
+    if (0 == Sound_Init()) {
+        errorAndExit("Couldn't initialize SDL_Sound", Sound_GetError(), "Init Error", true);
+    }
+
     if (cdaudio_flag && SDL_CDROMInit() < 0) {
         errorAndExit("Couldn't initialize CD-ROM", SDL_GetError(), "Init Error", true);
         return; //dummy
@@ -823,7 +827,7 @@ ONScripterLabel::ONScripterLabel()
   shelter_select_link(NULL), default_cdrom_drive(NULL),
   wave_file_name(NULL), seqmusic_file_name(NULL), seqmusic_info(NULL),
   cdrom_info(NULL),
-  music_file_name(NULL), music_buffer(NULL), mp3_sample(NULL),
+  music_file_name(NULL), mp3_sample(NULL),
   music_info(NULL), music_cmd(NULL), seqmusic_cmd(NULL),
   async_movie(NULL), surround_rects(NULL),
   text_font(NULL), cached_page(NULL), system_menu_title(NULL)
@@ -876,7 +880,6 @@ ONScripterLabel::ONScripterLabel()
     effectspeed = EFFECTSPEED_NORMAL;
     shortcut_mouse_line = -1;
     skip_mode = SKIP_NONE;
-    music_buffer_length = 0;
     mp3fade_start = 0;
     wm_edit_string[0] = '\0';
 #ifdef PNG_AUTODETECT_NSCRIPTER_MASKS
@@ -1170,6 +1173,69 @@ bool ONScripterLabel::file_exists(const char *fileName)
     return infile.good();
 }
 
+std::vector<ONScripterLabel::FontInfo> ONScripterLabel::GetFonts()
+{
+    char* default_ttf = create_filepath(archive_path, "default.ttf");
+    char* default_ttc = create_filepath(archive_path, "default.ttc");
+    char* default_otf = create_filepath(archive_path, "default.otf");
+    char* default_otc = create_filepath(archive_path, "default.otc");
+
+    std::vector<std::string> defaultFonts{
+        "default.ttf",
+        "default.ttc",
+        "default.otf",
+        "default.otc"
+    };
+
+    if (NULL != default_ttf) defaultFonts.push_back(default_ttf);
+    if (NULL != default_ttc) defaultFonts.push_back(default_ttc);
+    if (NULL != default_otf) defaultFonts.push_back(default_otf);
+    if (NULL != default_otc) defaultFonts.push_back(default_otc);
+
+    std::vector<FontInfo> fontInfos{
+        {"MS Gothic" /*"MS ゴシック"*/, {"msgothic.ttc"}, {} },
+        {"NSimSun" /*"NSimSun"*/, {"simsun.ttc"}, {} },
+        {"SimSun-ExtB" /*"SimSun-ExtB"*/, {"simsunb.ttf"}, {} },
+        {"BIZ UD Gothic" /*"BIZUDゴシック"*/, {"BIZ-UDGothicR.ttc"}, {} },
+        {"BIZ UDP Mincho Medium" /*"BIZ UD明朝 Medium"*/, {"BIZ-UDMinchoM.ttc"}, {} },
+        {"MS Mincho" /*"MS 明朝"*/, {"Msmincho.ttc"}, {} },
+        {"UD Digi Kyokasho N-B" /*"UD デジタル教科書体N-B"*/, {"UDDigiKyokashoN-B.ttc"}, {} },
+        {"UD Digi Kyokasho N-R" /*"UD デジタル教科書体N-R"*/, {"UDDigiKyokashoN-R.ttc"}, {} },
+        {"Sazanami" /*"さざなみゴシック"*/, {""}, {} },
+        {"Default" /*"デフォルト"*/, std::move(defaultFonts), {} }
+    };
+
+    delete[] default_ttf;
+    delete[] default_ttc;
+    delete[] default_otf;
+    delete[] default_otc;
+
+    std::string systemFontPath;
+
+#ifdef WIN32
+    systemFontPath = "C:\\Windows\\Fonts\\";
+#endif
+
+    for (auto& font : fontInfos)
+    {
+        for (auto& fontPath : font.m_paths)
+        {
+            if (file_exists(fontPath.c_str())) {
+                font.m_availiblePath = fontPath;
+            }
+            else if (systemFontPath.size()) {
+                font.m_availiblePath = systemFontPath + fontPath;
+
+                if (!file_exists(font.m_availiblePath.c_str())) {
+                    font.m_availiblePath.clear();
+                }
+            }
+        }
+    }
+
+    return fontInfos;
+}
+
 char* ONScripterLabel::create_filepath(DirPaths archive_path, const char* filename)
 {
     FILE *fp;
@@ -1374,6 +1440,8 @@ int ONScripterLabel::init()
     }
      */
 #endif
+
+    auto fonts = GetFonts();
 
     if(file_exists("default.ttf")) font_picker = FONT_DEFAULT_TTF;
     else if(file_exists("default.ttc")) font_picker = FONT_DEFAULT_TTC;

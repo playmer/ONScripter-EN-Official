@@ -53,7 +53,6 @@
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 #include "SDL_cdrom.h"
-#include "SDL_sound.h"
 
 #include "SDL2/SDL_mutex.h"
 
@@ -873,6 +872,14 @@ private:
     // May be unnecessary, I haven't been using it so far bc I didn't realise it existed lol
     //void getNextChar(const char *buf, int offset, char *out_chars);
 
+    struct FontInfo {
+        std::string m_name;
+        std::vector<std::string> m_paths;
+        std::string m_availiblePath;
+    };
+
+    std::vector<FontInfo> GetFonts();
+
     //Mion: variables & functions for special text processing
     bool *string_buffer_breaks;  // can it break before a particular offset?
     char *string_buffer_margins; // where are the ruby margins, how long (in pixels)
@@ -982,6 +989,7 @@ private:
 
     /* ---------------------------------------- */
     /* Sound related variables */
+
     enum{
         SOUND_NONE          =  0,
         SOUND_PRELOAD       =  1,
@@ -1012,8 +1020,6 @@ private:
     bool music_play_loop_flag;
     bool mp3save_flag;
     char *music_file_name;
-    unsigned char *music_buffer; // for looped music
-    long music_buffer_length;
     Mix_Chunk* mp3_sample;
     int mp3_channel = 0;
     Uint32 mp3fade_start;
@@ -1024,50 +1030,16 @@ private:
 
     int channelvolumes[ONS_MIX_CHANNELS]; //insani's addition
     bool channel_preloaded[ONS_MIX_CHANNELS]; //seems we need to track this...
-    Mix_Chunk *wave_sample[ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS];
+    SoundChunk *wave_sample[ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS];
 
     char *music_cmd;
     char *seqmusic_cmd;
-
-    // Sound decoded by SDL_Sound that we've created a chunk for.
-    struct SoundMusic {
-        ~SoundMusic();
-
-        static SoundMusic* Create(SDL_RWops* file, const char* ext_hint);
-
-
-    private:
-        static void SDLCALL Decode(void* udata, Uint8* stream, int len);
-
-        Sound_Sample* m_sample = NULL;
-        SDL_AudioSpec devformat;
-        Uint8* m_decoded = NULL;
-        Uint32 m_decoded_bytes = 0;
-        bool m_done = false;
-
-        SoundMusic() = default;
-    };
-
-    // Sound decoded by SDL_Sound that we've created a chunk for.
-    struct SoundChunk {
-        ~SoundChunk();
-
-        static SoundChunk* Create(SDL_RWops* file, const char* ext_hint);
-        Mix_Chunk* GetChunk() { return &m_chunk; };
-
-    private:
-        Sound_Sample* m_sample = NULL;
-        Mix_Chunk m_chunk;
-
-        SoundChunk() = default;
-    };
-    SoundChunk* m_soundChunk;
 
 
 
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
-    int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);
+    int playWave(SoundChunk *chunk, int format, bool loop_flag, int channel);
     int playExternalMusic(bool loop_flag);
     int playSequencedMusic(bool loop_flag);
     // Mion: for music status and fades
@@ -1083,8 +1055,6 @@ private:
     void stopDWAVE( int channel );
     void stopAllDWAVE();
     void playClickVoice();
-    OVInfo *openOggVorbis(unsigned char *buf, long len, int &channels, int &rate);
-    int  closeOggVorbis(OVInfo *ovi);
 
     /* ---------------------------------------- */
     /* Movie related variables */
@@ -1210,6 +1180,7 @@ private:
     void setupLookbackButton();
     void executeSystemLookback();
 
+    friend SoundMusic;
     friend FFMpegWrapper;
     friend Window;
     friend BasicWindow;

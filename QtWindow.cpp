@@ -504,6 +504,32 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
             toReturn.m_actionOrMenu.m_menu = menu;
             break;
         }
+        case MenuBarFunction::FONT:
+        {
+            QString display = QString::fromStdString(input.m_label);
+            QMenu* menu = new QMenu(display);
+
+            for (auto& font : m_onscripterLabel->GetFonts())
+            {
+                if (!font.m_availiblePath.empty()) {
+                    QAction* action = new QAction(QString::fromUtf8("Font Selection"));
+                    m_actionsMap[input.m_function].emplace_back(action);
+
+                    action->setCheckable(true);
+                    action->setChecked(IsChecked(input.m_function));
+
+                    QObject::connect(action, &QAction::triggered, [this, function = input.m_function]() {
+
+                    });
+
+                    menu->addAction(action);
+                }
+            }
+
+            toReturn.isAction = false;
+            toReturn.m_actionOrMenu.m_menu = menu;
+            break;
+        }
         default:
         {
             QAction* action = new QAction(QString::fromStdString(input.m_label));

@@ -159,7 +159,7 @@ int ONScripterLabel::wavestopCommand()
     if ( audio_open_flag && wave_sample[MIX_WAVE_CHANNEL] ){
         Mix_Pause( MIX_WAVE_CHANNEL );
         Mix_ChannelFinished(NULL);
-        Mix_FreeChunk( wave_sample[MIX_WAVE_CHANNEL] );
+        delete wave_sample[MIX_WAVE_CHANNEL];
         wave_sample[MIX_WAVE_CHANNEL] = NULL;
     }
     setStr( &wave_file_name, NULL );
@@ -2199,13 +2199,13 @@ int ONScripterLabel::loopbgmstopCommand()
     if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ){
         Mix_Pause(MIX_LOOPBGM_CHANNEL0);
         Mix_ChannelFinished(NULL);
-        Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL0] );
+        delete wave_sample[MIX_LOOPBGM_CHANNEL0];
         wave_sample[MIX_LOOPBGM_CHANNEL0] = NULL;
     }
     if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ){
         Mix_Pause(MIX_LOOPBGM_CHANNEL1);
         Mix_ChannelFinished(NULL);
-        Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL1] );
+        delete wave_sample[MIX_LOOPBGM_CHANNEL1];
         wave_sample[MIX_LOOPBGM_CHANNEL1] = NULL;
     }
     setStr(&loop_bgm_name[0], NULL);
@@ -3577,7 +3577,7 @@ int ONScripterLabel::dwaveCommand()
 
     if (play_mode == WAVE_PLAY_LOADED){
         Mix_ChannelFinished(waveCallback);
-        Mix_PlayChannel(ch, wave_sample[ch], loop_flag?-1:0);
+        Mix_PlayChannel(ch, wave_sample[ch]->GetChunk(), loop_flag ? -1 : 0);
     }
     else{
         const char *buf = script_h.readStr();

@@ -889,6 +889,8 @@ ONScripterLabel::ONScripterLabel()
 #else
     png_mask_type = PNG_MASK_USE_ALPHA;
 #endif
+
+    InitFonts();
     
     //init arrays
     int i=0;
@@ -1173,55 +1175,27 @@ bool ONScripterLabel::file_exists(const char *fileName)
     return infile.good();
 }
 
-std::vector<ONScripterLabel::FontInfo> ONScripterLabel::GetFonts()
+void ONScripterLabel::ProcessFonts(std::vector<FontOption>& fonts)
 {
-    char* default_ttf = create_filepath(archive_path, "default.ttf");
-    char* default_ttc = create_filepath(archive_path, "default.ttc");
-    char* default_otf = create_filepath(archive_path, "default.otf");
-    char* default_otc = create_filepath(archive_path, "default.otc");
-
-    std::vector<std::string> defaultFonts{
-        "default.ttf",
-        "default.ttc",
-        "default.otf",
-        "default.otc"
-    };
-
-    if (NULL != default_ttf) defaultFonts.push_back(default_ttf);
-    if (NULL != default_ttc) defaultFonts.push_back(default_ttc);
-    if (NULL != default_otf) defaultFonts.push_back(default_otf);
-    if (NULL != default_otc) defaultFonts.push_back(default_otc);
-
-    std::vector<FontInfo> fontInfos{
-        {"MS Gothic" /*"MS ゴシック"*/, {"msgothic.ttc"}, {} },
-        {"NSimSun" /*"NSimSun"*/, {"simsun.ttc"}, {} },
-        {"SimSun-ExtB" /*"SimSun-ExtB"*/, {"simsunb.ttf"}, {} },
-        {"BIZ UD Gothic" /*"BIZUDゴシック"*/, {"BIZ-UDGothicR.ttc"}, {} },
-        {"BIZ UDP Mincho Medium" /*"BIZ UD明朝 Medium"*/, {"BIZ-UDMinchoM.ttc"}, {} },
-        {"MS Mincho" /*"MS 明朝"*/, {"Msmincho.ttc"}, {} },
-        {"UD Digi Kyokasho N-B" /*"UD デジタル教科書体N-B"*/, {"UDDigiKyokashoN-B.ttc"}, {} },
-        {"UD Digi Kyokasho N-R" /*"UD デジタル教科書体N-R"*/, {"UDDigiKyokashoN-R.ttc"}, {} },
-        {"Sazanami" /*"さざなみゴシック"*/, {""}, {} },
-        {"Default" /*"デフォルト"*/, std::move(defaultFonts), {} }
-    };
-
-    delete[] default_ttf;
-    delete[] default_ttc;
-    delete[] default_otf;
-    delete[] default_otc;
-
     std::string systemFontPath;
 
 #ifdef WIN32
     systemFontPath = "C:\\Windows\\Fonts\\";
+#elif defined(MACOSX)
+    systemFontPath = "/System/Library/Fonts/"
 #endif
 
-    for (auto& font : fontInfos)
+    for (auto& font : fonts)
     {
         for (auto& fontPath : font.m_paths)
         {
+            char* archiveFontPath = create_filepath(archive_path, fontPath.c_str());
+
             if (file_exists(fontPath.c_str())) {
                 font.m_availiblePath = fontPath;
+            }
+            else if (archiveFontPath != NULL) {
+
             }
             else if (systemFontPath.size()) {
                 font.m_availiblePath = systemFontPath + fontPath;
@@ -1230,10 +1204,66 @@ std::vector<ONScripterLabel::FontInfo> ONScripterLabel::GetFonts()
                     font.m_availiblePath.clear();
                 }
             }
+
+            delete[] archiveFontPath;
+
+            if (!font.m_availiblePath.empty()) break;
+        }
+
+        // Didn't find it, look at the fallbacks.
+        if (font.m_availiblePath.empty()) {
+            ProcessFonts(font.m_fallbackFonts);
+        }
+        else {
+            font.m_fontToUse = &font;
         }
     }
+}
 
-    return fontInfos;
+void ONScripterLabel::InitFonts()
+{
+    std::vector<FontOption> fontInfos{
+        {"MS Gothic" /*"MS ゴシック"*/, {"msgothic.ttc", "msgothic.ttf"}, {}, NULL, {
+            {"ヒラギノ丸ゴ ProN" /*Mac Gothic*/, {"ヒラギノ丸ゴ ProN W4.ttc"}, {}, NULL}
+        }},
+        {"NSimSun" /*"NSimSun"*/, {"simsun.ttc"}, {}, NULL },
+        {"SimSun-ExtB" /*"SimSun-ExtB"*/, {"simsunb.ttf"}, {}, NULL },
+        {"BIZ UD Gothic" /*"BIZUDゴシック"*/, {"BIZ-UDGothicR.ttc"}, {}, NULL, {
+            {"BIZ UDGothic" /*"BIZ UD明朝 Medium"*/, {"BIZUDGothic-Regular.ttf"}, {}, NULL }
+        }},
+        {"BIZ UDP Mincho Medium" /*"BIZ UD明朝 Medium"*/, {"BIZ-UDMinchoM.ttc"}, {}, NULL, {
+            {"BIZ UDP Mincho" /*"BIZ UD明朝 Medium"*/, {"BIZUDPMincho-Regular.ttf"}, {}, NULL }
+        }},
+        {"MS Mincho" /*"MS 明朝"*/, {"Msmincho.ttc"}, {}, NULL },
+        {"UD Digi Kyokasho N-B" /*"UD デジタル教科書体N-B"*/, {"UDDigiKyokashoN-B.ttc"}, {}, NULL },
+        {"UD Digi Kyokasho N-R" /*"UD デジタル教科書体N-R"*/, {"UDDigiKyokashoN-R.ttc"}, {}, NULL },
+        {"Sazanami Gothic", {"sazanami-gothic.ttf", "sgothic.ttf"}, {}, NULL, {
+            {"Sazanami Mincho", {"sazanami-mincho.ttf", "smincho.ttf"}, {}, NULL}
+        }},
+        {"Default" /*"デフォルト"*/, {"default.ttf", "default.ttc", "default.otf", "default.otc"}, {}, NULL }
+    };
+
+    ProcessFonts(fontInfos);
+    m_fonts = std::move(fontInfos);
+
+    if (m_fonts[9].m_fontToUse) font_file = m_fonts[9].m_fontToUse->m_availiblePath.c_str();
+    else if (m_fonts[0].m_fontToUse) font_file = m_fonts[0].m_fontToUse->m_availiblePath.c_str();
+    else {
+        fprintf(stderr, "no font file detected\n");
+    }
+}
+
+void ONScripterLabel::ChangeFont(FontOption* fontOption)
+{
+    font_file = fontOption->m_availiblePath.data();
+
+    repaintCommand();
+}
+
+
+const std::vector<ONScripterLabel::FontOption>& ONScripterLabel::GetFonts()
+{
+    return m_fonts;
 }
 
 char* ONScripterLabel::create_filepath(DirPaths archive_path, const char* filename)
@@ -1414,116 +1444,6 @@ int ONScripterLabel::init()
     text_info.num_of_cells = 1;
     text_info.allocImage( screen_width, screen_height );
     text_info.fill(0, 0, 0, 0);
-
-    // ----------------------------------------
-    // Initialize font
-    delete[] font_file;
-
-    int font_picker = -1;
-
-    FILE *fp;
-    // No longer causes segfault :) -Galladite 2023-06-05
-    char* archive_default_font_ttf = create_filepath(archive_path, "default.ttf");
-    char* archive_default_font_ttc = create_filepath(archive_path, "default.ttc");
-    char* archive_default_font_otf = create_filepath(archive_path, "default.otf");
-    char* archive_default_font_otc = create_filepath(archive_path, "default.otc");
-
-#if defined(MACOSX)
-    /*
-    char* macos_font_file;
-    NSFileManager *fm = [NSFileManager defaultManager];
-    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸ゴ ProN W4.ttc";
-    if ([fm fileExistsAtPath:hiraginoPath])
-    {
-        macos_font_file = new char[ strlen([hiraginoPath UTF8String]) + 1 ];
-        strcpy(macos_font_file, [hiraginoPath UTF8String]);
-    }
-     */
-#endif
-
-    auto fonts = GetFonts();
-
-    if(file_exists("default.ttf")) font_picker = FONT_DEFAULT_TTF;
-    else if(file_exists("default.ttc")) font_picker = FONT_DEFAULT_TTC;
-    else if(file_exists("default.otf")) font_picker = FONT_DEFAULT_OTF;
-    else if(file_exists("default.otc")) font_picker = FONT_DEFAULT_OTC;
-    else if(file_exists(archive_default_font_ttf)) font_picker = FONT_ARCHIVE_TTF;
-    else if(file_exists(archive_default_font_ttc)) font_picker = FONT_ARCHIVE_TTC;
-    else if(file_exists(archive_default_font_otf)) font_picker = FONT_ARCHIVE_OTF;
-    else if(file_exists(archive_default_font_otc)) font_picker = FONT_ARCHIVE_OTC;
-#if defined(WIN32)
-    else if(file_exists("C:\\Windows\\Fonts\\msgothic.ttc")) font_picker = FONT_WIN32_MSGOTHIC_TTC;
-    else if(file_exists("C:\\Windows\\Fonts\\msgothic.ttf")) font_picker = FONT_WIN32_MSGOTHIC_TTF;
-#endif
-#if defined(MACOSX)
-    //else if([fm fileExistsAtPath:hiraginoPath]) font_picker = FONT_MACOS_HIRAGINO;
-#endif
-
-    switch(font_picker)
-    {
-        case FONT_DEFAULT_TTF:
-            font_file = create_filepath("", "default.ttf");
-            break;
-        case FONT_DEFAULT_TTC:
-            font_file = create_filepath("", "default.ttc");
-            break;
-        case FONT_DEFAULT_OTF:
-            font_file = create_filepath("", "default.otf");
-            break;
-        case FONT_DEFAULT_OTC:
-            font_file = create_filepath("", "default.otc");
-            break;
-        case FONT_ARCHIVE_TTF:
-            font_file = archive_default_font_ttf;
-            delete archive_default_font_ttc;
-            delete archive_default_font_otf;
-            delete archive_default_font_otc;
-            break;
-        case FONT_ARCHIVE_TTC:
-            font_file = archive_default_font_ttc;
-            delete archive_default_font_ttf;
-            delete archive_default_font_otf;
-            delete archive_default_font_otc;
-            break;
-        case FONT_ARCHIVE_OTF:
-            font_file = archive_default_font_otf;
-            delete archive_default_font_ttf;
-            delete archive_default_font_ttc;
-            delete archive_default_font_otc;
-            break;
-        case FONT_ARCHIVE_OTC:
-            font_file = archive_default_font_otc;
-            delete archive_default_font_ttf;
-            delete archive_default_font_ttc;
-            delete archive_default_font_otf;
-            break;
-#if defined(WIN32)
-        case FONT_WIN32_MSGOTHIC_TTC:
-            font_file = create_filepath("", "C:\\Windows\\Fonts\\msgothic.ttc");
-            fprintf( stderr, "no font file detected; using system fallback (MS Gothic)\n" );
-            break;
-        case FONT_WIN32_MSGOTHIC_TTF:
-            font_file = create_filepath("", "C:\\Windows\\Fonts\\msgothic.ttf");
-            fprintf( stderr, "no font file detected; using system fallback (MS Gothic)\n" );
-            break;
-#endif
-#if defined(MACOSX)
-            /*
-        case FONT_MACOS_HIRAGINO:
-            font_file = macos_font_file;
-            fprintf( stderr, "no font file detected; using system fallback (Hiragino Gothic)\n" );
-            break;
-             */
-#endif
-        default:
-            font_picker = -1;
-            break;
-    }
-    if(font_picker == -1)
-    {
-        fprintf( stderr, "no font file detected; exiting\n" );
-        return -1;
-    }
 
     // ----------------------------------------
     // Sound related variables

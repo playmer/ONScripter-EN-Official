@@ -391,6 +391,9 @@ public:
     void SetMusicVolume(int volume);
     void SetSfxVolume(int volume);
     void SetVoiceVolume(int volume);
+    
+    struct FontOption;
+    void ChangeFont(FontOption* fontOption);
 
 protected:
     /* ---------------------------------------- */
@@ -824,7 +827,7 @@ private:
     /* Text related variables */
     AnimationInfo text_info, shelter_text_info;
     AnimationInfo sentence_font_info;
-    char *font_file;
+    const char *font_file;
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
     bool draw_cursor_flag;
@@ -872,13 +875,18 @@ private:
     // May be unnecessary, I haven't been using it so far bc I didn't realise it existed lol
     //void getNextChar(const char *buf, int offset, char *out_chars);
 
-    struct FontInfo {
+    struct FontOption {
         std::string m_name;
         std::vector<std::string> m_paths;
         std::string m_availiblePath;
+        FontOption* m_fontToUse; // This will be set if we find this font, or a fallback font to use.
+        std::vector<FontOption> m_fallbackFonts;
     };
 
-    std::vector<FontInfo> GetFonts();
+    void ProcessFonts(std::vector<FontOption>& fonts);
+    void InitFonts();
+    const std::vector<FontOption>& GetFonts();
+    std::vector<FontOption> m_fonts;
 
     //Mion: variables & functions for special text processing
     bool *string_buffer_breaks;  // can it break before a particular offset?

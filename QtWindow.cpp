@@ -479,6 +479,7 @@ std::string QtWindow::Dialog_InputStr(std::string& display, int maximumInputLeng
     return InputStrDialog::getInputStr(RectFromWidget(m_mainWindow), display, maximumInputLength, forceDoubleByte, w, h, input_w, input_h, m_sdlWidget);
 }
 
+
 ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
 {
     ActionOrMenu toReturn;
@@ -511,19 +512,32 @@ ActionOrMenu QtWindow::CreateMenuBarInternal(MenuBarInput& input)
 
             for (auto& font : m_onscripterLabel->GetFonts())
             {
-                if (!font.m_availiblePath.empty()) {
-                    QAction* action = new QAction(QString::fromStdString(font.m_name));
-                    m_actionsMap[input.m_function].emplace_back(action);
+                QAction* action = new QAction();
+                action->setCheckable(true);
 
-                    action->setCheckable(true);
-                    action->setChecked(IsChecked(input.m_function));
+                if (font.m_fontToUse)
+                {
+                    QObject::connect(action, &QAction::triggered, [this, thisAction = action, font = font.m_fontToUse]() {
+                            m_onscripterLabel->ChangeFont(font);
+                            for (auto& action : m_actionsMap[MenuBarFunction::FONT]) {
+                                action->setChecked(false);
+                            }
 
-                    QObject::connect(action, &QAction::triggered, [this, function = input.m_function]() {
+                            thisAction->setChecked(true);
+                        });
 
-                    });
-
-                    menu->addAction(action);
+                    action->setText(QString::fromStdString(font.m_fontToUse->m_name));
+                    action->setChecked(m_onscripterLabel->font_file ? font.m_fontToUse->m_availiblePath == m_onscripterLabel->font_file : false);
+                    action->setDisabled(font.m_fontToUse->m_availiblePath.empty());
                 }
+                else {
+                    action->setText(QString::fromStdString(font.m_name));
+                    action->setChecked(false);
+                    action->setDisabled(true);
+                }
+
+                menu->addAction(action);
+                m_actionsMap[input.m_function].emplace_back(action);
             }
 
             toReturn.isAction = false;

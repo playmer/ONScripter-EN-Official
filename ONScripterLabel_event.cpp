@@ -53,19 +53,19 @@
 #define EDIT_SELECT_STRING "Music vol (m)  SE vol (s)  Voice vol (v)  Numeric variable (n)  Exit (Esc)"
 #define EDIT_VOLUME_STRING "Music vol (m)  SE vol (s)  Voice vol (v)  Exit (Esc)"
 
-static SDL_TimerID timer_id = NULL;
-static SDL_TimerID break_id = NULL;
-SDL_TimerID timer_cdaudio_id = NULL;
-SDL_TimerID anim_timer_id = NULL;
+static SDL_TimerID timer_id = 0;
+static SDL_TimerID break_id = 0;
+SDL_TimerID timer_cdaudio_id = 0;
+SDL_TimerID anim_timer_id = 0;
 
-SDL_TimerID timer_bgmfade_id = NULL;
-SDL_TimerID timer_silentmovie_id = NULL;
+SDL_TimerID timer_bgmfade_id = 0;
+SDL_TimerID timer_silentmovie_id = 0;
 
 // The reason we have a separate midi loop timer id here is that on Mac OS X, looping midis via SDL will cause SDL itself
 // to hard crash after the first play.  So, we work around that by manually causing the midis to loop.  This OS X midi
 // workaround is the work of Ben Carter.  Recommend for integration.  [Seung Park, 20060621]
 #ifdef MACOSX
-SDL_TimerID timer_seqmusic_id = NULL;
+SDL_TimerID timer_seqmusic_id = 0;
 #endif
 bool ext_music_play_once_flag = false;
 

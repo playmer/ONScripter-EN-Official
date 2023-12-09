@@ -1178,11 +1178,16 @@ bool ONScripterLabel::file_exists(const char *fileName)
 void ONScripterLabel::ProcessFonts(std::vector<FontOption>& fonts)
 {
     std::string systemFontPath;
+    std::string userFontPath;
 
 #ifdef WIN32
     systemFontPath = "C:\\Windows\\Fonts\\";
+    auto localAppDataSdl = SDL_getenv("LOCALAPPDATA");
+    userFontPath.append(localAppDataSdl);
+    userFontPath.append("\\Microsoft\\Windows\\Fonts\\");
 #elif defined(MACOSX)
-    systemFontPath = "/System/Library/Fonts/"
+    systemFontPath = "/System/Library/Fonts/";
+    userFontPath = "";
 #endif
 
     for (auto& font : fonts)
@@ -1197,11 +1202,21 @@ void ONScripterLabel::ProcessFonts(std::vector<FontOption>& fonts)
             else if (archiveFontPath != NULL) {
 
             }
-            else if (systemFontPath.size()) {
-                font.m_availiblePath = systemFontPath + fontPath;
+            else {
+                if (!systemFontPath.empty()) {
+                    font.m_availiblePath = systemFontPath + fontPath;
 
-                if (!file_exists(font.m_availiblePath.c_str())) {
-                    font.m_availiblePath.clear();
+                    if (!file_exists(font.m_availiblePath.c_str())) {
+                        font.m_availiblePath.clear();
+                    }
+                }
+
+                if (font.m_availiblePath.empty() && !userFontPath.empty()) {
+                    font.m_availiblePath = userFontPath + fontPath;
+
+                    if (!file_exists(font.m_availiblePath.c_str())) {
+                        font.m_availiblePath.clear();
+                    }
                 }
             }
 

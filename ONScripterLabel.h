@@ -391,8 +391,16 @@ public:
     void SetMusicVolume(int volume);
     void SetSfxVolume(int volume);
     void SetVoiceVolume(int volume);
-    
-    struct FontOption;
+
+
+    struct FontOption {
+        std::string m_name;
+        std::vector<std::string> m_paths;
+        std::string m_availiblePath;
+        FontOption* m_fontToUse; // This will be set if we find this font, or a fallback font to use.
+        std::vector<FontOption> m_fallbackFonts;
+    };
+
     void ChangeFont(FontOption* fontOption);
 
 protected:
@@ -874,14 +882,6 @@ private:
     //float getPixelLength(const char *buf, Fontinfo *fi, bool *bold_flag, bool *italics_flag);
     // May be unnecessary, I haven't been using it so far bc I didn't realise it existed lol
     //void getNextChar(const char *buf, int offset, char *out_chars);
-
-    struct FontOption {
-        std::string m_name;
-        std::vector<std::string> m_paths;
-        std::string m_availiblePath;
-        FontOption* m_fontToUse; // This will be set if we find this font, or a fallback font to use.
-        std::vector<FontOption> m_fallbackFonts;
-    };
 
     void ProcessFonts(std::vector<FontOption>& fonts);
     void InitFonts();

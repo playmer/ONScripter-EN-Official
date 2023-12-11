@@ -80,7 +80,7 @@ void ONScripterLabel::clearTimer(SDL_TimerID &timer_id)
 /* **************************************** *
  * Callback functions
  * **************************************** */
-extern "C" Uint32 SDLCALL animCallback( Uint32 interval, void *param )
+extern "C" Uint32 SDLCALL animCallback( Uint32 /*interval*/, void */*param*/ )
 {
     ONScripterLabel::clearTimer( anim_timer_id );
 
@@ -89,7 +89,7 @@ extern "C" Uint32 SDLCALL animCallback( Uint32 interval, void *param )
     return 0;
 }
 
-extern "C" Uint32 SDLCALL breakCallback(Uint32 interval, void *param)
+extern "C" Uint32 SDLCALL breakCallback(Uint32 /*interval*/, void */*para*/m)
 {
     ONScripterLabel::clearTimer(break_id);
 
@@ -98,7 +98,7 @@ extern "C" Uint32 SDLCALL breakCallback(Uint32 interval, void *param)
     return 0;
 }
 
-extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
+extern "C" Uint32 SDLCALL timerCallback( Uint32 /*interval*/, void */*param*/ )
 {
     ONScripterLabel::clearTimer( timer_id );
 
@@ -107,7 +107,7 @@ extern "C" Uint32 SDLCALL timerCallback( Uint32 interval, void *param )
     return 0;
 }
 
-extern "C" Uint32 cdaudioCallback( Uint32 interval, void *param )
+extern "C" Uint32 cdaudioCallback( Uint32 /*interval*/, void */*param*/ )
 {
     ONScripterLabel::clearTimer( timer_cdaudio_id );
 

@@ -37,6 +37,7 @@ public:
     enum { YOKO_MODE = 0,
            TATE_MODE = 1
     };
+    const char* m_font_file;
     void *ttf_font;
     uchar3 color;
     uchar3 on_color, off_color, nofile_color;

@@ -463,7 +463,7 @@ protected:
     void openAudio(int freq=DEFAULT_AUDIO_RATE, Uint16 format=MIX_DEFAULT_FORMAT, int channels=MIX_DEFAULT_CHANNELS);
 
     void UpdateScreen(SDL_Rect dst_rect);
-    void DisplayTexture(SDL_Texture* texture);
+    void DisplayTexture(SDL_Texture* texture, SDL_Rect* dst = NULL);
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
 
 
@@ -1075,6 +1075,8 @@ private:
     bool movie_click_flag, movie_loop_flag;
     int playMPEG( const char *filename, bool async_flag, bool use_pos=false, int xpos=0, int ypos=0, int width=0, int height=0 );
     int playAVI( const char *filename, bool click_flag );
+
+    static Uint32 SDLCALL silentmovieCallback(Uint32 interval, void* param);
     //void stopMovie(SMPEG *mpeg);
 
     /* ---------------------------------------- */

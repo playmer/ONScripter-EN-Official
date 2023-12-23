@@ -68,6 +68,7 @@ void Fontinfo::reset()
 
 void *Fontinfo::openFont( const char *font_file, int ratio1, int ratio2 )
 {
+    m_font_file = font_file;
     int font_size;
     if ( font_size_xy[0] < font_size_xy[1] )
         font_size = font_size_xy[0];

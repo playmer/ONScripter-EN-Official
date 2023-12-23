@@ -407,14 +407,22 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
   //fprintf(stderr, "UpdateScreen\n");
 }
 
-void ONScripterLabel::DisplayTexture(SDL_Texture* texture)
+void ONScripterLabel::DisplayTexture(SDL_Texture* texture, SDL_Rect* dst)
 {
     Uint32 format;
     int imageResolutionX, imageResolutionY, access;
-    SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
-
     int windowResolutionX, windowResolutionY;
-    SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
+
+    if (dst == NULL) {
+        SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
+        SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
+    }
+    else {
+        imageResolutionX = dst->x;
+        imageResolutionY = dst->y;
+        windowResolutionX = dst->w;
+        windowResolutionY = dst->h;
+    }
 
     float scaleWidth = windowResolutionX / (float)imageResolutionX;
     float scaleHeight = windowResolutionY / (float)imageResolutionY;

@@ -123,13 +123,15 @@ extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param )
     return interval;
 }
 
-extern "C" Uint32 SDLCALL silentmovieCallback( Uint32 interval, void *param )
+Uint32 SDLCALL ONScripterLabel::silentmovieCallback( Uint32 interval, void *param )
 {
-    FFMpegWrapper** video_player = static_cast<FFMpegWrapper**>(param);
+    ONScripterLabel* onscripter = static_cast<ONScripterLabel*>(param);
 
-    if ((*video_player) && (*video_player)->getStatus() != Kit_PlayerState::KIT_PLAYING){
-        (*video_player)->play();
-    } else if (*video_player == NULL){
+    FFMpegWrapper* video_player = onscripter->async_movie;
+
+    if (video_player && video_player->getStatus() == Kit_PlayerState::KIT_PLAYING){
+        video_player->playFrame(&onscripter->async_movie_rect);
+    } else if (video_player == NULL){
         ONScripterLabel::clearTimer( timer_silentmovie_id );
         return 0;
     }
@@ -424,9 +426,12 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
 
 void ONScripterLabel::flushEvent()
 {
+    printf("Start Flush\n");
     SDL_Event event;
     while (m_window->PollEvents(event))
         flushEventSub( event );
+
+    printf("End Flush\n");
 }
 
 void ONScripterLabel::advancePhase( int count )
@@ -1556,6 +1561,7 @@ void ONScripterLabel::runEventLoop()
     //SDL_Event temp_event;
     SDL_Event event;
     while (m_window->WaitEvents(event)) {
+        printf("Event: %d\n", event.type);
         // ignore continous SDL_MOUSEMOTION
         //while (event.type == SDL_MOUSEMOTION) {
         //    if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;

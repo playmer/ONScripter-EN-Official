@@ -559,6 +559,12 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
         return 0;
     }
 
+    surround_rects = new SDL_Rect[4];
+    for (int i = 0; i < 4; ++i) {
+        surround_rects[i].x = surround_rects[i].y = 0;
+        surround_rects[i].w = surround_rects[i].h = 0;
+    }
+
     if (use_pos) {
         async_movie_rect.x = xpos;
         async_movie_rect.y = ypos;
@@ -585,9 +591,9 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 
     if (async_flag){
         async_movie = video_player;
+        async_movie->play();
         if (!async_movie->hasAudioStream() && movie_loop_flag) {
-            timer_silentmovie_id = SDL_AddTimer(100, silentmovieCallback,
-                                                (void*)&async_movie);
+            timer_silentmovie_id = SDL_AddTimer(100, silentmovieCallback, this);
         }
         return 0;
     }

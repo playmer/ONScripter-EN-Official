@@ -186,6 +186,7 @@ bool ONScripterLabel::executeSystemCall()
 
 void ONScripterLabel::executeSystemMenu()
 {
+    printf("Start\n");
     current_font = &menu_font;
 
     if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
@@ -216,9 +217,11 @@ void ONScripterLabel::executeSystemMenu()
         menu_font.setXY( (menu_font.num_xy[0] - (rmenu_link_width * menu_font.pitch_xy[0])) / 2,
                          (menu_font.num_xy[1] - rmenu_link_num) / 2 );
 
+    printf("Start Buttons\n");
     RMenuLink *link = root_rmenu_link.next;
     int counter = 1;
     while( link ){
+        printf("\tButton: %s\n", link->label);
         ButtonLink *button = getSelectableSentence( link->label, &menu_font, false );
         root_button_link.insert( button );
         button->no = counter++;
@@ -226,9 +229,18 @@ void ONScripterLabel::executeSystemMenu()
         link = link->next;
         flush( refreshMode() );
     }
+    printf("End Buttons\n");
+
 
     flushEvent();
     refreshMouseOverButton();
+
+    //SDL_Rect rect = { 0, 0, screen_width, screen_height };
+    //refreshSurface(accumulation_surface, &rect, refreshMode());
+    //SDL_Rect dummyRect{0,0,0,0};
+    //UpdateScreen(dummyRect);
+
+    printf("Drew the screen\n");
 
     event_mode = WAIT_BUTTON_MODE;
     do waitEventSub(-1);
@@ -241,6 +253,7 @@ void ONScripterLabel::executeSystemMenu()
             playSound(menuselectvoice_file_name[MENUSELECTVOICE_CANCEL],
                       SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
         leaveSystemCall();
+        printf("End Early\n");
         return;
     }
 
@@ -257,6 +270,8 @@ void ONScripterLabel::executeSystemMenu()
         }
         link = link->next;
     }
+
+    printf("End\n");
 }
 
 void ONScripterLabel::executeSystemSkip()

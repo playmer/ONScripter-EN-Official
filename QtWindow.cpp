@@ -107,52 +107,51 @@ public:
             case QEvent::User:
             {
                 ONScripterCustomQtEvent* qtEvent = static_cast<ONScripterCustomQtEvent*>(event);
-                SDL_Event event;
-                event.type = qtEvent->m_customEvent;
-                event.user.code = qtEvent->m_value;
+                SDL_Event sdl_event;
+                sdl_event.type = qtEvent->m_customEvent;
+                sdl_event.user.code = qtEvent->m_value;
 
-                m_events.push_back(event);
+                m_events.push_back(sdl_event);
                 return true;
             }
             case QEvent::Move:
             {
                 QMoveEvent* qtEvent = static_cast<QMoveEvent*>(event);
-                SDL_Event sdlEvent;
-                sdlEvent.type = SDL_WINDOWEVENT;
-                sdlEvent.window.event = SDL_WINDOWEVENT_MOVED;
-                sdlEvent.window.data1 = qtEvent->pos().x();
-                sdlEvent.window.data2 = qtEvent->pos().y();
+                SDL_Event sdl_event;
+                sdl_event.type = SDL_WINDOWEVENT;
+                sdl_event.window.event = SDL_WINDOWEVENT_MOVED;
+                sdl_event.window.data1 = qtEvent->pos().x();
+                sdl_event.window.data2 = qtEvent->pos().y();
 
-                m_events.push_back(sdlEvent);
+                m_events.push_back(sdl_event);
                 return true;
             }
             case QEvent::Resize:
             {
                 QResizeEvent* qtEvent = static_cast<QResizeEvent*>(event);
 
-                SDL_Event sdlEvent;
-                sdlEvent.type = SDL_WINDOWEVENT;
+                SDL_Event sdl_event;
+                sdl_event.type = SDL_WINDOWEVENT;
 
-                sdlEvent.window.event = SDL_WINDOWEVENT_SIZE_CHANGED;
-                sdlEvent.window.data1 = qtEvent->size().width();
-                sdlEvent.window.data2 = qtEvent->size().height();
+                sdl_event.window.event = SDL_WINDOWEVENT_SIZE_CHANGED;
+                sdl_event.window.data1 = qtEvent->size().width();
+                sdl_event.window.data2 = qtEvent->size().height();
 
-                m_events.push_back(sdlEvent);
+                m_events.push_back(sdl_event);
 
-                sdlEvent.window.event = SDL_WINDOWEVENT_RESIZED;
-                sdlEvent.window.data1 = qtEvent->size().width();
-                sdlEvent.window.data2 = qtEvent->size().height();
+                sdl_event.window.event = SDL_WINDOWEVENT_RESIZED;
+                sdl_event.window.data1 = qtEvent->size().width();
+                sdl_event.window.data2 = qtEvent->size().height();
 
-                m_events.push_back(sdlEvent);//SDL_PushEvent(&sdlEvent);
+                m_events.push_back(sdl_event);//SDL_PushEvent(&sdl_event);
                 return true;
             }
             case QEvent::Close:
             {
-                QCloseEvent* qtEvent = static_cast<QCloseEvent*>(event);
-                SDL_Event sdlEvent;
-                sdlEvent.type = SDL_QUIT;
+                SDL_Event sdl_event;
+                sdl_event.type = SDL_QUIT;
 
-                m_events.push_back(sdlEvent);
+                m_events.push_back(sdl_event);
                 return QWindow::event(event);
             }
             default:
@@ -170,10 +169,10 @@ public:
 
     virtual void closeEvent(QCloseEvent*)
     {
-        SDL_Event sdlEvent;
-        sdlEvent.type = SDL_QUIT;
+        SDL_Event sdl_event;
+        sdl_event.type = SDL_QUIT;
 
-        m_events.push_back(sdlEvent);
+        m_events.push_back(sdl_event);
     }
 
     virtual void exposeEvent(QExposeEvent*)
@@ -187,7 +186,7 @@ public:
     //    aEvent->accept();
     //}
 
-    virtual void keyPressEvent(QKeyEvent* aEvent)
+    virtual void keyPressEvent(QKeyEvent*)
     {
 
     }
@@ -221,7 +220,7 @@ public:
     }
 
 protected:
-    void closeEvent(QCloseEvent* event)
+    void closeEvent(QCloseEvent*)
     {
         Window::SendCustomEventStatic(static_cast<ONScripterCustomEvent>(SDL_QUIT), 0);
     }
@@ -238,7 +237,7 @@ protected:
                     QRect rect = geometry();
                     rect.setHeight(25);
 
-                    if (rect.contains(mouseMoveEvent->globalPos()))
+                    if (rect.contains(mouseMoveEvent->globalPosition().toPoint()))
                     {
                         menuBar()->show();
                     }
@@ -247,7 +246,7 @@ protected:
                 {
                     QRect rect = QRect(menuBar()->mapToGlobal(QPoint(0, 0)), menuBar()->size());
 
-                    if (!rect.contains(mouseMoveEvent->globalPos()))
+                    if (!rect.contains(mouseMoveEvent->globalPosition().toPoint()))
                     {
                         menuBar()->hide();
                     }
@@ -361,11 +360,11 @@ int QtWindow::WaitEvents(SDL_Event& event)
 int QtWindow::PollEvents(SDL_Event& event)
 {
     m_eventLoop.processEvents(QEventLoop::AllEvents);
-    for (SDL_Event& event : m_sdlWindow->m_events)
+    for (SDL_Event& local_event : m_sdlWindow->m_events)
     {
-        if (event.type == SDL_WINDOWEVENT)
-            event.window.windowID = SDL_GetWindowID(m_window);
-        SDL_PushEvent(&event);
+        if (local_event.type == SDL_WINDOWEVENT)
+            local_event.window.windowID = SDL_GetWindowID(m_window);
+        SDL_PushEvent(&local_event);
     }
 
     m_sdlWindow->m_events.clear();
@@ -403,7 +402,7 @@ void QtWindow::SetWindowCaption(const char* title, const char* icon_name)
     }
 }
 
-SDL_Surface* QtWindow::SetVideoMode(int width, int height, int bpp, bool fullscreen)
+SDL_Surface* QtWindow::SetVideoMode(int width, int height, int /*bpp*/, bool fullscreen)
 {
     // In both paths here we're doing some additional event processing in between focus requests.
     // This is a best effort attempt to maintain window _and_ widget focus after a fullscreen transition.

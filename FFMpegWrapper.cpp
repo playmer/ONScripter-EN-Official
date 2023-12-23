@@ -194,6 +194,7 @@ int FFMpegWrapper::playFull(bool click_flag)
         SDL_UnlockMutex(audio_data_mutex);
         
         // Refresh videotexture and render it
+        SDL_RenderClear(m_window->GetRenderer());
         display_frame();
 
         SDL_Delay(1);
@@ -209,7 +210,7 @@ int FFMpegWrapper::playFull(bool click_flag)
     return ret;
 }
 
-void FFMpegWrapper::playFrame()
+void FFMpegWrapper::playFrame(SDL_Rect* dst)
 {
     if ((Kit_GetPlayerState(m_player) == KIT_STOPPED) && m_onscripterLabel->movie_loop_flag) {
         Kit_PlayerPlay(m_player);
@@ -229,7 +230,7 @@ void FFMpegWrapper::playFrame()
     SDL_UnlockMutex(audio_data_mutex);
 
     // Refresh videotexture and render it
-    display_frame();
+    display_frame(dst);
 }
 
 void FFMpegWrapper::setVolume(int volume)
@@ -237,11 +238,13 @@ void FFMpegWrapper::setVolume(int volume)
     Mix_VolumeMusic(volume);
 }
 
-void FFMpegWrapper::display_frame()
+void FFMpegWrapper::display_frame(SDL_Rect *dst)
 {
     Kit_GetPlayerVideoData(m_player, m_video_texture);
-    SDL_RenderClear(m_window->GetRenderer());
-    m_onscripterLabel->DisplayTexture(m_video_texture);
+    //m_onscripterLabel->DisplayTexture(m_video_texture, dst);
+
+    SDL_RenderCopy(m_window->GetRenderer(), m_video_texture, NULL /*&src_rect*/, dst);
+    SDL_RenderPresent(m_window->GetRenderer());
 }
 
 void FFMpegWrapper::play()

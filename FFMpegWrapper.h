@@ -49,7 +49,7 @@ public:
     void stopMovie();
     void setVolume(int volume);
 
-    void playFrame();
+    void playFrame(SDL_Rect* dst);
 
     bool hasAudioStream();
 
@@ -58,7 +58,7 @@ public:
     static void mixer_callback(FFMpegWrapper* userdata, Uint8* stream, int length);
 
 private:
-    void display_frame();
+    void display_frame(SDL_Rect* dst = NULL);
     void queue_audio();
     ONScripterLabel* m_onscripterLabel;
     Window* m_window;

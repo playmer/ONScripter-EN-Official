@@ -10,15 +10,19 @@ endif()
 if(EMSCRIPTEN)
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
+    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" OFF)
 elseif(MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" ON)
 elseif(ANDROID) # Android
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
+    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" OFF)
 else()
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
-    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
+    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" ON)
 endif()
 
 option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
@@ -44,7 +48,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-
 option(SDLSOUND_DECODER_WAV "Wave"  ON)
 option(SDLSOUND_DECODER_AIFF "Audio Interchange"  ON)
 option(SDLSOUND_DECODER_AU "Sun/NeXT audio"  ON)
@@ -56,6 +59,7 @@ option(SDLSOUND_DECODER_SHN "Shorten"  ON)
 option(SDLSOUND_DECODER_MODPLUG "ModPlug" ON)
 option(SDLSOUND_DECODER_MP3 "MPEG-1 Layers I-III" ON)
 option(SDLSOUND_DECODER_MIDI "Midi"  ON)
+option(SDLSOUND_BUILD_SHARED "Build shared library" FALSE)
 
 if (WIN32)
     option(SDLSOUND_BUILD_SHARED "Build shared library" ON)
@@ -190,6 +194,7 @@ else()
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
     endif ()
 endif()
+set_property(TARGET onscripter_en PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 #########
 # AVI Support
@@ -224,6 +229,8 @@ if (ONS_USE_AVIFILE)
     ###############
     # SDL_KitchenSink
     add_library(SDL_kitchensink)
+    
+    set_property(TARGET SDL_kitchensink PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
     target_include_directories(SDL_kitchensink PUBLIC extlib/SDL_kitchensink/include)
 
@@ -257,6 +264,9 @@ if (ONS_USE_AVIFILE)
     
     target_link_directories(SDL_kitchensink PRIVATE ${FFMPEG_LIBRARY_DIRS})
 
+    #find_package(PkgConfig)
+    #pkg_check_modules(libass REQUIRED libass)
+
     if (LINUX OR APPLE)
         find_package(Fontconfig REQUIRED)
         find_library(FRIBIDI_LIBRARY NAMES fribidi REQUIRED)
@@ -264,7 +274,6 @@ if (ONS_USE_AVIFILE)
         target_link_libraries(SDL_kitchensink
         PRIVATE
             fontconfig
-            ${fribidi}
         )
     endif()
 
@@ -272,6 +281,7 @@ if (ONS_USE_AVIFILE)
     PRIVATE
         harfbuzz
         Freetype::Freetype
+        #libass::libass
         ass
         ${FFMPEG_LIBRARIES}
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
@@ -351,8 +361,6 @@ if (ONS_USE_QT_WINDOW)
     )")
 endif()
 
-
-
 #########
 # onScripter_en settings and libraries
 add_custom_command(TARGET onscripter_en POST_BUILD
@@ -367,6 +375,7 @@ PRIVATE
     ZLIB::ZLIB
     PNG::PNG
     Freetype::Freetype
+    fribidi.lib
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
@@ -464,6 +473,16 @@ if(WIN32)
     target_link_options(onscripter_en 
     PRIVATE
         $<IF:$<CONFIG:DEBUG>,/SUBSYSTEM:CONSOLE,/SUBSYSTEM:WINDOWS>
+    )
+
+    target_compile_definitions(onscripter_en
+        PRIVATE
+        _CRT_SECURE_NO_WARNINGS
+    )
+
+    target_compile_options(onscripter_en 
+    PRIVATE
+        /W4
     )
 
     #/SUBSYSTEM:WINDOWS

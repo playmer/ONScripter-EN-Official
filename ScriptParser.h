@@ -82,8 +82,10 @@
 #define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
 
 // Mion: kinsoku
-#define DEFAULT_START_KINSOKU "」』）］｝、。，．・？！ヽヾゝゞ々ー"
-#define DEFAULT_END_KINSOKU   "「『（［｛"
+//The following sting in Shift-JIS "」』）］｝、。，．・？！ヽヾゝゞ々ー"
+const char DEFAULT_START_KINSOKU[] = { -127, 118, -127, 120, -127, 106, -127, 110, -127, 112, -127, 65, -127, 66, -127, 67, -127, 68, -127, 69, -127, 72, -127, 73, -127, 82, -127, 83, -127, 84, -127, 85, -127, 88, -127, 91, 0 };
+//The following sting in Shift-JIS  "「『（［｛"
+const char DEFAULT_END_KINSOKU[] = {-127, 117, -127, 119, -127, 105, -127, 109, -127, 111, 0};
 
 typedef unsigned char uchar3[3];
 

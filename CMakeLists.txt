@@ -33,6 +33,66 @@ if (MSVC)
     add_compile_options(/MP)
 endif()
 
+
+
+###############
+# CMake Pkg-Config Wrapper Macro
+#   This is a best-effort wrapper around the pkg-config functions that
+#   allow us to create targets for libraries that are intended to be found
+#   via pkg-config, but which don't properly select debug/release libs.
+#   It's likely it may need to be revisited upon using other pkg-config based
+#   libraries. For now we use it for libass.
+
+find_package(PkgConfig)
+
+function(PkgConfig_Find_Module module_name)
+    pkg_check_modules(${module_name}_TO_FIND REQUIRED ${module_name})
+
+    list(LENGTH ${module_name}_TO_FIND_LIBRARY_DIRS include_dir_length)
+
+    if (${include_dir_length} GREATER 2)
+        message(STATUS "We've encountered a pkg-config library with more than a debug and release include directory.")
+        message(STATUS ${${module_name}_TO_FIND_LIBRARY_DIRS})
+    endif()
+
+    # STATIC should be variable here, should detect it somehow.
+    add_library(PkgConfigWrapper::${module_name} INTERFACE IMPORTED)
+
+    foreach(include_dir ${${module_name}_TO_FIND_LIBRARY_DIRS})
+        if(include_dir MATCHES ".*/debug/lib$")
+            set(${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG ${include_dir})
+        elseif(include_dir MATCHES ".*/lib$")
+            set(${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE ${include_dir})
+        endif()
+    endforeach()
+    
+    foreach(library ${${module_name}_TO_FIND_LIBRARIES})
+        # Get the debug library
+        unset(${module_name}_TO_FIND_${library}_LIBRARY_FOUND)
+        find_library(${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND ${library} ${${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG})
+
+        # Get the release library
+        unset(${module_name}_TO_FIND_${library}_LIBRARY_FOUND)
+        find_library(${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND ${library} ${${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE})
+
+        add_library(PkgConfigWrapperSubLib::${library} UNKNOWN IMPORTED)
+        set_target_properties(PkgConfigWrapperSubLib::${library} PROPERTIES
+            IMPORTED_LOCATION ${${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND}
+            IMPORTED_LOCATION_DEBUG ${${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND}
+        )
+        
+        set_property(TARGET PkgConfigWrapper::${module_name} APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapperSubLib::${library})
+    endforeach()
+
+    foreach(include_dir ${${module_name}_TO_FIND_INCLUDE_DIRS})
+        set_property(TARGET PkgConfigWrapper::${module_name} APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${include_dir})
+    endforeach()
+    
+    foreach(cflag ${${module_name}_TO_FIND_CFLAGS_OTHER})
+        set_property(TARGET PkgConfigWrapper::${module_name} APPEND PROPERTY INTERFACE_COMPILE_OPTIONS ${cflag})
+    endforeach()
+endfunction()
+
 ###############
 # onscripter-en required Libraries/Packages
 find_package(BZip2 REQUIRED)
@@ -221,11 +281,8 @@ if (ONS_USE_AVIFILE)
         FFMpegWrapper.h
     )
 
+    PkgConfig_Find_Module(libass)
 
-    find_package(harfbuzz REQUIRED)
-
-
-    
     ###############
     # SDL_KitchenSink
     add_library(SDL_kitchensink)
@@ -257,36 +314,23 @@ if (ONS_USE_AVIFILE)
         extlib/SDL_kitchensink/src/internal/video/kitvideo.c
     )
     
-    target_include_directories(SDL_kitchensink 
-    PRIVATE 
-        ${FFMPEG_INCLUDE_DIRS}
+    target_link_directories(SDL_kitchensink 
+    PUBLIC 
+        ${FFMPEG_LIBRARY_DIRS}
     )
-    
-    target_link_directories(SDL_kitchensink PRIVATE ${FFMPEG_LIBRARY_DIRS})
-
-    #find_package(PkgConfig)
-    #pkg_check_modules(libass REQUIRED libass)
-
-    if (LINUX OR APPLE)
-        find_package(Fontconfig REQUIRED)
-        find_library(FRIBIDI_LIBRARY NAMES fribidi REQUIRED)
-
-        target_link_libraries(SDL_kitchensink
-        PRIVATE
-            fontconfig
-        )
-    endif()
 
     target_link_libraries(SDL_kitchensink
     PRIVATE
-        harfbuzz
-        Freetype::Freetype
-        #libass::libass
-        ass
         ${FFMPEG_LIBRARIES}
+        PkgConfigWrapper::libass
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     )
-    
+
+    target_include_directories(SDL_kitchensink 
+    PUBLIC 
+        ${LIBASS_INCLUDE_DIRS}
+    )
+
     set(KIT_VERSION_MAJOR "1")
     set(KIT_VERSION_MINOR "0")
     set(KIT_VERSION_PATCH "11")
@@ -296,6 +340,20 @@ if (ONS_USE_AVIFILE)
         -DKIT_VERSION_MAJOR=${KIT_VERSION_MAJOR}
         -DKIT_VERSION_MINOR=${KIT_VERSION_MINOR}
         -DKIT_VERSION_PATCH=${KIT_VERSION_PATCH}
+    )
+endif()
+
+#########
+# WxWidgets Support
+if (ONS_USE_WX_WINDOW)
+    find_package(wxWidgets CONFIG REQUIRED)
+    target_link_libraries(onscripter_en PRIVATE wx::core wx::base)
+    target_compile_definitions(onscripter_en PRIVATE -DUSE_WX_WINDOW)
+    
+    target_sources(onscripter_en
+    PRIVATE
+        WxPlatform.cpp
+        WxPlatform.h
     )
 endif()
 

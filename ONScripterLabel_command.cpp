@@ -120,7 +120,7 @@ int ONScripterLabel::yesnoboxCommand()
         SDL_VERSION(&info.version);
         if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
           pwin = info.info.win.window;
-        res = MessageBox(pwin, msg, title, mb_type);
+        res = MessageBoxA(pwin, msg, title, mb_type);
         res = ((res == IDYES) || (res == IDOK)) ? 1 : 0;
 #elif defined(LINUX)
         strncat(msg, "\n", 1); // This is used in order to prevent a... wierd... bug -Galladite 2023-4-10
@@ -799,7 +799,7 @@ int ONScripterLabel::shellCommand()
 {
 #ifdef WIN32
     const char *url = script_h.readStr();
-    HMODULE shdll = LoadLibrary("shell32");
+    HMODULE shdll = LoadLibraryA("shell32");
     if (shdll) {
         typedef HINSTANCE (WINAPI *SHELLEXECUTE)(HWND, LPCSTR, LPCSTR, LPCSTR,
 						 LPCSTR, int);
@@ -1973,7 +1973,7 @@ int ONScripterLabel::mesboxCommand()
     SDL_VERSION(&info.version);
     if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
       pwin = info.info.win.window;
-    MessageBox(pwin, msg, title, MB_OK);
+    MessageBoxA(pwin, msg, title, MB_OK);
 #endif
     fprintf(stderr,"Got message box '%s': '%s'\n", title, msg);
     delete[] msg;

@@ -190,6 +190,10 @@ class QtBasicWindow;
 Window* CreateQtBasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
 #endif
 
+#ifdef USE_WX_WINDOW
+class WxWindow;
+Window* CreateWxWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
+#endif
 
 
 

@@ -107,7 +107,7 @@ class ONScripterLabel : public ScriptParser
 public:
     typedef AnimationInfo::ONSBuf ONSBuf;
 
-    ONScripterLabel();
+    ONScripterLabel(int argc, char** argv);
     ~ONScripterLabel();
 
     void executeLabel();
@@ -1190,6 +1190,9 @@ private:
     void setupLookbackButton();
     void executeSystemLookback();
 
+    int argc;
+    char** argv;
+
     friend SoundMusic;
     friend FFMpegWrapper;
     friend Window;
@@ -1198,6 +1201,11 @@ private:
 #ifdef USE_QT_WINDOW
     friend QtWindow;
     friend QtBasicWindow;
+#endif
+
+
+#ifdef USE_WX_WINDOW
+    friend WxWindow;
 #endif
 
 #ifdef USE_IMGUIWINDOW

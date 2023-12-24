@@ -67,7 +67,11 @@
 #define NOMINMAX
 #include <windows.h>
 #include "winres.h"
-typedef HRESULT (WINAPI *GETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
+
+#ifdef UNICODE
+typedef HRESULT (WINAPI *GETFOLDERPATHW)(HWND, int, HANDLE, DWORD, LPTSTR);
+typedef HRESULT(WINAPI *GETFOLDERPATHA)(HWND, int, HANDLE, DWORD, LPSTR);
+#endif
 #endif
 #ifdef LINUX
 #include <unistd.h>
@@ -559,6 +563,9 @@ void ONScripterLabel::initSDL()
     m_window = CreateQtWindow(this, 800, 600, 50, 50);
     //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif
+#elif USE_WX_WINDOW
+    m_window = CreateWxWindow(this, 800, 600, 50, 50);
+    //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #else
     m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif
@@ -818,7 +825,7 @@ int ONScripterLabel::StretchPosY(int val) {
 }
 #endif
 
-ONScripterLabel::ONScripterLabel()
+ONScripterLabel::ONScripterLabel(int argc, char** argv)
 //Using an initialization list to make sure pointers start out NULL
 : default_font(NULL), registry_file(NULL), dll_file(NULL),
   getret_str(NULL), key_exe_file(NULL), trap_dest(NULL),
@@ -838,7 +845,8 @@ ONScripterLabel::ONScripterLabel()
   music_file_name(NULL), mp3_sample(NULL),
   music_info(NULL), music_cmd(NULL), seqmusic_cmd(NULL),
   async_movie(NULL), surround_rects(NULL),
-  text_font(NULL), cached_page(NULL), system_menu_title(NULL)
+  text_font(NULL), cached_page(NULL), system_menu_title(NULL),
+  argc(argc), argv(argv)
 {
     //first initialize *everything* (static) to base values
 
@@ -1363,9 +1371,9 @@ int ONScripterLabel::init()
         // On Windows, store in [Profiles]/All Users/Application Data.
         // Permit saves to be per-user rather than shared if
         // option --current-user-appdata is specified
-        HMODULE shdll = LoadLibrary("shfolder");
+        HMODULE shdll = LoadLibraryA("shfolder");
         if (shdll) {
-            GETFOLDERPATH gfp = GETFOLDERPATH(GetProcAddress(shdll, "SHGetFolderPathA"));
+            GETFOLDERPATHA gfp = GETFOLDERPATHA(GetProcAddress(shdll, "SHGetFolderPathA"));
             if (gfp) {
                 char hpath[MAX_PATH];
 #define CSIDL_COMMON_APPDATA 0x0023 // for [Profiles]/All Users/Application Data
@@ -1379,7 +1387,7 @@ int ONScripterLabel::init()
                     script_h.save_path = new char[strlen(hpath) + strlen(gameid) + 3];
                     sprintf(script_h.save_path, "%s%c%s%c",
                             hpath, DELIMITER, gameid, DELIMITER);
-                    CreateDirectory(script_h.save_path, 0);
+                    CreateDirectoryA(script_h.save_path, 0);
                 }
             }
             FreeLibrary(shdll);
@@ -1807,7 +1815,7 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool is
     }
     else
         mb_type |= MB_ICONERROR;
-    int res = MessageBox(pwin, errstr, errtitle, mb_type);
+    int res = MessageBoxA(pwin, errstr, errtitle, mb_type);
     if (is_warning)
         return (res == IDABORT); //should do exit if got Abort
 #else
@@ -1837,11 +1845,11 @@ void ONScripterLabel::openDebugFolders()
     // to make it easier to debug user issues on Windows, open
     // the current directory, save_path and ONScripter output folders
     // in Explorer
-    HMODULE shdll = LoadLibrary("shell32");
+    HMODULE shdll = LoadLibraryA("shell32");
     if (shdll) {
         char hpath[MAX_PATH];
         bool havefp = false;
-        GETFOLDERPATH gfp = GETFOLDERPATH(GetProcAddress(shdll, "SHGetFolderPathA"));
+        GETFOLDERPATHA gfp = GETFOLDERPATHA(GetProcAddress(shdll, "SHGetFolderPathA"));
         if (gfp) {
             HRESULT res = gfp(0, CSIDL_APPDATA, 0, 0, hpath); //now user-based
             if (res != S_FALSE && res != E_FAIL && res != E_INVALIDARG) {

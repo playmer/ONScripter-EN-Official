@@ -12,15 +12,14 @@
       "features": [ "avcodec", "avdevice", "avfilter", "avformat" ],
       "platform": "(windows|osx|ios|linux|emscripten)"
     },
-    {
-      "name": "fontconfig",
-      "platform": "(osx|linux)"
-    },
     "libjpeg-turbo",
     "libass",
     "libpng",
     "lua",
-    "qtbase",
+    {
+      "name": "pkgconf",
+      "platform": "(windows)&(!mingw)"
+    },
     {
       "name": "sdl2",
       "features": [ "vulkan", "wayland", "x11" ],
@@ -32,6 +31,7 @@
     },
     "sdl2-mixer",
     "sdl2-ttf",
+    "wxwidgets",
     "zlib"
   ]
 }

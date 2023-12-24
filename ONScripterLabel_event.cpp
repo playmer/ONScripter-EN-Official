@@ -1444,7 +1444,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         SDL_VERSION(&info.version);
         if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
           pwin = info.info.win.window;
-        MessageBox(pwin, version_str, "About",
+        MessageBoxA(pwin, version_str, "About",
                    MB_OK|MB_ICONINFORMATION);
 
         key_pressed_flag = true;

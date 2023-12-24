@@ -443,8 +443,6 @@ PRIVATE
     BZip2::BZip2
     ZLIB::ZLIB
     PNG::PNG
-    Freetype::Freetype
-    fribidi.lib
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>

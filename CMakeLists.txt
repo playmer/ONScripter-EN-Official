@@ -57,29 +57,34 @@ function(PkgConfig_Find_Module module_name)
 
     # STATIC should be variable here, should detect it somehow.
     add_library(PkgConfigWrapper::${module_name} INTERFACE IMPORTED)
+    
 
-    foreach(include_dir ${${module_name}_TO_FIND_LIBRARY_DIRS})
-        if(include_dir MATCHES ".*/debug/lib$")
-            set(${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG ${include_dir})
-        elseif(include_dir MATCHES ".*/lib$")
-            set(${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE ${include_dir})
-        endif()
-    endforeach()
+    set(${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib)
+    set(${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
+
+    message(STATUS "RELEASE DIR: ${${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE}")
+    message(STATUS "DEBUG DIR: ${${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG}")
     
     foreach(library ${${module_name}_TO_FIND_LIBRARIES})
-
-        # Get the debug library
-        unset(${module_name}_TO_FIND_${library}_LIBRARY_FOUND)
-        find_library(${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND ${library} ${${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG})
+        if (TARGET PkgConfigWrapperSubLib::${library})
+            continue()
+        endif()
 
         # Get the release library
-        unset(${module_name}_TO_FIND_${library}_LIBRARY_FOUND)
-        find_library(${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND ${library} ${${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE})
-        
+        unset(${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND)
+        find_library(${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND NAMES ${library} PATHS ${${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE} NO_CACHE NO_DEFAULT_PATH)
 
+        # Get the debug library
+        unset(${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND)
+        find_library(${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND NAMES ${library} PATHS ${${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG} NO_CACHE NO_DEFAULT_PATH)
+        
         if (${${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND} STREQUAL ${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND-NOTFOUND)
+            message(STATUS "Giving up and just linking ${library}")
             set_property(TARGET PkgConfigWrapper::${module_name} APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${library})
         else()
+            message(STATUS "Found RELEASE: ${${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND}")
+            message(STATUS "Found DEBUG: ${${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND}")
+
             add_library(PkgConfigWrapperSubLib::${library} UNKNOWN IMPORTED)
             set_target_properties(PkgConfigWrapperSubLib::${library} PROPERTIES
                 IMPORTED_LOCATION ${${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND}

@@ -37,7 +37,7 @@ jobs:
       CMAKE_MAKE_PROGRAM: ninja
     steps:
       - run: sudo apt update
-      - run: sudo apt install -y apt autoconf automake build-essential cmake fcitx-libs-dev git gnome-desktop-testing libasound2-dev libaudio-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libpipewire-0.3-dev libpulse-dev libsamplerate0-dev libsndio-dev libtool libudev-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make nasm ninja-build pkg-config zlib1g-dev
+      - run: sudo apt install -y apt autoconf automake autopoint build-essential cmake fcitx-libs-dev git gnome-desktop-testing libasound2-dev libaudio-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libpipewire-0.3-dev libpulse-dev libsamplerate0-dev libsndio-dev libtool libudev-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make nasm ninja-build pkg-config zlib1g-dev
       - run: ninja --version
       - run: nasm -v
       
@@ -47,14 +47,14 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          aqtversion: '==3.1.*'
-          version: '6.6.0'
-          host: 'linux'
-          target: 'desktop'
-          arch: 'gcc_64'
+      #- name: Install Qt
+      #  uses: jurplel/install-qt-action@v3
+      #  with:
+      #    aqtversion: '==3.1.*'
+      #    version: '6.6.0'
+      #    host: 'linux'
+      #    target: 'desktop'
+      #    arch: 'gcc_64'
 
       - name: Restore from cache and setup vcpkg executable and data files.
         uses: lukka/run-vcpkg@v11
@@ -206,14 +206,14 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          aqtversion: '==3.1.*'
-          version: '6.6.0'
-          host: 'mac'
-          target: 'desktop'
-          arch: 'clang_64'
+      #- name: Install Qt
+      #  uses: jurplel/install-qt-action@v3
+      #  with:
+      #    aqtversion: '==3.1.*'
+      #    version: '6.6.0'
+      #    host: 'mac'
+      #    target: 'desktop'
+      #    arch: 'clang_64'
 
       - name: Restore from cache and setup vcpkg executable and data files.
         uses: lukka/run-vcpkg@v11
@@ -258,14 +258,14 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          aqtversion: '==3.1.*'
-          version: '6.6.0'
-          host: 'windows'
-          target: 'desktop'
-          arch: 'win64_msvc2019_64'
+      #- name: Install Qt
+      #  uses: jurplel/install-qt-action@v3
+      #  with:
+      #    aqtversion: '==3.1.*'
+      #    version: '6.6.0'
+      #    host: 'windows'
+      #    target: 'desktop'
+      #    arch: 'win64_msvc2019_64'
 
       - name: Restore from cache and setup vcpkg executable and data files.
         uses: lukka/run-vcpkg@v11

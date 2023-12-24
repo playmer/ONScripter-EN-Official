@@ -67,6 +67,7 @@ function(PkgConfig_Find_Module module_name)
     endforeach()
     
     foreach(library ${${module_name}_TO_FIND_LIBRARIES})
+
         # Get the debug library
         unset(${module_name}_TO_FIND_${library}_LIBRARY_FOUND)
         find_library(${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND ${library} ${${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG})
@@ -74,14 +75,19 @@ function(PkgConfig_Find_Module module_name)
         # Get the release library
         unset(${module_name}_TO_FIND_${library}_LIBRARY_FOUND)
         find_library(${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND ${library} ${${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE})
-
-        add_library(PkgConfigWrapperSubLib::${library} UNKNOWN IMPORTED)
-        set_target_properties(PkgConfigWrapperSubLib::${library} PROPERTIES
-            IMPORTED_LOCATION ${${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND}
-            IMPORTED_LOCATION_DEBUG ${${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND}
-        )
         
-        set_property(TARGET PkgConfigWrapper::${module_name} APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapperSubLib::${library})
+
+        if (${${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND} STREQUAL ${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND-NOTFOUND)
+            set_property(TARGET PkgConfigWrapper::${module_name} APPEND PROPERTY INTERFACE_LINK_LIBRARIES ${library})
+        else()
+            add_library(PkgConfigWrapperSubLib::${library} UNKNOWN IMPORTED)
+            set_target_properties(PkgConfigWrapperSubLib::${library} PROPERTIES
+                IMPORTED_LOCATION ${${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND}
+                IMPORTED_LOCATION_DEBUG ${${module_name}_TO_FIND_${library}_DEBUG_LIBRARY_FOUND}
+            )
+        
+            set_property(TARGET PkgConfigWrapper::${module_name} APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapperSubLib::${library})
+        endif()
     endforeach()
 
     foreach(include_dir ${${module_name}_TO_FIND_INCLUDE_DIRS})

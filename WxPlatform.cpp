@@ -77,7 +77,10 @@ WxWindow::WxWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
     //while (m_app->Pending())
     //    m_app->Dispatch();
 
+
+#ifdef WIN32
     m_window = SDL_CreateWindowFrom(m_mainWindow->GetHWND());
+#endif
     m_renderer = SDL_CreateRenderer(m_window, 0, 0);
 }
 

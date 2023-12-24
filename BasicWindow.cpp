@@ -89,12 +89,15 @@ SDL_Surface* BasicWindow::SetVideoMode(int width, int height, int bpp, bool full
 // on Window, hence why this is not fully implemented for Linux.
 void* BasicWindow::GetWindowHandle()
 {
+#ifdef WIN32
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
     SDL_GetWindowWMInfo(m_window, &info);
-#ifdef WIN32
     return info.info.win.window;
 #elif defined(APPLE)
+    SDL_SysWMinfo info;
+    SDL_VERSION(&info.version);
+    SDL_GetWindowWMInfo(m_window, &info);
     return info.info.cocoa.window;
 #else
     return NULL;

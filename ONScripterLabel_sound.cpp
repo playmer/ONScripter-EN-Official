@@ -526,7 +526,9 @@ int ONScripterLabel::setVolumeMute( bool do_mute )
         music_vol /= 2;
     if (Mix_GetMusicHookData() != NULL) { // for streamed MP3 & OGG
         if ( mp3_sample ) Mix_Volume(mp3_channel, do_mute ? 0 : music_vol); // mp3
+#ifdef USE_AVIFILE
         if ( async_movie ) async_movie->setVolume( do_mute? 0 : music_vol ); // async mpeg
+#endif
         else music_struct.is_mute = do_mute; // ogg
     } else if (Mix_Playing(MIX_BGM_CHANNEL) == 1) { // wave
         Mix_Volume( MIX_BGM_CHANNEL, do_mute? 0 : music_vol * 128 / 100 );
@@ -549,6 +551,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 {
     int ret = 0;
 
+#if USE_AVIFILE
     if (async_movie) delete async_movie;
 
     if (audio_open_flag) Mix_CloseAudio();
@@ -591,10 +594,12 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 
     if (async_flag){
         async_movie = video_player;
+#ifdef USE_AVIFILE
         async_movie->play();
         if (!async_movie->hasAudioStream() && movie_loop_flag) {
             timer_silentmovie_id = SDL_AddTimer(100, silentmovieCallback, this);
         }
+#endif
         return 0;
     }
 
@@ -606,6 +611,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
     }
 
     delete video_player;
+#endif
 
     return ret;
 }

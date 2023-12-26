@@ -1070,7 +1070,7 @@ private:
     //unsigned char *movie_buffer;
     //SDL_Surface *async_movie_surface;
     SDL_Rect async_movie_rect;
-    FFMpegWrapper* async_movie;
+    FFMpegWrapper* async_movie = NULL;
     SDL_Rect *surround_rects;
     bool movie_click_flag, movie_loop_flag;
     int playMPEG( const char *filename, bool async_flag, bool use_pos=false, int xpos=0, int ypos=0, int width=0, int height=0 );

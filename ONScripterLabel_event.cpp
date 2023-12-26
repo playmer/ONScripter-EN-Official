@@ -128,13 +128,15 @@ Uint32 SDLCALL ONScripterLabel::silentmovieCallback( Uint32 interval, void *para
     ONScripterLabel* onscripter = static_cast<ONScripterLabel*>(param);
 
     FFMpegWrapper* video_player = onscripter->async_movie;
-
-    if (video_player && video_player->getStatus() == Kit_PlayerState::KIT_PLAYING){
-        video_player->playFrame(&onscripter->async_movie_rect);
-    } else if (video_player == NULL){
-        ONScripterLabel::clearTimer( timer_silentmovie_id );
+    if (video_player == NULL) {
+        ONScripterLabel::clearTimer(timer_silentmovie_id);
         return 0;
     }
+#ifdef USE_AVIFILE
+    else if (video_player->getStatus() == Kit_PlayerState::KIT_PLAYING){
+        video_player->playFrame(&onscripter->async_movie_rect);
+    }
+#endif
 
     return interval;
 }
@@ -297,8 +299,10 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
     //event related to streaming media
     if ( event.type == ONS_SOUND_EVENT ){
         if (async_movie) {
+#ifdef USE_AVIFILE
             if ((async_movie->getStatus() != Kit_PlayerState::KIT_PLAYING) && (movie_loop_flag))
                 async_movie->play();
+#endif
         } else if ( music_play_loop_flag ||
              (cd_play_loop_flag && !cdaudio_flag ) ){
             stopBGM( true );

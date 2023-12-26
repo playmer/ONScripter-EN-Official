@@ -24,6 +24,7 @@
 #ifndef __FFMPEG_WRAPPER_H__
 #define __FFMPEG_WRAPPER_H__
 
+#ifdef USE_AVIFILE
 
 #include <vector>
 
@@ -75,5 +76,6 @@ private:
     SDL_mutex* audio_data_mutex;
 };
 
+#endif
 
 #endif // __FFMPEG_WRAPPER_H__

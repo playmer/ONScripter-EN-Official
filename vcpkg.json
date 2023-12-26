@@ -10,7 +10,7 @@
     {
       "name": "ffmpeg",
       "features": [ "avcodec", "avdevice", "avfilter", "avformat" ],
-      "platform": "(windows|osx|ios|linux|emscripten)"
+      "platform": "(windows|osx|ios|linux)"
     },
     "libjpeg-turbo",
     "libass",
@@ -31,7 +31,10 @@
     },
     "sdl2-mixer",
     "sdl2-ttf",
-    "wxwidgets",
+    {
+      "name": "wxwidgets",
+      "platform": "(windows|osx|linux)"
+    },
     "zlib"
   ]
 }

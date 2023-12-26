@@ -2779,7 +2779,9 @@ void ONScripterLabel::quit(bool no_error)
 
     if (async_movie)
     {
+#ifdef USE_AVIFILE
         async_movie->stopMovie();
+#endif
         async_movie = NULL;
     }
 

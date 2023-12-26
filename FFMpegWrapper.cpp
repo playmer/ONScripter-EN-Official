@@ -21,7 +21,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+// This file won't be compiled if this flag isn't set, but for completeness sake it's being included here.
+#ifdef USE_AVIFILE
 
 #include "FFMpegWrapper.h"
 #include <SDL_mixer.h>
@@ -267,3 +268,5 @@ Kit_PlayerState FFMpegWrapper::getStatus()
 {
     return Kit_GetPlayerState(m_player);
 }
+
+#endif

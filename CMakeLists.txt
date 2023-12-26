@@ -352,6 +352,8 @@ if (ONS_USE_AVIFILE)
         -DKIT_VERSION_MINOR=${KIT_VERSION_MINOR}
         -DKIT_VERSION_PATCH=${KIT_VERSION_PATCH}
     )
+
+    target_link_libraries(onscripter_en PRIVATE SDL_kitchensink)
 endif()
 
 #########
@@ -450,7 +452,6 @@ PRIVATE
     $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
     SDLHelper_CD
     $<IF:$<TARGET_EXISTS:SDL2_sound::SDL2_sound>,SDL2_sound::SDL2_sound,SDL2_sound::SDL2_sound-static>
-    SDL_kitchensink
 )
 
 if (WIN32)

@@ -11,6 +11,7 @@ class WxWindow : public Window
 {
 public:
     WxWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
+    ~WxWindow();
     virtual int WaitEvents(SDL_Event& event);
     virtual int PollEvents(SDL_Event& event);
     virtual void WarpMouse(int x, int y);
@@ -22,7 +23,7 @@ public:
 
 private:
     onscripter_en_app* m_app;
-    WxMainWindow* m_mainWindow;
+    //WxMainWindow* m_mainWindow;
     wxPoint m_originalPosition;
     bool m_wasMaximized = false;
 };

@@ -60,12 +60,12 @@ cd ONScripter-EN-Official/android-project
 
 ## Emscripten Build
 
-Requirements: XCode (with Command Line tools), CMake, Qt (Some env variables needed, need to fill this out)
+Requirements: emscripten environment, CMake, ONScripter game to place in `ONScripter-EN-Official/game` folder for deployment
 
 ```bash
 git clone --recurse-submodules https://github.com/playmer/ONScripter-EN-Official.git
 cd ONScripter-EN-Official
-cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_MAKE_PROGRAM=ninja --preset=emscripten .
+cmake --preset=emscripten .
 cmake --build --preset emscripten-release
 cpack --preset=emscripten-package-release
 ```

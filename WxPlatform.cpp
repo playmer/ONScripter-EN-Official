@@ -298,11 +298,10 @@ WxWindow::WxWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
 #elif defined(MACOSX)
 #else
     // Maybe needs to be a wxPanel instead of Frame?
-    GtkWidget* widget = m_app->m_mainWindow->GetHandle();
-    gtk_widget_realize(widget);
-    Window xid = GDK_WINDOW_XWINDOW(widget->window);
-
-    SDL_Window* win = SDL_CreateWindowFrom(xid);
+    //GtkWidget* widget = m_app->m_mainWindow->GetHandle();
+    //gtk_widget_realize(widget);
+    //Window xid = GDK_WINDOW_XWINDOW(widget->window);
+    //SDL_Window* win = SDL_CreateWindowFrom(xid);
 #endif
     m_renderer = SDL_CreateRenderer(m_window, 0, 0);
 

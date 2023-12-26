@@ -40,12 +40,24 @@ public:
         h = height;
     }
 
-
     bool OnInit() override;
+
+    void DrainSdlEvents()
+    {
+        for (SDL_Event& local_event : m_events)
+        {
+            if (local_event.type == SDL_WINDOWEVENT)
+                local_event.window.windowID = SDL_GetWindowID(m_sdlWindow);
+            SDL_PushEvent(&local_event);
+        }
+        m_events.clear();
+    }
 
     int w, h, x, y;
     //WxMainWindow* m_mainWindow;
-    MyFrame* m_mainWindow;
+    MyFrame* m_mainWindow = NULL;
+    SDL_Window* m_sdlWindow = NULL;;
+    std::vector<SDL_Event> m_events;
 };
 
 wxIMPLEMENT_APP_NO_MAIN(onscripter_en_app);
@@ -80,14 +92,14 @@ class MyFrame: public wxFrame
 public:
     MyFrame(onscripter_en_app* app, const wxString& title, const wxPoint& pos, const wxSize& size);
 
-
-    std::vector<SDL_Event> m_events;
+    onscripter_en_app* m_app;
 private:
     void OnHello(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnCustomEvent(ONScripterCustomWxEvent& event);
     void OnIdle(wxIdleEvent& event);
+    void OnClose(wxCloseEvent& event);
     wxDECLARE_EVENT_TABLE();
 };
 
@@ -102,6 +114,7 @@ wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
     EVT_MENU(wxID_ABOUT, MyFrame::OnAbout)
     MY_EVT_ONSCRIPTER_EVENT_SENT(wxID_ANY, MyFrame::OnCustomEvent)
     EVT_IDLE(MyFrame::OnIdle)
+    EVT_CLOSE(MyFrame::OnClose)
 wxEND_EVENT_TABLE()
 //wxIMPLEMENT_APP(MyApp);
 
@@ -114,7 +127,7 @@ wxEND_EVENT_TABLE()
 //}
 
 MyFrame::MyFrame(onscripter_en_app* app, const wxString& title, const wxPoint& pos, const wxSize& size)
-        : wxFrame(NULL, wxID_ANY, title, pos, size)
+        : wxFrame(NULL, wxID_ANY, title, pos, size), m_app(app)
 {
     //wxMenu *menuFile = new wxMenu;
     //menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
@@ -161,13 +174,20 @@ void MyFrame::OnCustomEvent(ONScripterCustomWxEvent& event)
     sdl_event.type = event.m_customEvent;
     sdl_event.user.code = event.m_value;
 
-    m_events.push_back(sdl_event);
+    m_app->m_events.push_back(sdl_event);
 
     //printf("\t Custom Event Received\n");
     wxTheApp->GetMainLoop()->Exit();
 }
 
-
+void MyFrame::OnClose(wxCloseEvent& event)
+{
+    SDL_Event sdl_event;
+    sdl_event.type = SDL_QUIT;
+    m_app->m_events.push_back(sdl_event);
+    event.Skip();  // you may also do:  event.Skip();
+    // since the default event handler does call Destroy(), too
+}
 
 
 
@@ -285,6 +305,8 @@ WxWindow::WxWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
     SDL_Window* win = SDL_CreateWindowFrom(xid);
 #endif
     m_renderer = SDL_CreateRenderer(m_window, 0, 0);
+
+    m_app->m_sdlWindow = m_window;
 }
 
 WxWindow::~WxWindow()
@@ -300,24 +322,28 @@ int WxWindow::WaitEvents(SDL_Event& event)
     auto processWxEvents = [this]() {
             m_app->OnRun();
             //printf("\t Ran WxEventLoop\n");
-            for (SDL_Event& event : m_app->m_mainWindow->m_events)
+            for (SDL_Event& event : m_app->m_events)
             {
                 if (event.type == SDL_WINDOWEVENT)
                     event.window.windowID = SDL_GetWindowID(m_window);
                 SDL_PushEvent(&event);
                 //printf("\t Pushed Event\n");
             }
-            m_app->m_mainWindow->m_events.clear();
+            m_app->m_events.clear();
         };
 
     //printf("Wait Call: %d\n", i);
 
     while (true)
     {
-        processWxEvents();
+        // Before processing any events from the OS/WxWidgets, drain the SDL queue.
         bool ret = SDL_PollEvent(&event) == 1;
+
         if (!ret)
-            //printf("\t No event seen\n");
+        {
+            processWxEvents();
+            ret = SDL_PollEvent(&event) == 1;
+        }
 
         SDL_Event temp_event;
 
@@ -353,15 +379,16 @@ int WxWindow::WaitEvents(SDL_Event& event)
 
 int WxWindow::PollEvents(SDL_Event& event)
 {
-    m_app->OnRun();
-    for (SDL_Event& local_event : m_app->m_mainWindow->m_events)
-    {
-        if (local_event.type == SDL_WINDOWEVENT)
-            local_event.window.windowID = SDL_GetWindowID(m_window);
-        SDL_PushEvent(&local_event);
-    }
+    m_app->DrainSdlEvents();
 
-    m_app->m_mainWindow->m_events.clear();
+    // Before processing any events from the OS/WxWidgets, drain the SDL queue.
+    int ret = SDL_PollEvent(&event) == 1;
+
+    if (ret == 1) {
+        return ret;
+    }
+    m_app->OnRun();
+    m_app->DrainSdlEvents();
 
     return SDL_PollEvent(&event);
 }

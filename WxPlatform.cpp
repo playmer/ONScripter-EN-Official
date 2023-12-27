@@ -1,3 +1,5 @@
+#include <map>
+
 #include "WxPlatform.h"
 #include "ONScripterLabel.h"
 
@@ -5,34 +7,82 @@
 
 #include "wx/evtloop.h"
 
+/////////////////////
+// Forward Declarations
+class MyFrame;
 
 
+/////////////////////
+// Dialogues
 
-
-
-
-
-/*
-
-
-
-class MyApp: public wxApp
+class ExitDialog : public wxDialog
 {
 public:
-    virtual bool OnInit();
+
+    ExitDialog(wxWindow* parent, wxWindowID id, const std::string& title, const std::string& label,
+        const wxPoint& pos = wxDefaultPosition,
+        const wxSize& size = wxDefaultSize,
+        long style = wxDEFAULT_DIALOG_STYLE)
+        : wxDialog(parent, id, title, pos, size, style)
+    {
+        //wxString dimensions = "", s;
+        //wxPoint p;
+        //wxSize  sz;
+        //
+        //sz.SetWidth(size.GetWidth() - 20);
+        //sz.SetHeight(size.GetHeight() - 70);
+        //
+        //p.x = 6; p.y = 2;
+        //s.Printf(_(" x = %d y = %d\n"), p.x, p.y);
+        //dimensions.append(s);
+        //s.Printf(_(" width = %d height = %d\n"), sz.GetWidth(), sz.GetHeight());
+        //dimensions.append(s);
+        //dimensions.append(AUTHOR);
+        //
+        //dialogText = new wxTextCtrl(this, -1, dimensions, p, sz, wxTE_MULTILINE);
+        //
+
+        SetTitle("Exit Dialog");
+        //SetIcon()
+
+        wxBoxSizer* buttonLayout = new wxBoxSizer(wxHORIZONTAL);
+        wxButton* yesButton = new wxButton(this, wxID_OK, _("Yes"));
+        wxButton* noButton = new wxButton(this, wxID_CANCEL, _("No"));
+        buttonLayout->Add(yesButton);
+        buttonLayout->Add(noButton);
+
+        wxBoxSizer* mainLayout = new wxBoxSizer(wxVERTICAL);
+        mainLayout->SetMinSize(wxSize(300, 200));
+
+        wxTextCtrl* labelText = new wxTextCtrl(this, -1, label);
+
+        mainLayout->Add(labelText);
+        mainLayout->Add(buttonLayout);
+        SetSizerAndFit(mainLayout);
+    }
+
+    wxTextCtrl* dialogText;
+    wxString GetText();
+
+private:
+
+    void OnOk(wxCommandEvent& event);
+
+    DECLARE_EVENT_TABLE()
 };
 
 
+wxBEGIN_EVENT_TABLE(ExitDialog, wxDialog)
+wxEND_EVENT_TABLE()
 
-*/
 
-class MyFrame;
-
+/////////////////////
+// App
 class onscripter_en_app : public wxApp
 {
 public:
 
-    void preinit(int xpos, int ypos, int width, int height)
+    void preinit(WxWindow* m_onscripterWindow, int xpos, int ypos, int width, int height)
     {
         x = xpos;
         y = ypos;
@@ -58,6 +108,7 @@ public:
     MyFrame* m_mainWindow = NULL;
     SDL_Window* m_sdlWindow = NULL;;
     std::vector<SDL_Event> m_events;
+    std::map<MenuBarFunction, std::vector<wxMenuItem*>> m_actionsMap;
 };
 
 wxIMPLEMENT_APP_NO_MAIN(onscripter_en_app);
@@ -100,7 +151,11 @@ private:
     void OnCustomEvent(ONScripterCustomWxEvent& event);
     void OnIdle(wxIdleEvent& event);
     void OnClose(wxCloseEvent& event);
+    void OnMenuOpen(wxMenuEvent& event);
+
     wxDECLARE_EVENT_TABLE();
+
+    bool m_modalOpen = false;
 };
 
 enum
@@ -112,6 +167,7 @@ wxBEGIN_EVENT_TABLE(MyFrame, wxFrame)
     EVT_MENU(ID_Hello,   MyFrame::OnHello)
     EVT_MENU(wxID_EXIT,  MyFrame::OnExit)
     EVT_MENU(wxID_ABOUT, MyFrame::OnAbout)
+    EVT_MENU_OPEN(MyFrame::OnMenuOpen)
     MY_EVT_ONSCRIPTER_EVENT_SENT(wxID_ANY, MyFrame::OnCustomEvent)
     EVT_IDLE(MyFrame::OnIdle)
     EVT_CLOSE(MyFrame::OnClose)
@@ -146,11 +202,31 @@ MyFrame::MyFrame(onscripter_en_app* app, const wxString& title, const wxPoint& p
     app->Bind(ONSCRIPTER_CUSTOM_EVENT_SENT, &MyFrame::OnCustomEvent, this);
 }
 
+void MyFrame::OnMenuOpen(wxMenuEvent& event)
+{
+    wxMenu* menu = event.GetMenu();
+    if (event.GetMenu()->GetMenuItems().size() == 0) {
+        // 
+        //wxMessageBox("Testing", "woo");
+        m_modalOpen = true;
+        auto exit = new ExitDialog(this, wxNewEventType(), "Exit Dialog", "Would you like to exit the game?");
+        exit->ShowModal();
+        m_modalOpen = false;
+
+        //wxTheApp->GetMainLoop()->Exit();
+    }
+    //if (event.GetMenu() == helpMenu)
+    //{
+    //    wxLogDebug("help menu opened");
+    //}
+}
+
 void MyFrame::OnIdle(wxIdleEvent& event)
 {
     //printf("idle\n");
     //printf("\t IdleEvent\n");
-    wxTheApp->GetMainLoop()->Exit();
+    if (!m_modalOpen)
+        wxTheApp->GetMainLoop()->Exit();
 }
 
 void MyFrame::OnExit(wxCommandEvent& event)
@@ -177,7 +253,8 @@ void MyFrame::OnCustomEvent(ONScripterCustomWxEvent& event)
     m_app->m_events.push_back(sdl_event);
 
     //printf("\t Custom Event Received\n");
-    wxTheApp->GetMainLoop()->Exit();
+    if (!m_modalOpen)
+        wxTheApp->GetMainLoop()->Exit();
 }
 
 void MyFrame::OnClose(wxCloseEvent& event)
@@ -268,7 +345,7 @@ WxWindow::WxWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
 
     m_app = new onscripter_en_app();
 
-    m_app->preinit(x, y, w, h);
+    m_app->preinit(this, x, y, w, h);
 
     wxApp::SetInstance(m_app);
     wxEntryStart(onscripter->argc, onscripter->argv);
@@ -497,8 +574,133 @@ void WxWindow::SendCustomEvent(ONScripterCustomEvent event, int value)
     //m_app->QueueEvent(new ONScripterCustomWxEvent(ONSCRIPTER_CUSTOM_EVENT_SENT, m_app->m_mainWindow->GetId(), event, value));
 }
 
+WxActionOrMenu WxWindow::CreateMenuBarInternal(MenuBarInput& input, bool topLevel)
+{
+    WxActionOrMenu toReturn;
+    switch (input.m_function)
+    {
+        case MenuBarFunction::SUB:
+        {
+            wxMenu* menu = new wxMenu(input.m_label);
+
+            for (auto& menuBarEntry : input.m_children)
+            {
+                WxActionOrMenu actionOrMenu = CreateMenuBarInternal(menuBarEntry);
+
+                if (actionOrMenu.isAction)
+                    menu->Append(actionOrMenu.m_actionOrMenu.m_action);
+                else
+                    menu->AppendSubMenu(actionOrMenu.m_actionOrMenu.m_menu, actionOrMenu.m_actionOrMenu.m_menu->GetTitle());
+            }
+
+            toReturn.isAction = false;
+            toReturn.m_actionOrMenu.m_menu = menu;
+            break;
+        }
+        case MenuBarFunction::FONT:
+        {
+            wxMenu* menu = new wxMenu(input.m_label);
+
+            for (auto& font : m_onscripterLabel->GetFonts())
+            {
+                wxMenuItem* action = NULL;
+
+                if (font.m_fontToUse) {
+                    //QObject::connect(action, &QAction::triggered, [this, thisAction = action, font = font.m_fontToUse]() {
+                    //    m_onscripterLabel->ChangeFont(font);
+                    //    for (auto& action : m_actionsMap[MenuBarFunction::FONT]) {
+                    //        action->setChecked(false);
+                    //    }
+                    //
+                    //    thisAction->setChecked(true);
+                    //    });
+                    action = new wxMenuItem(NULL, wxNewId(), font.m_fontToUse->m_name, "", wxITEM_RADIO, NULL);
+                    action->Check(m_onscripterLabel->font_file ? font.m_fontToUse->m_availiblePath == m_onscripterLabel->font_file : false);
+                    action->Enable(font.m_fontToUse->m_availiblePath.empty());
+                }
+                else {
+                    action = new wxMenuItem(NULL, wxNewId(), font.m_name, "", wxITEM_RADIO, NULL);
+                    action->Check(false);
+                    action->Enable(false);
+                }
+
+                menu->Append(action);
+                m_app->m_actionsMap[input.m_function].emplace_back(action);
+            }
+
+            toReturn.isAction = false;
+            toReturn.m_actionOrMenu.m_menu = menu;
+            break;
+        }
+        default:
+        {
+            //QAction* action = new QAction(QString::fromStdString(input.m_label));
+            //m_actionsMap[input.m_function].emplace_back(action);
+            //
+            //if (IsCheckable(input.m_function))
+            //{
+            //    action->setCheckable(true);
+            //    action->setChecked(IsChecked(input.m_function));
+            //}
+
+            //m_app->m_mainWindow->SetFocus();
+            wxItemKind kind = wxITEM_NORMAL;
+
+            if (IsCheckable(input.m_function))
+            {
+                kind = wxITEM_CHECK;
+            }
+
+            switch (input.m_function)
+            {
+            case MenuBarFunction::AUTO:
+            case MenuBarFunction::CLICKDEF:
+            case MenuBarFunction::CLICKPAGE:
+            case MenuBarFunction::DWAVEVOLUME:
+            case MenuBarFunction::END:
+            case MenuBarFunction::kidokuoff:
+            case MenuBarFunction::kidokuon:
+            case MenuBarFunction::SKIP:
+            case MenuBarFunction::TEXTFAST:
+            case MenuBarFunction::TEXTMIDDLE:
+            case MenuBarFunction::TEXTSLOW:
+            case MenuBarFunction::VERSION:
+            case MenuBarFunction::WAVEOFF:
+            case MenuBarFunction::WAVEON:
+            case MenuBarFunction::FULL:
+            case MenuBarFunction::WINDOW:
+                if (topLevel) {
+                    toReturn.m_actionOrMenu.m_menu = new wxMenu(input.m_label);
+                    //toReturn.m_actionOrMenu.m_menu
+                }
+                else {
+                    toReturn.m_actionOrMenu.m_action = new wxMenuItem(NULL, wxNewId(), input.m_label, "", kind, NULL);
+                }
+                break;
+            default:
+                break;
+            }
+
+            toReturn.isAction = true;
+
+            break;
+        }
+    }
+
+    return toReturn;
+}
+
 void WxWindow::CreateMenuBar()
 {
+    MenuBarInput menuBarTree = ParseMenuBarTree(m_menuBarEntries);
 
+    wxMenuBar* menuBar = new wxMenuBar();
+
+    for (auto& menuBarEntry : menuBarTree.m_children)
+    {
+        WxActionOrMenu actionOrMenu = CreateMenuBarInternal(menuBarEntry, true);
+        menuBar->Append(actionOrMenu.m_actionOrMenu.m_menu, actionOrMenu.m_actionOrMenu.m_menu->GetTitle());
+    }
+    m_app->m_mainWindow->SetMenuBar(menuBar);
 }
 

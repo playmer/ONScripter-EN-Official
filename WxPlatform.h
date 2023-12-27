@@ -7,6 +7,16 @@
 class onscripter_en_app;
 class WxMainWindow;
 
+struct WxActionOrMenu
+{
+    union
+    {
+        wxMenuItem* m_action;
+        wxMenu* m_menu;
+    } m_actionOrMenu;
+    bool isAction;
+};
+
 class WxWindow : public Window
 {
 public:
@@ -22,6 +32,9 @@ public:
     virtual void CreateMenuBar();
 
 private:
+    WxActionOrMenu CreateMenuBarInternal(MenuBarInput& menubarInput, bool topLevel = false);
+
+
     onscripter_en_app* m_app;
     //WxMainWindow* m_mainWindow;
     wxPoint m_originalPosition;

@@ -4,6 +4,8 @@
 #include "ONScripterLabel.h"
 
 #include "wx/wx.h"
+#include "wx/dialog.h"
+#include "wx/modalhook.h"
 
 #include "wx/evtloop.h"
 
@@ -14,6 +16,87 @@ class MyFrame;
 
 /////////////////////
 // Dialogues
+
+class wxDialogModalData_OnScripter
+{
+public:
+    wxDialogModalData_OnScripter(wxDialog* dialog) : m_evtLoop(dialog) { }
+
+    void RunLoop()
+    {
+        m_evtLoop.Run();
+    }
+
+    void ExitLoop()
+    {
+        m_evtLoop.ScheduleExit();
+        //m_evtLoop.Exit();
+    }
+
+private:
+    wxModalEventLoop m_evtLoop;
+};
+
+wxDEFINE_TIED_SCOPED_PTR_TYPE(wxDialogModalData_OnScripter)
+
+// This is used for emulating buttons on the menubar. By creating and closing a Dialog, we return focus to the
+// window rather than opening the empty menu.
+class InvisibleDialog : public wxDialog
+{
+public:
+
+    InvisibleDialog(wxWindow* parent, wxWindowID id)
+        : wxDialog(parent, id, "InvisibleDialoge", wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE)
+    {
+    }
+    bool Show(bool show = true) override
+    {
+        if (show)
+            EndModal(0);
+        return true;
+    }
+
+    int ShowModal() override
+    {
+        WX_HOOK_MODAL_DIALOG();
+    
+        wxASSERT_MSG(!IsModal(), wxT("ShowModal() can't be called twice"));
+    
+        wxDialogModalData_OnScripterTiedPtr modalData(&m_modalData,
+            new wxDialogModalData_OnScripter(this));
+    
+        Show();
+    
+        // EndModal may have been called from InitDialog handler (called from
+        // inside Show()) and hidden the dialog back again
+        if (IsShown()) {
+            modalData->RunLoop();
+        }
+        else {
+            m_modalData->ExitLoop();
+        }
+    }
+
+    void OnIdle(wxIdleEvent& event)
+    {
+        //EndModal(0);
+    }
+
+    wxTextCtrl* dialogText;
+
+private:
+    void OnOk(wxCommandEvent& event);
+
+    wxDialogModalData_OnScripter* m_modalData;
+
+    DECLARE_EVENT_TABLE()
+};
+
+
+wxBEGIN_EVENT_TABLE(InvisibleDialog, wxDialog)
+    EVT_IDLE(InvisibleDialog::OnIdle)
+wxEND_EVENT_TABLE()
+
 
 class ExitDialog : public wxDialog
 {
@@ -48,24 +131,22 @@ public:
         wxBoxSizer* buttonLayout = new wxBoxSizer(wxHORIZONTAL);
         wxButton* yesButton = new wxButton(this, wxID_OK, _("Yes"));
         wxButton* noButton = new wxButton(this, wxID_CANCEL, _("No"));
-        buttonLayout->Add(yesButton);
-        buttonLayout->Add(noButton);
+        buttonLayout->Add(yesButton, wxEXPAND);
+        buttonLayout->Add(noButton, wxEXPAND);
 
         wxBoxSizer* mainLayout = new wxBoxSizer(wxVERTICAL);
-        mainLayout->SetMinSize(wxSize(300, 200));
+        mainLayout->SetMinSize(wxSize(300, 100));
 
-        wxTextCtrl* labelText = new wxTextCtrl(this, -1, label);
+        wxStaticText* labelText = new wxStaticText(this, wxID_ANY, label);
 
-        mainLayout->Add(labelText);
-        mainLayout->Add(buttonLayout);
+        mainLayout->Add(labelText, 1, wxALIGN_CENTER | wxALIGN_CENTRE_VERTICAL | wxALIGN_CENTRE_HORIZONTAL, FromDIP(10));
+        mainLayout->Add(buttonLayout, 0, wxALIGN_CENTER, FromDIP(10));
         SetSizerAndFit(mainLayout);
     }
 
     wxTextCtrl* dialogText;
-    wxString GetText();
 
 private:
-
     void OnOk(wxCommandEvent& event);
 
     DECLARE_EVENT_TABLE()
@@ -208,10 +289,17 @@ void MyFrame::OnMenuOpen(wxMenuEvent& event)
     if (event.GetMenu()->GetMenuItems().size() == 0) {
         // 
         //wxMessageBox("Testing", "woo");
-        m_modalOpen = true;
-        auto exit = new ExitDialog(this, wxNewEventType(), "Exit Dialog", "Would you like to exit the game?");
-        exit->ShowModal();
-        m_modalOpen = false;
+        
+        //auto exit = new ExitDialog(this, wxNewEventType(), "Exit Dialog", "Would you like to exit the game?");
+        //exit->ShowModal();
+        
+        //m_modalOpen = true;
+        //auto invisible = new InvisibleDialog(this, wxNewEventType());
+        //
+        //invisible->ShowModal();
+        //{
+        //}
+        //m_modalOpen = false;
 
         //wxTheApp->GetMainLoop()->Exit();
     }

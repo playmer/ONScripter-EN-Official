@@ -403,6 +403,9 @@ void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
     SDL_SaveBMP(accumulation_surface, "Test.bmp");
 
   auto texture = SDL_CreateTextureFromSurface(m_window->GetRenderer(), accumulation_surface);
+  SDL_SetTextureScaleMode(texture, SDL_ScaleModeLinear);
+  //SDL_SetTextureScaleMode(texture, SDL_ScaleModeBest);
+  //SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
   DisplayTexture(texture);
   SDL_DestroyTexture(texture);
 

@@ -462,8 +462,6 @@ protected:
     void initSDL();
     void openAudio(int freq=DEFAULT_AUDIO_RATE, Uint16 format=MIX_DEFAULT_FORMAT, int channels=MIX_DEFAULT_CHANNELS);
 
-    void UpdateScreen(SDL_Rect dst_rect);
-    void DisplayTexture(SDL_Texture* texture, SDL_Rect* dst = NULL);
     int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
 
 
@@ -621,11 +619,13 @@ private:
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ text_window + text_surface)
     SDL_Surface *backup_surface; // Final image w/o (text_window + text_surface) used in leaveTextDisplayMode()
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
+    SDL_Surface *temp_screen_surface; // Text + Select_image + Tachi image + background
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destination buffer for effect
     SDL_Surface *effect_tmp_surface; // Intermediate buffer for effect
     SDL_Surface *screenshot_surface; // Screenshot
     SDL_Surface *image_surface; // Reference for loadImage() - 32bpp
+    SDL_Cursor *cursor;
 
     unsigned char *tmp_image_buf;
     unsigned long tmp_image_buf_length;
@@ -1071,7 +1071,7 @@ private:
     //SDL_Surface *async_movie_surface;
     SDL_Rect async_movie_rect;
     FFMpegWrapper* async_movie = NULL;
-    SDL_Rect *surround_rects;
+    SDL_Rect surround_rects[4];
     bool movie_click_flag, movie_loop_flag;
     int playMPEG( const char *filename, bool async_flag, bool use_pos=false, int xpos=0, int ypos=0, int width=0, int height=0 );
     int playAVI( const char *filename, bool click_flag );

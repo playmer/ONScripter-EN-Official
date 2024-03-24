@@ -562,7 +562,6 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
         return 0;
     }
 
-    surround_rects = new SDL_Rect[4];
     for (int i = 0; i < 4; ++i) {
         surround_rects[i].x = surround_rects[i].y = 0;
         surround_rects[i].w = surround_rects[i].h = 0;

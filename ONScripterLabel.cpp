@@ -68,10 +68,8 @@
 #include <windows.h>
 #include "winres.h"
 
-#ifdef UNICODE
 typedef HRESULT (WINAPI *GETFOLDERPATHW)(HWND, int, HANDLE, DWORD, LPTSTR);
 typedef HRESULT(WINAPI *GETFOLDERPATHA)(HWND, int, HANDLE, DWORD, LPSTR);
-#endif
 #endif
 #ifdef LINUX
 #include <unistd.h>
@@ -368,7 +366,6 @@ static void SDL_Quit_Wrapper()
     SDL_Quit();
 }
 
-
 static int onscripter_putenv(const char* _var)
 {
   char* ptr = NULL;
@@ -387,64 +384,6 @@ static int onscripter_putenv(const char* _var)
   SDL_setenv(var, ptr + 1, 1);
   SDL_free(var);
   return 0;
-}
-
-void ONScripterLabel::UpdateScreen(SDL_Rect dst_rect)
-{
-  SDL_SetRenderDrawColor(m_window->GetRenderer(), 0, 0, 0, 255);
-  SDL_RenderClear(m_window->GetRenderer());
-
-  // If you need to check the output of the surface before rendering it out, you can debug break
-  // just before the if and move the stack pointer just past the conditional. However due to it
-  // being unreachable, it's likely this is considered Undefined Behavior, and thus I've only found
-  // this to work on MSVC. I plan to just make this a hotkeyable thing in the future.
-  bool doIt = false;
-  if (doIt)
-    SDL_SaveBMP(accumulation_surface, "Test.bmp");
-
-  auto texture = SDL_CreateTextureFromSurface(m_window->GetRenderer(), accumulation_surface);
-  SDL_SetTextureScaleMode(texture, SDL_ScaleModeLinear);
-  //SDL_SetTextureScaleMode(texture, SDL_ScaleModeBest);
-  //SDL_SetTextureScaleMode(texture, SDL_ScaleModeNearest);
-  DisplayTexture(texture);
-  SDL_DestroyTexture(texture);
-
-  //m_window->Repaint();
-  //
-  //fprintf(stderr, "UpdateScreen\n");
-}
-
-void ONScripterLabel::DisplayTexture(SDL_Texture* texture, SDL_Rect* dst)
-{
-    Uint32 format;
-    int imageResolutionX, imageResolutionY, access;
-    int windowResolutionX, windowResolutionY;
-
-    if (dst == NULL) {
-        SDL_QueryTexture(texture, &format, &access, &imageResolutionX, &imageResolutionY);
-        SDL_GetRendererOutputSize(m_window->GetRenderer(), &windowResolutionX, &windowResolutionY);
-    }
-    else {
-        imageResolutionX = dst->x;
-        imageResolutionY = dst->y;
-        windowResolutionX = dst->w;
-        windowResolutionY = dst->h;
-    }
-
-    float scaleWidth = windowResolutionX / (float)imageResolutionX;
-    float scaleHeight = windowResolutionY / (float)imageResolutionY;
-    float scale = std::min(scaleHeight, scaleWidth);
-
-    //fprintf(stderr, "%f; (%d, %d); (%d, %d)\n", scale, imageResolutionX, imageResolutionY, windowResolutionX, windowResolutionY);
-
-    SDL_Rect dstRect;
-    dstRect.w = scale * imageResolutionX;
-    dstRect.h = scale * imageResolutionY;
-    dstRect.x = (windowResolutionX - dstRect.w) / 2;
-    dstRect.y = (windowResolutionY - dstRect.h) / 2;
-
-    SDL_RenderCopy(m_window->GetRenderer(), texture, NULL /*&dst_rect*/, &dstRect);
-    SDL_RenderPresent(m_window->GetRenderer());
 }
 
 void ONScripterLabel::SetMusicVolume(int volume)
@@ -483,6 +422,10 @@ void ONScripterLabel::SetVoiceVolume(int volume)
     if (wave_sample[0])
         Mix_Volume(0, !volume_on_flag ? 0 : voice_volume * 128 / 100);
 }
+
+
+int SDLCALL
+SDL_BuildAudioCVT_Original(SDL_AudioCVT* cvt12, Uint16 src_format, Uint8 src_channels, int src_rate, Uint16 dst_format, Uint8 dst_channels, int dst_rate);
 
 
 void ONScripterLabel::initSDL()
@@ -581,6 +524,56 @@ void ONScripterLabel::initSDL()
         errorAndExit("can't initialize SDL TTF", NULL, "Init Error", true);
         return; //dummy
     }
+
+    // Mac cursor from SDL1, which is what ONScripter seems to use typically.
+    const int DEFAULT_CWIDTH = 16;
+    const int DEFAULT_CHEIGHT = 16;
+    const int DEFAULT_CHOTX = 0;
+    const int DEFAULT_CHOTY = 0;
+
+    static unsigned char default_cdata[] =
+    {
+        0x00,0x00,
+        0x40,0x00,
+        0x60,0x00,
+        0x70,0x00,
+        0x78,0x00,
+        0x7C,0x00,
+        0x7E,0x00,
+        0x7F,0x00,
+        0x7F,0x80,
+        0x7C,0x00,
+        0x6C,0x00,
+        0x46,0x00,
+        0x06,0x00,
+        0x03,0x00,
+        0x03,0x00,
+        0x00,0x00
+    };
+    static unsigned char default_cmask[] =
+    {
+        0xC0,0x00,
+        0xE0,0x00,
+        0xF0,0x00,
+        0xF8,0x00,
+        0xFC,0x00,
+        0xFE,0x00,
+        0xFF,0x00,
+        0xFF,0x80,
+        0xFF,0xC0,
+        0xFF,0xE0,
+        0xFE,0x00,
+        0xEF,0x00,
+        0xCF,0x00,
+        0x87,0x80,
+        0x07,0x80,
+        0x03,0x00
+    };
+
+    SDL_Cursor* cursor = SDL_CreateCursor(default_cdata, default_cmask,
+        DEFAULT_CWIDTH, DEFAULT_CHEIGHT,
+        DEFAULT_CHOTX, DEFAULT_CHOTY);
+    SDL_SetCursor(cursor);
 
 //insani added app icon
     SDL_Surface* icon = IMG_Load("icon.png");
@@ -745,8 +738,8 @@ void ONScripterLabel::initSDL()
         }
     }
 #endif
-    screen_surface = AnimationInfo::allocSurface(screen_width, screen_height);
     screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, fullscreen_mode );
+    temp_screen_surface = SDL_CreateRGBSurfaceWithFormat(0, screen_width, screen_height, screen_surface->format->BitsPerPixel, screen_surface->format->format);
 
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
@@ -847,7 +840,7 @@ ONScripterLabel::ONScripterLabel(int argc, char** argv)
   cdrom_info(NULL),
   music_file_name(NULL), mp3_sample(NULL),
   music_info(NULL), music_cmd(NULL), seqmusic_cmd(NULL),
-  async_movie(NULL), surround_rects(NULL),
+  async_movie(NULL),
   text_font(NULL), cached_page(NULL), system_menu_title(NULL),
   argc(argc), argv(argv)
 {
@@ -1013,6 +1006,8 @@ ONScripterLabel::~ONScripterLabel()
 
     if (default_font) delete[] default_font;
     if (font_file) delete[] font_file;
+
+    SDL_FreeCursor(cursor);
 }
 
 void ONScripterLabel::enableCDAudio(){
@@ -1926,6 +1921,8 @@ bool intersectRects( SDL_Rect &result, SDL_Rect rect1, SDL_Rect rect2) {
 
 void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
+    printf("\t\tRefresh Mode %d\n", refresh_mode);
+
     if ( direct_flag ){
         flushDirect( *rect, refresh_mode );
     }
@@ -1941,24 +1938,29 @@ void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_
 
 void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode, bool updaterect )
 {
-    //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
-
-    if (surround_rects) {
+    if (async_movie) {
         // playing a movie, need to avoid overpainting it
         SDL_Rect tmp_rects[4];
         for (int i=0; i<4; ++i) {
             if (intersectRects(tmp_rects[i], rect, surround_rects[i])) {
                 refreshSurface( accumulation_surface, &tmp_rects[i], refresh_mode );
-                SDL_BlitSurface( accumulation_surface, &tmp_rects[i], screen_surface, &tmp_rects[i] );
+
+                SDL_Rect real_dst_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, tmp_rects[i]);
+                SDL_BlitSurface(accumulation_surface, &tmp_rects[i], temp_screen_surface, &tmp_rects[i]);
+                SDL_SoftStretchLinear(temp_screen_surface, &tmp_rects[i], screen_surface, &real_dst_rect);
+                tmp_rects[i] = real_dst_rect;
             }
         }
 
-        //#error "Consider movie playing?"
-        if (updaterect) UpdateScreen(rect);
-    } else { 
-        refreshSurface( accumulation_surface, &rect, refresh_mode );
-        SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
-        if (updaterect) UpdateScreen(rect);
+        if (updaterect) SDL_UpdateWindowSurfaceRects(m_window->GetWindow(), tmp_rects, 4);
+    }
+    else {
+        refreshSurface(accumulation_surface, &rect, refresh_mode);
+
+        SDL_Rect real_dst_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
+        SDL_BlitSurface(accumulation_surface, &rect, temp_screen_surface, &rect);
+        SDL_SoftStretchLinear(temp_screen_surface, &rect, screen_surface, &real_dst_rect);
+        if (updaterect) SDL_UpdateWindowSurfaceRects(m_window->GetWindow(), &real_dst_rect, 1);;
     }
 }
 

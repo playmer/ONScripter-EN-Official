@@ -1659,7 +1659,13 @@ int ONScripterLabel::playCommand()
 
 int ONScripterLabel::ofscopyCommand()
 {
-    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+    SDL_Rect rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = accumulation_surface->w;
+    rect.h = accumulation_surface->h;
+    //SDL_Rect real_src_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
+    SDL_BlitSurface( temp_screen_surface, NULL, accumulation_surface, NULL );
 
     return RET_CONTINUE;
 }
@@ -3650,8 +3656,8 @@ int ONScripterLabel::drawsp3Command()
         si.inv_mat[1][1] =  si.mat[0][0] * 1000 / denom;
     }
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
-    si.blendOnSurface2( accumulation_surface, x, y, clip, alpha );
+    SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h };
+    si.blendOnSurface2(accumulation_surface, x, y, clip, alpha);
     si.setCell(old_cell_no);
 
     return RET_CONTINUE;
@@ -3673,7 +3679,7 @@ int ONScripterLabel::drawsp2Command()
     si.calcAffineMatrix();
     si.setCell(cell_no);
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
+    SDL_Rect clip = { 0, 0, accumulation_surface->w, accumulation_surface->h};
     si.blendOnSurface2( accumulation_surface, si.pos.x, si.pos.y, clip, alpha );
 
     return RET_CONTINUE;
@@ -3734,7 +3740,7 @@ int ONScripterLabel::drawbg2Command()
     bi.rot = script_h.readInt();
     bi.calcAffineMatrix();
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
+    SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h};
     bi.blendOnSurface2( accumulation_surface, bi.pos.x, bi.pos.y,
                         clip, 256 );
 
@@ -4467,8 +4473,10 @@ int ONScripterLabel::bltCommand()
         SDL_Rect src_rect = {sx,sy,sw,sh};
         SDL_Rect dst_rect = {dx,dy,dw,dh};
 
-        SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
-        UpdateScreen( dst_rect );
+        SDL_Rect real_dst_rect = Window::ScaleRectToPixels(btndef_info.image_surface, screen_surface, dst_rect);
+        SDL_BlitSurface(btndef_info.image_surface, &src_rect, temp_screen_surface, &src_rect);
+        SDL_SoftStretchLinear(temp_screen_surface, &src_rect, screen_surface, &real_dst_rect);
+        SDL_UpdateWindowSurfaceRects(m_window->GetWindow(), &real_dst_rect, 1);
         dirty_rect.clear();
     }
     else{
@@ -4537,7 +4545,13 @@ int ONScripterLabel::bgmdownmodeCommand()
 
 int ONScripterLabel::bgcopyCommand()
 {
-    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+    SDL_Rect rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = accumulation_surface->w;
+    rect.h = accumulation_surface->h;
+    //SDL_Rect real_src_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
+    SDL_BlitScaled( temp_screen_surface, NULL, accumulation_surface, NULL );
 
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;

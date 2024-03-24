@@ -309,7 +309,9 @@ QtWindow::QtWindow(ONScripterLabel* onscripter, int w, int h, int x, int y)
     m_mainWindow->move(x, y);
     
     m_sdlWindow->resize(w, h);
-    m_renderer = SDL_CreateRenderer(m_window, preferredRendererIndex, 0);
+    //m_renderer = SDL_CreateRenderer(m_window, preferredRendererIndex, 0);
+    //SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+    //SDL_RenderClear(m_renderer);
 
     CreateMenuBar();
 
@@ -334,12 +336,18 @@ int QtWindow::WaitEvents(SDL_Event& event)
 
     while (true)
     {
-        processQtEvents();
+        // Before processing any events from the OS/Qt, drain the SDL queue.
         bool ret = SDL_PollEvent(&event) == 1;
+
+        if (!ret)
+        {
+            processQtEvents();
+            ret = SDL_PollEvent(&event) == 1;
+        }
 
         SDL_Event temp_event;
 
-        // ignore continous SDL_MOUSEMOTION
+        // ignore continuous SDL_MOUSEMOTION
         while (IgnoreContinuousMouseMove && event.type == SDL_MOUSEMOTION) {
             processQtEvents();
             if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
@@ -350,10 +358,10 @@ int QtWindow::WaitEvents(SDL_Event& event)
 
         if (ret)
         {
-            //fprintf(stderr, "SDLEvent: %d\n", event.type);
             return 1;
         }
-        SDL_Delay(1);
+
+        SDL_Delay(6);
     }
 }
 
@@ -374,11 +382,16 @@ int QtWindow::PollEvents(SDL_Event& event)
 
 void QtWindow::WarpMouse(int x, int y)
 {
+    int orig_x = x;
+    int orig_y = y;
+
     int windowResolutionX, windowResolutionY;
     SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
 
-    ScaleMouseToPixels(windowResolutionX, windowResolutionY, m_onscripterLabel->screen_surface->w, m_onscripterLabel->screen_surface->h, x, y);
+    ScalePositionToPixels(windowResolutionX, windowResolutionY, m_onscripterLabel->accumulation_surface->w, m_onscripterLabel->accumulation_surface->h, x, y);
     TranslateMouse(x, y);
+
+    printf("{%d, %d}: {%d, %d}", orig_x, orig_y, x, y);
 
     SDL_WarpMouseInWindow(m_window, x, y);
 }
@@ -452,7 +465,7 @@ SDL_Surface* QtWindow::SetVideoMode(int width, int height, int /*bpp*/, bool ful
         m_wasMaximized = false;
     }
 
-    return m_onscripterLabel->screen_surface;
+    return SDL_GetWindowSurface(m_window);
 }
 
 void* QtWindow::GetWindowHandle()
@@ -463,8 +476,9 @@ void* QtWindow::GetWindowHandle()
 
 void QtWindow::Repaint()
 {
-    //m_sdlWindow->requestUpdate();
-    //m_mainWindow->repaint();
+    m_sdlWindow->requestUpdate();
+    m_sdlWidget->repaint();
+    m_mainWindow->repaint();
 }
 
 

@@ -240,6 +240,9 @@ void ONScripterLabel::executeSystemMenu()
     //SDL_Rect dummyRect{0,0,0,0};
     //UpdateScreen(dummyRect);
 
+    //SDL_Rect rect = { 0, 0, screen_width, screen_height };
+    //UpdateScreen(rect);
+
     printf("Drew the screen\n");
 
     event_mode = WAIT_BUTTON_MODE;

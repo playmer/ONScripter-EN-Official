@@ -63,9 +63,11 @@ private:
     void queue_audio();
     ONScripterLabel* m_onscripterLabel;
     Window* m_window;
-    Kit_Source* m_source;
-    Kit_Player* m_player;
-    SDL_Texture* m_video_texture;
+    Kit_Source* m_source = NULL;
+    Kit_Player* m_player = NULL;
+    SDL_Texture* m_video_texture = NULL;
+    SDL_Surface* m_render_surface = NULL;
+    SDL_Renderer* m_software_renderer = NULL;
 
     bool m_has_audio = false;
     bool m_have_not_hit_audio = true;

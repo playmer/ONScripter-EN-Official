@@ -127,9 +127,12 @@ public:
         new_dialog_rect.y = window_rect.y + ((window_rect.h - new_dialog_rect.h) / 2);
         return new_dialog_rect;
     }
+
+    static SDL_Rect ScaleRectToPixels(SDL_Surface* src_surface, SDL_Surface* dst_surface, SDL_Rect dst_rect);
+
 protected:
     virtual void CreateMenuBar() = 0;
-    static void ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m);
+    static void ScalePositionToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m);
 
     struct MenuBarInput
     {

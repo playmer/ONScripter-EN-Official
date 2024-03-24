@@ -482,21 +482,17 @@ WxWindow::~WxWindow()
 
 int WxWindow::WaitEvents(SDL_Event& event)
 {
-    static int i = 0;
     auto processWxEvents = [this]() {
-            m_app->OnRun();
-            //printf("\t Ran WxEventLoop\n");
-            for (SDL_Event& event : m_app->m_events)
-            {
-                if (event.type == SDL_WINDOWEVENT)
-                    event.window.windowID = SDL_GetWindowID(m_window);
-                SDL_PushEvent(&event);
-                //printf("\t Pushed Event\n");
-            }
-            m_app->m_events.clear();
-        };
+        m_app->OnRun();
+        for (SDL_Event& event : m_app->m_events)
+        {
+            if (event.type == SDL_WINDOWEVENT)
+                event.window.windowID = SDL_GetWindowID(m_window);
+            SDL_PushEvent(&event);
+        }
 
-    //printf("Wait Call: %d\n", i);
+        m_app->m_events.clear();
+    };
 
     while (true)
     {
@@ -511,7 +507,7 @@ int WxWindow::WaitEvents(SDL_Event& event)
 
         SDL_Event temp_event;
 
-        // ignore continous SDL_MOUSEMOTION
+        // ignore continuous SDL_MOUSEMOTION
         while (IgnoreContinuousMouseMove && event.type == SDL_MOUSEMOTION) {
             processWxEvents();
             if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;
@@ -522,23 +518,11 @@ int WxWindow::WaitEvents(SDL_Event& event)
 
         if (ret)
         {
-            //fprintf(stderr, "SDLEvent: %d\n", event.type);
-            ++i;
             return 1;
         }
+
         SDL_Delay(6);
     }
-
-    //processWxEvents();
-    //int ret = SDL_PollEvent(&event);
-    //
-    //while (ret == 0) {
-    //    SDL_Delay(1);
-    //    processWxEvents();
-    //    ret = SDL_PollEvent(&event);
-    //}
-    //
-    //return ret;
 }
 
 int WxWindow::PollEvents(SDL_Event& event)

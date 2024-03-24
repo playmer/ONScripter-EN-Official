@@ -36,6 +36,10 @@
 
 FFMpegWrapper::~FFMpegWrapper()
 {
+    if (NULL != m_software_renderer) SDL_DestroyRenderer(m_software_renderer);
+    if (NULL != m_render_surface) SDL_FreeSurface(m_render_surface);
+    if (NULL != m_player) Kit_ClosePlayer(m_player);
+    if (NULL != m_source) Kit_CloseSource(m_source);
 }
 
 int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, const char* filename, bool audio_open_flag, bool debug_flag)
@@ -84,9 +88,20 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
 
     m_has_audio = Kit_GetPlayerAudioStream(m_player) != -1;
 
+    m_onscripterLabel->openAudio(pinfo.audio.output.samplerate, pinfo.audio.output.format, pinfo.audio.output.channels);
+
+    m_render_surface = SDL_CreateRGBSurfaceWithFormat(
+        0,
+        pinfo.video.output.width,
+        pinfo.video.output.height,
+        m_onscripterLabel->temp_screen_surface->format->BitsPerPixel,
+        m_onscripterLabel->temp_screen_surface->format->format);
+
+    m_software_renderer = SDL_CreateSoftwareRenderer(m_render_surface);
+
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
     m_video_texture = SDL_CreateTexture(
-        window->GetRenderer(),
+        m_software_renderer,
         pinfo.video.output.format,
         SDL_TEXTUREACCESS_STATIC,
         pinfo.video.output.width,
@@ -96,8 +111,6 @@ int FFMpegWrapper::initialize(ONScripterLabel* onscripterLabel, Window* window, 
         fprintf(stderr, "Error while attempting to create a video texture\n");
         return 1;
     }
-
-    m_onscripterLabel->openAudio(pinfo.audio.output.samplerate, pinfo.audio.output.format, pinfo.audio.output.channels);
 
     return 0;
 }
@@ -112,7 +125,6 @@ extern "C" void mixer_callback_external(void* userdata, Uint8 * stream, int len)
 {
     FFMpegWrapper& ffmpegWrapper = *(FFMpegWrapper*)userdata;
     ffmpegWrapper.mixer_callback((FFMpegWrapper*)userdata, stream, len);
-
 }
 
 
@@ -242,10 +254,21 @@ void FFMpegWrapper::setVolume(int volume)
 void FFMpegWrapper::display_frame(SDL_Rect *dst)
 {
     Kit_GetPlayerVideoData(m_player, m_video_texture);
-    //m_onscripterLabel->DisplayTexture(m_video_texture, dst);
 
-    SDL_RenderCopy(m_window->GetRenderer(), m_video_texture, NULL /*&src_rect*/, dst);
-    SDL_RenderPresent(m_window->GetRenderer());
+    auto err = SDL_RenderCopy(m_software_renderer, m_video_texture, NULL /*&src_rect*/, dst);
+    SDL_RenderPresent(m_software_renderer);
+
+    SDL_BlitScaled(m_render_surface, NULL, m_onscripterLabel->temp_screen_surface, NULL);
+
+    SDL_Rect rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = m_onscripterLabel->temp_screen_surface->w;
+    rect.h = m_onscripterLabel->temp_screen_surface->h;
+
+    SDL_Rect real_dst_rect = Window::ScaleRectToPixels(m_onscripterLabel->temp_screen_surface, m_onscripterLabel->screen_surface, rect);
+    SDL_SoftStretchLinear(m_onscripterLabel->temp_screen_surface, &rect, m_onscripterLabel->screen_surface, &real_dst_rect);
+    SDL_UpdateWindowSurfaceRects(m_window->GetWindow(), &real_dst_rect, 1);
 }
 
 void FFMpegWrapper::play()

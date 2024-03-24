@@ -14,15 +14,15 @@ if(EMSCRIPTEN)
 elseif(MINGW)
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
-    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" ON)
+    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" OFF)
 elseif(ANDROID) # Android
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" OFF)
     option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
     option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" OFF)
 else()
     option(ONS_USE_AVIFILE "Choose whether to enable AVI support or not" ON)
-    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" OFF)
-    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" ON)
+    option(ONS_USE_QT_WINDOW "Choose whether to enable Qt window support or not, this will allow various Window commands to be enabled" ON)
+    option(ONS_USE_WX_WINDOW "Choose whether to enable WxWidgets window support or not, this will allow various Window commands to be enabled" OFF)
 endif()
 
 option(ONS_USE_IMGUI_WINDOW "Choose whether to enable ImGui window support or not, this will allow various Window commands to be enabled" ON)
@@ -557,15 +557,15 @@ if(WIN32)
 
     if (ONS_USE_QT_WINDOW)
         # Qt Deployment stuff
-        find_program(TOOL_WINDEPLOYQT NAMES windeployqt PATHS ${_qt_cmake_dir}/../../bin)
-        message(STATUS Found Qt tools: ${TOOL_WINDEPLOYQT_DEBUG},${TOOL_WINDEPLOYQT})
-        
-        add_custom_command(TARGET onscripter_en POST_BUILD
-            COMMAND $<IF:$<CONFIG:DEBUG>,${TOOL_WINDEPLOYQT},${TOOL_WINDEPLOYQT}> 
-                    $<IF:$<CONFIG:DEBUG>,--debug,--release>
-                    $<TARGET_FILE:onscripter_en>
-            COMMENT "Running windeployqt..."
-        )
+#        find_program(TOOL_WINDEPLOYQT NAMES windeployqt PATHS ${_qt_cmake_dir}/../../bin)
+#        message(STATUS Found Qt tools: ${TOOL_WINDEPLOYQT_DEBUG},${TOOL_WINDEPLOYQT})
+#        
+#        add_custom_command(TARGET onscripter_en POST_BUILD
+#            COMMAND $<IF:$<CONFIG:DEBUG>,${TOOL_WINDEPLOYQT},${TOOL_WINDEPLOYQT}> 
+#                    $<IF:$<CONFIG:DEBUG>,--debug,--release>
+#                    $<TARGET_FILE:onscripter_en>
+#            COMMENT "Running windeployqt..."
+#        )
     endif()
 endif()
 

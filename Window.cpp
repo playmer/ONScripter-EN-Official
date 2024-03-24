@@ -157,8 +157,8 @@ bool Window::TranslateMouse(int& x, int& y, bool toScreenSize)
 
     if (toScreenSize)
     {
-        windowPointsW = m_onscripterLabel->screen_surface->w;
-        windowPointsH = m_onscripterLabel->screen_surface->h;
+        windowPointsW = m_onscripterLabel->accumulation_surface->w;
+        windowPointsH = m_onscripterLabel->accumulation_surface->h;
     }
     else
     {
@@ -265,7 +265,19 @@ Window::MenuBarInput Window::ParseMenuBarTree(std::vector<MenuBarInput>& menuBar
     return toReturn;
 }
 
-void Window::ScaleMouseToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
+SDL_Rect Window::ScaleRectToPixels(SDL_Surface* src_surface, SDL_Surface* dst_surface, SDL_Rect dst_rect)
+{
+    float scale = std::min(float(dst_surface->w) / src_surface->w, float(dst_surface->h) / src_surface->h);
+
+    dst_rect.w *= scale;
+    dst_rect.h *= scale;
+
+    //ScalePositionToPixels(dst_surface->w, dst_surface->h, src_surface->w, src_surface->h, dst_rect.w, dst_rect.h);
+    ScalePositionToPixels(dst_surface->w, dst_surface->h, src_surface->w, src_surface->h, dst_rect.x, dst_rect.y);
+    return dst_rect;
+}
+
+void Window::ScalePositionToPixels(int w_1, int h_1, int w_2, int h_2, int& x_m, int& y_m)
 {
     // Scale the mouse to Window (pixel) coordinates
     float scaleWidth = w_1 / (float)w_2;

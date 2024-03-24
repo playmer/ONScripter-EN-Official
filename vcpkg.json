@@ -20,6 +20,7 @@
       "name": "pkgconf",
       "platform": "(windows)&(!mingw)"
     },
+    "qtbase",
     {
       "name": "sdl2",
       "features": [ "vulkan", "wayland", "x11" ],
@@ -31,10 +32,6 @@
     },
     "sdl2-mixer",
     "sdl2-ttf",
-    {
-      "name": "wxwidgets",
-      "platform": "(windows|osx|linux)"
-    },
     "zlib"
   ]
 }

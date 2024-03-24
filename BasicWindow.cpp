@@ -21,7 +21,9 @@ BasicWindow::BasicWindow(ONScripterLabel* onscripter, int w, int h, int x, int y
     if (s_window != NULL)
         fprintf(stderr, "Game has created two instances of Window, there should only be one.");
     s_window = this;
-    SDL_CreateWindowAndRenderer(w, h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI, &m_window, &m_renderer);
+    //SDL_CreateWindowAndRenderer(w, h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI, &m_window, &m_renderer);
+    m_window = SDL_CreateWindow("", 0, 0, w, h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    m_renderer = NULL;
     SDL_SetWindowPosition(m_window, x, y);
 }
 
@@ -60,7 +62,7 @@ void BasicWindow::WarpMouse(int x, int y)
     int windowResolutionX, windowResolutionY;
     SDL_GetWindowSizeInPixels(m_window, &windowResolutionX, &windowResolutionY);
 
-    ScaleMouseToPixels(windowResolutionX, windowResolutionY, m_onscripterLabel->screen_surface->w, m_onscripterLabel->screen_surface->h, x, y);
+    ScalePositionToPixels(windowResolutionX, windowResolutionY, m_onscripterLabel->screen_surface->w, m_onscripterLabel->screen_surface->h, x, y);
     TranslateMouse(x, y);
 
     SDL_WarpMouseInWindow(m_window, x, y);
@@ -82,7 +84,7 @@ SDL_Surface* BasicWindow::SetVideoMode(int width, int height, int bpp, bool full
     SDL_SetWindowSize(m_window, width, height);
     SDL_SetWindowFullscreen(m_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 
-    return m_onscripterLabel->screen_surface;
+    return SDL_GetWindowSurface(m_window);
 }
 
 // Ideally we remove this function completely, once we remove using SendMessage to set the Window Icon

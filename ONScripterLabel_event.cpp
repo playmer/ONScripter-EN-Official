@@ -1773,15 +1773,17 @@ void ONScripterLabel::runEventLoop()
             {
               case (SDL_WINDOWEVENT_RESIZED):
               case (SDL_WINDOWEVENT_MOVED):
-                screen_surface = SDL_GetWindowSurface(m_window->GetWindow());
-                SDL_FillRect(screen_surface, NULL, SDL_MapRGBA(screen_surface->format, 0, 0, 0, 0));
+              {
+                  screen_surface = SDL_GetWindowSurface(m_window->GetWindow());
+                  SDL_FillRect(screen_surface, NULL, SDL_MapRGBA(screen_surface->format, 0, 0, 0, 0));
 
-                refreshSurface(accumulation_surface, &rect, refreshMode());
+                  refreshSurface(accumulation_surface, &rect, refreshMode());
 
-                SDL_Rect real_dst_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
-                SDL_BlitSurface(accumulation_surface, &rect, temp_screen_surface, &rect);
-                SDL_SoftStretchLinear(temp_screen_surface, &rect, screen_surface, &real_dst_rect);
-                rect = real_dst_rect;
+                  SDL_Rect real_dst_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
+                  SDL_BlitSurface(accumulation_surface, &rect, temp_screen_surface, &rect);
+                  SDL_SoftStretchLinear(temp_screen_surface, &rect, screen_surface, &real_dst_rect);
+                  rect = real_dst_rect;
+              }
 
               case (SDL_WINDOWEVENT_ENTER):
               case (SDL_WINDOWEVENT_FOCUS_GAINED):

@@ -17,8 +17,8 @@ name: hosted-ninja-vcpkg_submod-autocache
 on:
   push:
     branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork", "emscripten" ]
-  pull_request:
-    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork" ]
+#  pull_request:
+#    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork" ]
   workflow_dispatch:
   schedule:
   - cron: '0 1 * * *'
@@ -247,7 +247,7 @@ jobs:
       matrix:
         os: [windows-latest]
 
-    runs-on: windows-latest
+    runs-on: TIMESTAR_RUNNER_WIN
     
     env:
       CMAKE_CXX_COMPILER: cl

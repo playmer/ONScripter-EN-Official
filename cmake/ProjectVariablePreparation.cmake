@@ -1,5 +1,5 @@
 # This is mostly for CI, might want to detect that scenario before setting this at all times.
-set(VCPKG_INSTALL_OPTIONS "--clean-after-build")
+#set(VCPKG_INSTALL_OPTIONS "--clean-after-build")
 
 if(VCPKG_TARGET_TRIPLET STREQUAL arm64-android)
     set(ANDROID_ABI arm64-v8a)

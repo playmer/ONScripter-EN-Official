@@ -283,7 +283,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=cl','-DCMAKE_C_COMPILER=cl','-DCMAKE_MAKE_PROGRAM=ninja', '-DONSCRIPTER_EN_CI=ON', '-DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build']"
+          configurePresetAdditionalArgs: "['-DONSCRIPTER_EN_CI=ON', '-DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build']"
           buildPreset: 'ninja-release'
           packagePreset: 'ninja-package-release'
           

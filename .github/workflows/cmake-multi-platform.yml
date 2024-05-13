@@ -256,7 +256,9 @@ jobs:
         with:
           submodules: true
 
-      - uses: lukka/get-cmake@latest
+      #- uses: lukka/get-cmake@latest
+      
+      - uses: ilammy/msvc-dev-cmd@v1
 
       #- name: Install Qt
       #  uses: jurplel/install-qt-action@v3

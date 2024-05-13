@@ -258,9 +258,9 @@ jobs:
 
       #- uses: lukka/get-cmake@latest
       #- uses: ilammy/msvc-dev-cmd@v1
-      - uses: TheMrMilchmann/setup-msvc-dev@v3
-        with:
-          arch: x64
+      #- uses: TheMrMilchmann/setup-msvc-dev@v3
+      #  with:
+      #    arch: x64
 
       #- name: Install Qt
       #  uses: jurplel/install-qt-action@v3
@@ -287,7 +287,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja'
-          configurePresetAdditionalArgs: "['-DONSCRIPTER_EN_CI=ON', '-DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build']"
+          configurePresetAdditionalArgs: "[ '-DCMAKE_MAKE_PROGRAM=ninja', '-DONSCRIPTER_EN_CI=ON', '-DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build']"
           buildPreset: 'ninja-release'
           packagePreset: 'ninja-package-release'
           

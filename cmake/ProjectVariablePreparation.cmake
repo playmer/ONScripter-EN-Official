@@ -1,5 +1,19 @@
 # This is mostly for CI, might want to detect that scenario before setting this at all times.
-#set(VCPKG_INSTALL_OPTIONS "--clean-after-build")
+option(ONSCRIPTER_EN_CI "Choose whether to accept arguments for vcpkg." OFF)
+if (ONSCRIPTER_EN_CI)
+    set(ONSCRIPTER_EN_VCPKG_PASS_ARGS OFF)
+    if (ONSCRIPTER_EN_VCPKG_BUILDTREE)
+        set(ONSCRIPTER_EN_VCPKG_PASS_ARGS ON)
+        list(APPEND ONSCRIPTER_EN_VCPKG_ARGS "--x-buildtrees-root=${ONSCRIPTER_EN_VCPKG_BUILDTREE}")
+    endif()
+
+    message(STATUS Args: ${ONSCRIPTER_EN_VCPKG_ARGS})
+
+    if (ONSCRIPTER_EN_VCPKG_PASS_ARGS)
+        list(JOIN ONSCRIPTER_EN_VCPKG_ARGS " " ONSCRIPTER_EN_VCPKG_ARGS_OUTPUT)
+        set(VCPKG_INSTALL_OPTIONS ${ONSCRIPTER_EN_VCPKG_ARGS_OUTPUT})
+    endif()
+endif()
 
 if(VCPKG_TARGET_TRIPLET STREQUAL arm64-android)
     set(ANDROID_ABI arm64-v8a)

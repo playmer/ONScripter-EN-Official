@@ -256,7 +256,7 @@ jobs:
         with:
           submodules: true
 
-      #- uses: lukka/get-cmake@latest
+      - uses: lukka/get-cmake@latest
       #- uses: ilammy/msvc-dev-cmd@v1
       #- uses: TheMrMilchmann/setup-msvc-dev@v3
       #  with:

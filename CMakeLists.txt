@@ -5,7 +5,7 @@ project(onscripter_en LANGUAGES C CXX)
 
 if (ONSCRIPTER_EN_CI)
     if (WIN32)
-        cmake_path(GET ${CMAKE_CXX_COMPILER} PARENT_PATH ToolchainDirectory)
+        cmake_path(GET CMAKE_CXX_COMPILER PARENT_PATH ToolchainDirectory)
         message(STATUS ToolchainDirectory: ${ToolchainDirectory})
         set(ENV{Path} "$ENV{Path};${ToolchainDirectory}")
     endif()

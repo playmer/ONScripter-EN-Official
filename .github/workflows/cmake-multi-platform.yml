@@ -257,6 +257,9 @@ jobs:
           submodules: true
 
       - uses: lukka/get-cmake@latest
+        with:
+          useLocalCache: true         # <--= Use the local cache (default is 'false').
+          useCloudCache: false        # <--= Ditch the cloud cache (default is 'true').
       #- uses: ilammy/msvc-dev-cmd@v1
       #- uses: TheMrMilchmann/setup-msvc-dev@v3
       #  with:
@@ -283,13 +286,23 @@ jobs:
       #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
       #   testPreset: 'ninja-vcpkg'
       #   testPresetAdditionalArgs: "[`--config`, `Release`]"
-      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
-        uses: lukka/run-cmake@v10
+
+      #- name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+      #  uses: lukka/run-cmake@v10
+      #  with:
+      #    configurePreset: 'ninja'
+      #    configurePresetAdditionalArgs: "[ '-DCMAKE_MAKE_PROGRAM=ninja', '-DONSCRIPTER_EN_CI=ON', '-DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build']"
+      #    buildPreset: 'ninja-release'
+      #    packagePreset: 'ninja-package-release'
+
+      - uses: TheMrMilchmann/setup-msvc-dev@v3
         with:
-          configurePreset: 'ninja'
-          configurePresetAdditionalArgs: "[ '-DCMAKE_MAKE_PROGRAM=ninja', '-DONSCRIPTER_EN_CI=ON', '-DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build']"
-          buildPreset: 'ninja-release'
-          packagePreset: 'ninja-package-release'
+          arch: x64
+      - name: Configure, Build, and Package
+        run: |
+          cmake --preset=ninja -DCMAKE_MAKE_PROGRAM=ninja -DONSCRIPTER_EN_CI=ON -DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build .
+          cmake --build --preset ninja-release
+          cpack --preset=ninja-package-release
           
       - uses: actions/upload-artifact@v3
         with:

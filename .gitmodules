@@ -7,3 +7,6 @@
 [submodule "extlib/SDL_sound"]
 	path = extlib/SDL_sound
 	url = https://github.com/icculus/SDL_sound.git
+[submodule "extlib/WindowsToolchain"]
+	path = extlib/WindowsToolchain
+	url = https://github.com/MarkSchofield/WindowsToolchain.git

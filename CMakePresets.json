@@ -16,6 +16,10 @@
                 "CMAKE_TOOLCHAIN_FILE": {
                     "type": "FILEPATH",
                     "value": "${sourceDir}/extlib/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                },
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "${sourceDir}/extlib/WindowsToolchain/Windows.MSVC.toolchain.cmake"
                 }
             }
         },

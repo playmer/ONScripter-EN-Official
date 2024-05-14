@@ -248,6 +248,7 @@ SoundChunk* SoundChunk::Create(unsigned char* buffer, size_t length, const char*
     soundChunk->m_chunk.volume = 100;
     soundChunk->m_chunk.allocated = 0;
     soundChunk->m_buffer = buffer;
+    return soundChunk;
 }
 
 SoundChunk::~SoundChunk()

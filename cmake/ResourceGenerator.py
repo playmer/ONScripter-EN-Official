@@ -14,6 +14,7 @@ files = []
 filesToBlit = sys.argv[2:len(sys.argv): 1]
 
 for i, fileToBlit in enumerate(filesToBlit):
+    print('File to blit: ', fileToBlit)
     fileData += f'static const unsigned char resource_{i}_buffer[] = ' + '{'
     fileData += '\t'
 

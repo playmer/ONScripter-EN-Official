@@ -158,7 +158,7 @@ endif()
 # We should make some sort of detection variable to determine if we should use a script vs the embed program,
 # Things get complicated on Apple under the XCode generator for example, these docs will help:
 # https://cmake.org/cmake/help/latest/variable/CMAKE_CROSSCOMPILING.html
-if (ANDROID OR EMSCRIPTEN)
+if (ANDROID OR EMSCRIPTEN OR CMAKE_CROSSCOMPILING)
     find_program(TOOL_POWERSHELL NAMES powershell powershell.exe)
     find_program(TOOL_PYTHON NAMES python python3)
 
@@ -166,47 +166,34 @@ if (ANDROID OR EMSCRIPTEN)
     message(STATUS "Powershell: ${TOOL_POWERSHELL}")
 
     if(TOOL_PYTHON)
-        set(EMBED_COMMAND ${TOOL_PYTHON})
-        set(EMBED_ARGS cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+        set(EMBED_COMMAND ${TOOL_PYTHON} cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
     elseif (TOOL_POWERSHELL)
-        set(EMBED_COMMAND ${TOOL_POWERSHELL})
-        set(EMBED_ARGS cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+        set(EMBED_COMMAND ${TOOL_POWERSHELL} cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
     else()
         message(STATUS "We're cross compiling, and couldn't find Powershell or Python 3, we're going to use CMake to generate the Resources file, but it'll be prohibitively slow (~15 minutes). Consider installing one of the above.")
-        set(EMBED_COMMAND ${CMAKE_COMMAND})
-        set(EMBED_ARGS  -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+        set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
     endif()
     
     set(ADDITIONAL_EMBED_DEPENDENCIES "")
-    
-    add_custom_command(
-        OUTPUT resources.cpp
-        COMMAND ${EMBED_COMMAND}
-        ARGS ${EMBED_ARGS}
-        DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-        COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon, we're using ${EMBED_COMMAND} for this."
-        VERBATIM
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
 else()
     add_executable(onscripter_embed embed.cpp)
     target_compile_features(onscripter_embed PUBLIC cxx_std_11)
 
-    set(EMBED_ARGS ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp)
+    set(EMBED_COMMAND onscripter_embed ons-en.ico gamecontrollerdb.txt > ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp)
     set(ADDITIONAL_EMBED_DEPENDENCIES onscripter_embed)
-
-    # Due to a bug where cmake seemingly can't see through the EMBED_COMMAND variable that it's a target (and thus needs to replace the path), I must specify this custom command twice.
-    add_custom_command(
-        OUTPUT resources.cpp
-        COMMAND onscripter_embed
-        ARGS ${EMBED_ARGS}
-        DEPENDS onscripter_embed ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-        COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-        VERBATIM
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
 endif()
 
+message(STATUS "Crosscompiling: ${CMAKE_CROSSCOMPILING}")
+message(STATUS "CMAKE_SIZEOF_VOID_P: ${CMAKE_SIZEOF_VOID_P}")
+
+add_custom_command(
+    OUTPUT resources.cpp
+    COMMAND ${EMBED_COMMAND}
+    DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 #########
 # Configure version.h

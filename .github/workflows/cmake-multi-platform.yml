@@ -300,7 +300,7 @@ jobs:
           arch: x64
       - name: Configure, Build, and Package
         run: |
-          cmake --preset=ninja -DCMAKE_MAKE_PROGRAM=ninja -DONSCRIPTER_EN_CI=ON -DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build -DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_packages .
+          cmake --preset=ninja -DCMAKE_MAKE_PROGRAM=ninja -DONSCRIPTER_EN_CI=ON -DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build -DONSCRIPTER_EN_VCPKG_PACKAGES=D:/vcpkg_packages .
           cmake --build --preset ninja-release
           cpack --preset=ninja-package-release
           

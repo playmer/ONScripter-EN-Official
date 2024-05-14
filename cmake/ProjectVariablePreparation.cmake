@@ -6,6 +6,11 @@ if (ONSCRIPTER_EN_CI)
         set(ONSCRIPTER_EN_VCPKG_PASS_ARGS ON)
         list(APPEND ONSCRIPTER_EN_VCPKG_ARGS "--x-buildtrees-root=${ONSCRIPTER_EN_VCPKG_BUILDTREE}")
     endif()
+    
+    if (ONSCRIPTER_EN_VCPKG_PACKAGES)
+        set(ONSCRIPTER_EN_VCPKG_PASS_ARGS ON)
+        list(APPEND ONSCRIPTER_EN_VCPKG_ARGS "--x-packages-root=${ONSCRIPTER_EN_VCPKG_PACKAGES}")
+    endif()
 
     message(STATUS Args: ${ONSCRIPTER_EN_VCPKG_ARGS})
 

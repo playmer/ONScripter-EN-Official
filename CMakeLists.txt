@@ -200,7 +200,7 @@ else()
         OUTPUT resources.cpp
         COMMAND onscripter_embed
         ARGS ${EMBED_ARGS}
-        DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+        DEPENDS onscripter_embed ${CMAKE_CURRENT_SOURCE_DIR}/gamecontrollerdb.txt ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
         COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
         VERBATIM
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

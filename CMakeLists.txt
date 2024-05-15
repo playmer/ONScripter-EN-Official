@@ -186,6 +186,7 @@ endif()
 message(STATUS "Crosscompiling: ${CMAKE_CROSSCOMPILING}")
 message(STATUS "CMAKE_SIZEOF_VOID_P: ${CMAKE_SIZEOF_VOID_P}")
 
+
 add_custom_command(
     OUTPUT resources.cpp
     COMMAND ${EMBED_COMMAND}
@@ -528,6 +529,8 @@ PRIVATE
     ScriptParser.cpp
     ScriptParser.h
     ScriptParser_command.cpp
+    SMpeg2Wrapper.h
+    SMpeg2Wrapper.cpp
     sjis2utf16.cpp
     version.h
     Window.cpp
@@ -539,6 +542,8 @@ if(WIN32)
     target_sources(onscripter_en
     PRIVATE
         onscripter.rc
+        Win32Window.cpp
+        Win32Window.h
     )
 
     target_link_options(onscripter_en 

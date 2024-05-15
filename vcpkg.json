@@ -32,6 +32,7 @@
     },
     "sdl2-mixer",
     "sdl2-ttf",
+    "smpeg2",
     "zlib"
   ]
 }

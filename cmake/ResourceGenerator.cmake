@@ -22,8 +22,8 @@ while(NOT ${i} STREQUAL ${CMAKE_ARGC})
 
     set(elementCounter 0)
     foreach(byteHex IN LISTS currentFileDataList)
-        math(EXPR byteDecimal "0x${byteHex}" OUTPUT_FORMAT DECIMAL)
-        string(APPEND generatedFile "${byteDecimal}, ")
+        #math(EXPR byteDecimal "0x${byteHex}" OUTPUT_FORMAT DECIMAL)
+        string(APPEND generatedFile "0x${byteHex}, ")
 
         math(EXPR elementCounter "${elementCounter}+1")
         if (elementCounter GREATER 16)

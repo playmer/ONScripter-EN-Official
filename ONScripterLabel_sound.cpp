@@ -41,6 +41,8 @@
 #include <signal.h>
 #endif
 
+#include "SMpeg2Wrapper.h"
+
 #ifdef USE_AVIFILE
 //#include "AVIWrapper.h"
 #include "FFMpegWrapper.h"
@@ -127,7 +129,6 @@ bool SoundMusic::Start(ONScripterLabel* onscripter, unsigned char* buffer, size_
 {
     // Not done yet;
     // - looping needs to be completed
-    // - SoundMusic needs to own the buffer the SDL_RWops is wrapping
     int freq;
     Uint16 format;
     int channels;

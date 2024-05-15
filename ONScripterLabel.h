@@ -100,6 +100,7 @@
 
 #define KEYPRESS_NULL ((SDL_Keycode)(SDLK_AUDIOFASTFORWARD+1)) // "null" for keypress variables
 
+class SMpeg2Wrapper;
 class FFMpegWrapper;
 
 class ONScripterLabel : public ScriptParser
@@ -1194,6 +1195,7 @@ private:
     char** argv;
 
     friend SoundMusic;
+    friend SMpeg2Wrapper;
     friend FFMpegWrapper;
     friend Window;
     friend BasicWindow;

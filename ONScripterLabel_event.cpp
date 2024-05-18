@@ -104,6 +104,8 @@ extern "C" Uint32 SDLCALL timerCallback( Uint32 /*interval*/, void */*param*/ )
 
     Window::SendCustomEventStatic(ONS_TIMER_EVENT);
 
+    printf("timerCallback\n");
+
     return 0;
 }
 
@@ -119,6 +121,9 @@ extern "C" Uint32 cdaudioCallback( Uint32 /*interval*/, void */*param*/ )
 extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param )
 {
     Window::SendCustomEventStatic(ONS_BGMFADE_EVENT, (param == NULL) ? 0 : 1);
+
+
+    printf("bgmfadeCallback\n");
 
     return interval;
 }
@@ -158,6 +163,7 @@ void seqmusicCallback( int sig )
     int status;
     wait( &status );
 #endif
+    printf("seqmusicCallback\n");
     if ( !ext_music_play_once_flag ){
         Window::SendCustomEventStatic(ONS_SEQMUSIC_EVENT);
     }
@@ -169,6 +175,7 @@ void musicCallback( int sig )
     int status;
     wait( &status );
 #endif
+    printf("musicCallback\n");
     if ( !ext_music_play_once_flag ){
         Window::SendCustomEventStatic(ONS_MUSIC_EVENT);
     }
@@ -176,6 +183,7 @@ void musicCallback( int sig )
 
 extern "C" void waveCallback( int channel )
 {
+    printf("waveCallback\n");
     Window::SendCustomEventStatic(ONS_WAVE_EVENT, channel);
 }
 
@@ -408,7 +416,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
                 //always free voice channel, for now - could be
                 //messy for bgmdownmode and/or voice-waiting FIXME
                 Mix_ChannelFinished(NULL);
-                delete wave_sample[ch];
+                Mix_FreeChunk(wave_sample[ch]);
 
                 wave_sample[ch] = NULL;
             }
@@ -417,7 +425,7 @@ void ONScripterLabel::flushEventSub( SDL_Event &event )
                 wave_sample[MIX_LOOPBGM_CHANNEL1]) {
                 Mix_ChannelFinished(waveCallback);
                 Mix_PlayChannel(MIX_LOOPBGM_CHANNEL1,
-                    wave_sample[MIX_LOOPBGM_CHANNEL1]->GetChunk(), -1);
+                                wave_sample[MIX_LOOPBGM_CHANNEL1], -1);
             }
             if (ch == 0) {
                 channel_preloaded[ch] = false;
@@ -854,17 +862,17 @@ void ONScripterLabel::variableEditMode( SDL_KeyboardEvent *event )
             se_volume = variable_edit_num;
             for ( i=1 ; i<ONS_MIX_CHANNELS ; i++ )
                 if ( wave_sample[i] )
-                    Mix_Volume( i, !volume_on_flag? 0 : se_volume * 128 / 100 );
+                    Mix_Volume( i, calculateVolume(se_volume) );
             if ( wave_sample[MIX_LOOPBGM_CHANNEL0] )
-                Mix_Volume( MIX_LOOPBGM_CHANNEL0, !volume_on_flag? 0 : se_volume * 128 / 100 );
+                Mix_Volume( MIX_LOOPBGM_CHANNEL0, calculateVolume(se_volume) );
             if ( wave_sample[MIX_LOOPBGM_CHANNEL1] )
-                Mix_Volume( MIX_LOOPBGM_CHANNEL1, !volume_on_flag? 0 : se_volume * 128 / 100 );
+                Mix_Volume( MIX_LOOPBGM_CHANNEL1, calculateVolume(se_volume) );
             break;
 
           case EDIT_VOICE_VOLUME_MODE:
             voice_volume = variable_edit_num;
             if ( wave_sample[0] )
-                Mix_Volume( 0, !volume_on_flag? 0 : voice_volume * 128 / 100 );
+                Mix_Volume( 0, calculateVolume(voice_volume) );
 
           default:
             break;
@@ -1565,7 +1573,7 @@ void ONScripterLabel::runEventLoop()
     //SDL_Event temp_event;
     SDL_Event event;
     while (m_window->WaitEvents(event)) {
-        printf("Event: %d\n", event.type);
+        //printf("Event: %d\n", event.type);
         // ignore continous SDL_MOUSEMOTION
         //while (event.type == SDL_MOUSEMOTION) {
         //    if (SDL_PeepEvents(&temp_event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 0) break;

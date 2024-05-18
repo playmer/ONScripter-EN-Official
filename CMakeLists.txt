@@ -140,7 +140,7 @@ endif()
 
 option(SDLSOUND_BUILD_TEST "Build stdio test program." OFF)
 
-add_subdirectory(extlib/SDL_sound)
+#add_subdirectory(extlib/SDL_sound)
 
 #########
 # Qt Support
@@ -454,7 +454,7 @@ PRIVATE
     $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
     $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
     SDLHelper_CD
-    $<IF:$<TARGET_EXISTS:SDL2_sound::SDL2_sound>,SDL2_sound::SDL2_sound,SDL2_sound::SDL2_sound-static>
+    #$<IF:$<TARGET_EXISTS:SDL2_sound::SDL2_sound>,SDL2_sound::SDL2_sound,SDL2_sound::SDL2_sound-static>
 )
 
 if (WIN32)

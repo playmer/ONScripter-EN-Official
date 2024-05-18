@@ -1027,9 +1027,8 @@ private:
     bool cd_play_loop_flag;
     bool music_play_loop_flag;
     bool mp3save_flag;
-    char *music_file_name;
-    Mix_Chunk* mp3_sample;
-    int mp3_channel = 0;
+    std::vector<unsigned char> sound_buffer;
+    char* music_file_name;
     Uint32 mp3fade_start;
     Uint32 mp3fadeout_duration;
     Uint32 mp3fadein_duration;
@@ -1038,16 +1037,16 @@ private:
 
     int channelvolumes[ONS_MIX_CHANNELS]; //insani's addition
     bool channel_preloaded[ONS_MIX_CHANNELS]; //seems we need to track this...
-    SoundChunk *wave_sample[ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS];
+    Mix_Chunk* wave_sample[ONS_MIX_CHANNELS + ONS_MIX_EXTRA_CHANNELS];
 
     char *music_cmd;
     char *seqmusic_cmd;
 
-
+    int calculateVolume(int volume /* between [0, 100]*/);
 
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
-    int playWave(SoundChunk *chunk, int format, bool loop_flag, int channel);
+    int playWave(Mix_Chunk*chunk, int format, bool loop_flag, int channel);
     int playExternalMusic(bool loop_flag);
     int playSequencedMusic(bool loop_flag);
     // Mion: for music status and fades
@@ -1193,7 +1192,6 @@ private:
     int argc;
     char** argv;
 
-    friend SoundMusic;
     friend FFMpegWrapper;
     friend Window;
     friend BasicWindow;

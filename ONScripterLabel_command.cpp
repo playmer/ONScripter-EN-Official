@@ -236,7 +236,7 @@ int ONScripterLabel::voicevolCommand()
     voice_volume = script_h.readInt();
 
     if ( wave_sample[0] )
-        Mix_Volume( 0, !volume_on_flag? 0 : voice_volume * 128 / 100 );
+        Mix_Volume( 0, calculateVolume(voice_volume) );
 
     channelvolumes[0] = voice_volume;
 
@@ -874,14 +874,14 @@ int ONScripterLabel::sevolCommand()
 
     for ( int i=1 ; i<ONS_MIX_CHANNELS ; i++ ) {
         if ( wave_sample[i] )
-            Mix_Volume( i, !volume_on_flag? 0 : se_volume * 128 / 100 );
+            Mix_Volume( i, calculateVolume(se_volume) );
         channelvolumes[i] = se_volume;
      }
 
     if ( wave_sample[MIX_LOOPBGM_CHANNEL0] )
-        Mix_Volume( MIX_LOOPBGM_CHANNEL0, !volume_on_flag? 0 : se_volume * 128 / 100 );
+        Mix_Volume( MIX_LOOPBGM_CHANNEL0, calculateVolume(se_volume) );
     if ( wave_sample[MIX_LOOPBGM_CHANNEL1] )
-        Mix_Volume( MIX_LOOPBGM_CHANNEL1, !volume_on_flag? 0 : se_volume * 128 / 100 );
+        Mix_Volume( MIX_LOOPBGM_CHANNEL1, calculateVolume(se_volume) );
 
     return RET_CONTINUE;
 }
@@ -1835,6 +1835,7 @@ int ONScripterLabel::mp3Command()
         playSound(music_file_name,
                   SOUND_WAVE | SOUND_OGG_STREAMING | SOUND_MP3 | SOUND_SEQMUSIC,
                   music_play_loop_flag, MIX_BGM_CHANNEL);
+
 
         music_volume = tmp;
 
@@ -3593,7 +3594,7 @@ int ONScripterLabel::dwaveCommand()
 
     if (play_mode == WAVE_PLAY_LOADED){
         Mix_ChannelFinished(waveCallback);
-        Mix_PlayChannel(ch, wave_sample[ch]->GetChunk(), loop_flag ? -1 : 0);
+        Mix_PlayChannel(ch, wave_sample[ch], loop_flag ? -1 : 0);
     }
     else{
         const char *buf = script_h.readStr();
@@ -4008,7 +4009,7 @@ int ONScripterLabel::chvolCommand()
     int vol = script_h.readInt();
 
     if ( wave_sample[ch] ){
-        Mix_Volume( ch, !volume_on_flag? 0 : vol * 128 / 100 );
+        Mix_Volume( ch, calculateVolume(vol) );
     }
 
     channelvolumes[ch] = vol;

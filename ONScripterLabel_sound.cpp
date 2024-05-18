@@ -121,147 +121,15 @@ extern SDL_TimerID timer_seqmusic_id;
           (buf[4] == 0)  && (buf[5] == 0) && \
           (buf[6] == 0)  && (buf[7] == 6))
 
-SoundMusic* SoundMusic::s_soundMusic = NULL;
 
-bool SoundMusic::Start(ONScripterLabel* onscripter, unsigned char* buffer, size_t length, const char* ext_hint)
-{
-    // Not done yet;
-    // - looping needs to be completed
-    // - SoundMusic needs to own the buffer the SDL_RWops is wrapping
-    int freq;
-    Uint16 format;
-    int channels;
-    Mix_QuerySpec(&freq, &format, &channels);
-    Sound_AudioInfo info;
-    info.channels = channels;
-    info.format = format;
-    info.rate = freq;
-    Sound_Sample* sample = Sound_NewSampleFromMem(buffer, length, ".mid", &info, 1024 * 1024);
+Mix_MusicType detect_music_type(SDL_RWops* src);
 
-    if ((NULL == sample) || (sample->flags == SOUND_SAMPLEFLAG_ERROR)) {
-        Sound_FreeSample(sample);
-        delete[] buffer;
-        return false;
-    }
 
-    if (s_soundMusic) {
-        delete s_soundMusic;
-    }
-
-    s_soundMusic = new SoundMusic();
-    s_soundMusic->m_sample = sample;
-    s_soundMusic->m_buffer = buffer;
-
-    Mix_CloseAudio();
-    onscripter->openAudio(sample->desired.rate, sample->desired.format, sample->desired.channels);
-
-    Mix_HookMusic(&Decode, s_soundMusic);
-
-    return true;
-}
-
-void SDLCALL SoundMusic::Decode(void* self, Uint8* stream, int len)
-{
-    SoundMusic* data = (SoundMusic*)self;
-    Sound_Sample* sample = data->m_sample;
-    int bw = 0; /* bytes written to stream this time through the callback */
-
-    while (bw < len)
-    {
-        int cpysize;  /* bytes to copy on this iteration of the loop. */
-
-        if (data->m_decoded_bytes == 0) /* need more data! */
-        {
-            /* if there wasn't previously an error or EOF, read more. */
-            if (((sample->flags & SOUND_SAMPLEFLAG_ERROR) == 0) &&
-                ((sample->flags & SOUND_SAMPLEFLAG_EOF) == 0))
-            {
-                data->m_decoded_bytes = Sound_Decode(sample);
-                data->m_decoded = static_cast<Uint8*>(sample->buffer);
-            } /* if */
-
-            if (data->m_decoded_bytes == 0)
-            {
-                /* ...there isn't any more data to read! */
-                SDL_memset(stream + bw, '\0', len - bw);  /* write silence. */
-                data->m_done = true;
-                return;  /* we're done playback, one way or another. */
-            } /* if */
-        } /* if */
-
-        /* we have data decoded and ready to write to the device... */
-        cpysize = len - bw;  /* len - bw == amount device still wants. */
-        if (cpysize > data->m_decoded_bytes)
-            cpysize = data->m_decoded_bytes;  /* clamp to what we have left. */
-
-        /* if it's 0, next iteration will decode more or decide we're done. */
-        if (cpysize > 0)
-        {
-            /* write this iteration's data to the device. */
-            SDL_memcpy(stream + bw, (Uint8*)data->m_decoded, cpysize);
-
-            /* update state for next iteration or callback */
-            bw += cpysize;
-            data->m_decoded += cpysize;
-            data->m_decoded_bytes -= cpysize;
-        } /* if */
-    } /* while */
-}
-
-SoundMusic::~SoundMusic()
-{
-    if (m_sample) {
-        Sound_FreeSample(m_sample);
-        m_sample = NULL;
-    }
-
-    if (m_buffer) {
-        delete[] m_buffer;
-        m_buffer = NULL;
-    }
-}
-
-SoundChunk* SoundChunk::Create(unsigned char* buffer, size_t length, const char* ext_hint)
-{
-    int freq;
-    Uint16 format;
-    int channels;
-    Mix_QuerySpec(&freq, &format, &channels);
-    Sound_AudioInfo info;
-    info.channels = channels;
-    info.format = format;
-    info.rate = freq;
-    Sound_Sample* sample = Sound_NewSampleFromMem(buffer, length, ext_hint, &info, 1024 * 1024);
-    Sound_DecodeAll(sample);
-
-    if ((NULL == sample) || (sample->flags == SOUND_SAMPLEFLAG_ERROR))
-    {
-        Sound_FreeSample(sample);
-        delete[] buffer;
-        return NULL;
-    }
-
-    SoundChunk* soundChunk = new SoundChunk();
-    soundChunk->m_sample = sample;
-    soundChunk->m_chunk.abuf = static_cast<Uint8*>(sample->buffer);
-    soundChunk->m_chunk.alen = sample->buffer_size;
-    soundChunk->m_chunk.volume = 100;
-    soundChunk->m_chunk.allocated = 0;
-    soundChunk->m_buffer = buffer;
-    return soundChunk;
-}
-
-SoundChunk::~SoundChunk()
-{
-    if (m_sample) {
-        Sound_FreeSample(m_sample);
-    }
-
-    if (m_buffer) delete[] m_buffer;
-}
 
 int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag, int channel)
 {
+    printf("%s\n", filename);
+
     if ( !audio_open_flag ) return SOUND_NONE;
 
     long length = script_h.cBR->getFileLength( filename );
@@ -277,96 +145,129 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
             return SOUND_NONE;
     }
 
-    unsigned char *buffer = new(std::nothrow) unsigned char[length];
-    if (buffer == NULL) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-                    "failed to load sound file [%s] (%lu bytes)",
-                    filename, length);
-        errorAndCont( script_h.errbuf, "unable to allocate buffer", "Memory Issue" );
-        return SOUND_NONE;
-    }
-    script_h.cBR->getFile( filename, buffer );
-
-    // if (format & SOUND_OGG) should be Mix_Chunk,
-    // else should be Mix_Music/Mix_HookMusic
-    if (format & (SOUND_OGG | SOUND_OGG_STREAMING)){
-        if (format & SOUND_OGG) {
-            SoundChunk *soundChunk = SoundChunk::Create(buffer, length, ".OGG");
-            if (soundChunk == NULL)
-            {
-                fprintf(stderr, "Issue loading ogg file: %s\n", SDL_GetError());
-                return SOUND_OTHER;
-            }
-
-            return playWave(soundChunk, format, loop_flag, channel) == 0 ? SOUND_OGG : SOUND_OTHER;
-        }
-
-        if (!SoundMusic::Start(this, buffer, length, ".mp3"))
-        {
-            fprintf(stderr, "Issue loading mp3 file: %s\n", SDL_GetError());
-            return SOUND_OTHER;
-        }
-
-        return SOUND_SEQMUSIC;
-    }
+    sound_buffer.resize(length);
+    script_h.cBR->getFile(filename, sound_buffer.data());
+    SDL_RWops* reader = SDL_RWFromMem(sound_buffer.data(), sound_buffer.size());
+    Mix_MusicType type = detect_music_type(reader);
 
     /* check for WMA (i.e. ASF header format) */
-    if ( IS_ASF_HDR(buffer) ){
+    if (IS_ASF_HDR(sound_buffer.data())) {
         snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-        "sound file '%s' is in WMA format, skipping", filename);
+            "sound file '%s' is in WMA format, skipping", filename);
         errorAndCont(script_h.errbuf);
-        delete[] buffer;
         return SOUND_OTHER;
     }
-
     /* check for AVI header format */
-    if ( IS_AVI_HDR(buffer) ){
+    else if (IS_AVI_HDR(sound_buffer.data())) {
         snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
-        "sound file '%s' is in AVI format, skipping", filename);
+            "sound file '%s' is in AVI format, skipping", filename);
         errorAndCont(script_h.errbuf);
-        delete[] buffer;
         return SOUND_OTHER;
     }
-
-    // Should be Mix_Chunk,
-    if (format & SOUND_WAVE){
-        SoundChunk *soundChunk = SoundChunk::Create(buffer, length, ".wav");
-        if (soundChunk == NULL)
+    /* check for OGG */
+    else if ((type == MUS_OGG) && (format & (SOUND_OGG | SOUND_OGG_STREAMING))) {
+        Mix_Chunk* chunk = Mix_LoadWAV_RW(reader, SDL_TRUE);
+        if (chunk == NULL)
         {
-            fprintf(stderr, "Issue loading wave file: %s\n", SDL_GetError());
+            fprintf(stderr, "Issue loading ogg file: %s\n", SDL_GetError());
             return SOUND_OTHER;
         }
 
-        return playWave(soundChunk, format, loop_flag, channel) == 0 ? SOUND_WAVE : SOUND_OTHER;
+        return playWave(chunk, format, loop_flag, channel) == 0 ? SOUND_OGG : SOUND_OTHER;
     }
-
-    // Should be streaming (Mix_Music/Mix_HookMusic)
-    if ((format & SOUND_MP3) &&
-        !(IS_MIDI_HDR(buffer) && (format & SOUND_SEQMUSIC))){ //bypass MIDIs
-        if (!SoundMusic::Start(this, buffer, length, ".mp3"))
+    /* check for MP3 */
+    else if ((format & SOUND_MP3) &&
+        !(IS_MIDI_HDR(sound_buffer.data()) && (format & SOUND_SEQMUSIC))) { //bypass MIDIs
+        music_info = Mix_LoadMUSType_RW(reader, MUS_MP3, SDL_TRUE);
+        if (music_info == NULL)
         {
             fprintf(stderr, "Issue loading mp3 file: %s\n", SDL_GetError());
             return SOUND_OTHER;
         }
 
-        return SOUND_SEQMUSIC;
+        Mix_HaltMusic();
+        int ret = Mix_PlayMusic(music_info, loop_flag) == 0 ? SOUND_MP3 : SOUND_OTHER;
+        Mix_VolumeMusic(calculateVolume(music_volume));
+        return ret;
     }
-
-    // Should be streaming (Mix_Music/Mix_HookMusic)
-    if (format & SOUND_SEQMUSIC){
-
-        SoundChunk *soundChunk = SoundChunk::Create(buffer, length, ".MID");
-        //Mix_Chunk* chunk = Mix_LoadWAV_RW(SDL_RWFromMem(buffer, length), 1);
-        if (soundChunk == NULL)
+    else if ((type == MUS_MID) && (format & SOUND_SEQMUSIC)) {
+        seqmusic_info = Mix_LoadMUSType_RW(reader, MUS_MID, SDL_TRUE);
+        if (seqmusic_info == NULL)
         {
-            fprintf(stderr, "Issue loading Midi file: %s\n", SDL_GetError());
+            fprintf(stderr, "Issue loading midi file: %s\n", SDL_GetError());
             return SOUND_OTHER;
         }
 
-        return playWave(soundChunk, format, loop_flag, channel) == 0 ? SOUND_SEQMUSIC : SOUND_OTHER;
+        int seqmusic_looping = loop_flag ? -1 : 0;
+        Mix_HaltMusic();
+        int ret = Mix_PlayMusic(seqmusic_info, seqmusic_looping) == 0 ? SOUND_SEQMUSIC : SOUND_OTHER;
+        Mix_VolumeMusic(calculateVolume(music_volume));
+        return ret;
     }
+    else if (format & SOUND_WAVE) {
+        if (strncmp((char*)sound_buffer.data(), "RIFF", 4) != 0) {
+            // bad (encrypted?) header; need to recreate
+            // assumes the first 128 bytes are bad (encrypted)
+            // _and_ that the file contains uncompressed PCM data
+            char* fmtname = new char[strlen(filename) + strlen(".fmt") + 1];
+            sprintf(fmtname, "%s.fmt", filename);
+            unsigned int fmtlen = script_h.cBR->getFileLength(fmtname);
+            if (fmtlen >= 8) {
+                // a file called filename + ".fmt" exists, of appropriate size;
+                // read fmt info
+                unsigned char* buffer2 = new unsigned char[fmtlen];
+                script_h.cBR->getFile(fmtname, buffer2);
 
-    delete[] buffer;
+                int channels, bits;
+                unsigned long rate = 0, data_length = 0;
+
+                channels = buffer2[0];
+                for (int i = 5; i > 1; i--) {
+                    rate = (rate << 8) + buffer2[i];
+                }
+                bits = buffer2[6];
+                if (fmtlen >= 12) {
+                    // read the data_length
+                    for (int i = 11; i > 7; i--) {
+                        data_length = (data_length << 8) + buffer2[i];
+                    }
+                }
+                else {
+                    // no data_length provided, fake it from the buffer length
+                    data_length = length - sizeof(WAVE_HEADER) - sizeof(WAVE_DATA_HEADER);
+                }
+                unsigned char fill = 0;
+                if (bits == 8) fill = 128;
+                for (int i = 0; (i < 128 && i < length); i++) {
+                    //clear the first 128 bytes (encryption noise)
+                    sound_buffer[i] = fill;
+                }
+                if (fmtlen > 12) {
+                    setupWaveHeader(sound_buffer.data(), channels, bits, rate, data_length,
+                        fmtlen - 12, buffer2 + 12);
+                }
+                else {
+                    setupWaveHeader(sound_buffer.data(), channels, bits, rate, data_length);
+                }
+                if ((bits == 8) && (fmtlen < 12)) {
+                    //hack: clear likely "pad bytes" at the end of the buffer
+                    //      (only on 8-bit samples when the fmt file doesn't
+                    //      include the data length)
+                    int i = 1;
+                    while (i < 5 && sound_buffer[length - i] == 0) {
+                        sound_buffer[length - i] = fill;
+                        i++;
+                    }
+                }
+                delete[] buffer2;
+            }
+            delete[] fmtname;
+        }
+        Mix_Chunk* chunk = Mix_LoadWAV_RW(reader, 1);
+        if (playWave(chunk, format, loop_flag, channel) == 0) {
+            return SOUND_WAVE;
+        }
+    }
 
     return SOUND_OTHER;
 }
@@ -400,30 +301,37 @@ void ONScripterLabel::playCDAudio()
     }
 }
 
-int ONScripterLabel::playWave(SoundChunk *soundChunk, int format, bool loop_flag, int channel)
+int ONScripterLabel::calculateVolume(int volume /* between [0, 100]*/)
 {
-    Mix_Pause( channel );
-    if ( wave_sample[channel] ) {
-      Mix_ChannelFinished(NULL);
-      delete wave_sample[channel];
-      wave_sample[channel] = NULL;
+    return !volume_on_flag ? 0 : volume * MIX_MAX_VOLUME / 100;
+}
+
+int ONScripterLabel::playWave(Mix_Chunk* chunk, int format, bool loop_flag, int channel)
+{
+    Mix_HaltChannel(channel);
+    if (Mix_Playing(channel) != 0) {
+        Mix_ChannelFinished(NULL);
     }
-    wave_sample[channel] = soundChunk;
+    if (wave_sample[channel]) {
+        Mix_FreeChunk(wave_sample[channel]);
+    }
 
-    if (!soundChunk) return -1;
+    wave_sample[channel] = chunk;
 
-    if      (channel < ONS_MIX_CHANNELS)
-        Mix_Volume( channel, !volume_on_flag? 0 : channelvolumes[channel] * 128 / 100 );
+    if (!chunk) return -1;
+
+    if (channel < ONS_MIX_CHANNELS)
+        Mix_Volume(channel, calculateVolume(channelvolumes[channel]));
     else if (channel == MIX_CLICKVOICE_CHANNEL)
-        Mix_Volume( channel, !volume_on_flag? 0 : se_volume * 128 / 100 );
+        Mix_Volume(channel, calculateVolume(se_volume));
     else if (channel == MIX_BGM_CHANNEL)
-        Mix_Volume( channel, !volume_on_flag? 0 : music_volume * 128 / 100 );
+        Mix_Volume(channel, calculateVolume(music_volume));
     else
-        Mix_Volume( channel, !volume_on_flag? 0 : se_volume * 128 / 100 );
+        Mix_Volume(channel, calculateVolume(se_volume));
 
     if (!(format & SOUND_PRELOAD)) {
         Mix_ChannelFinished(waveCallback);
-        Mix_PlayChannel(channel, wave_sample[channel]->GetChunk(), loop_flag ? -1 : 0);
+        Mix_PlayChannel(channel, wave_sample[channel], loop_flag ? -1 : 0);
     }
 
     return 0;
@@ -475,7 +383,7 @@ int ONScripterLabel::playSequencedMusic(bool loop_flag)
     if (seqmusic_cmd) seqmusic_looping = 0;
 #endif
 
-    Mix_VolumeMusic(!volume_on_flag? 0 : music_volume);
+    Mix_VolumeMusic(calculateVolume(music_volume));
 #if defined(MACOSX) //insani
     // Emulate looping on MacOS ourselves to work around bug in SDL_Mixer
     seqmusic_looping = 0;
@@ -504,15 +412,16 @@ int ONScripterLabel::setCurMusicVolume( int volume )
 {
     if (!audio_open_flag) return 0;
 
+    printf("Music Volume Change: %d\n", volume);
+
     if (music_struct.voice_sample && *(music_struct.voice_sample))
         volume /= 2;
     if (Mix_GetMusicHookData() != NULL) { // for streamed MP3 & OGG
-        if ( mp3_sample ) Mix_Volume(mp3_channel, !volume_on_flag ? 0 : volume);
-        else music_struct.volume = volume; // ogg
+        music_struct.volume = volume; // ogg
     } else if (Mix_Playing(MIX_BGM_CHANNEL) == 1) { // wave
-        Mix_Volume( MIX_BGM_CHANNEL, !volume_on_flag? 0 : volume * 128 / 100 );
+        Mix_Volume( MIX_BGM_CHANNEL, calculateVolume(volume) );
     } else if (Mix_PlayingMusic() == 1) { // midi
-        Mix_VolumeMusic( !volume_on_flag? 0 : volume * 128 / 100 );
+        Mix_VolumeMusic( calculateVolume(volume) );
     }
 
     return 0;
@@ -526,11 +435,14 @@ int ONScripterLabel::setVolumeMute( bool do_mute )
     if (music_struct.voice_sample && *(music_struct.voice_sample)) //bgmdown
         music_vol /= 2;
     if (Mix_GetMusicHookData() != NULL) { // for streamed MP3 & OGG
-        if ( mp3_sample ) Mix_Volume(mp3_channel, do_mute ? 0 : music_vol); // mp3
 #ifdef USE_AVIFILE
-        if ( async_movie ) async_movie->setVolume( do_mute? 0 : music_vol ); // async mpeg
+        if ( async_movie ) 
+            async_movie->setVolume( do_mute? 0 : music_vol ); // async mpeg
+        else
 #endif
-        else music_struct.is_mute = do_mute; // ogg
+        {
+            music_struct.is_mute = do_mute; // ogg
+        }
     } else if (Mix_Playing(MIX_BGM_CHANNEL) == 1) { // wave
         Mix_Volume( MIX_BGM_CHANNEL, do_mute? 0 : music_vol * 128 / 100 );
     } else if (Mix_PlayingMusic() == 1) { // midi
@@ -694,15 +606,9 @@ void ONScripterLabel::stopBGM( bool continue_flag )
             SDL_CDStop( cdrom_info );
     }
 
-    if ( mp3_sample ){
-        Mix_Pause(MIX_BGM_CHANNEL);
-        Mix_ChannelFinished(NULL);
-        Mix_FreeChunk(mp3_sample);
-        mp3_sample = NULL;
-    }
-
     if ( wave_sample[MIX_BGM_CHANNEL] ){
         Mix_Pause( MIX_BGM_CHANNEL );
+        //Mix_HaltChannel( MIX_BGM_CHANNEL );
         Mix_ChannelFinished(NULL);
         delete wave_sample[MIX_BGM_CHANNEL];
         wave_sample[MIX_BGM_CHANNEL] = NULL;
@@ -711,6 +617,12 @@ void ONScripterLabel::stopBGM( bool continue_flag )
     if ( !continue_flag ){
         setStr( &music_file_name, NULL );
         music_play_loop_flag = false;
+    }
+
+    if (music_info) {
+        Mix_HaltMusic();
+        Mix_FreeMusic(music_info);
+        music_info = NULL;
     }
 
     if ( seqmusic_info ){
@@ -797,4 +709,143 @@ void ONScripterLabel::playClickVoice()
             playSound(clickvoice_file_name[CLICKVOICE_NORMAL],
                       SOUND_WAVE|SOUND_OGG, false, MIX_CLICKVOICE_CHANNEL);
     }
+}
+
+void setupWaveHeader(unsigned char* buffer, int channels, int bits,
+    unsigned long rate, unsigned long data_length,
+    unsigned int extra_bytes, unsigned char* extra_ptr)
+{
+    memcpy(header.chunk_riff, "RIFF", 4);
+    unsigned long riff_length = sizeof(WAVE_HEADER) + sizeof(WAVE_DATA_HEADER) +
+        data_length + extra_bytes - 8;
+    header.riff_length[0] = riff_length & 0xff;
+    header.riff_length[1] = (riff_length >> 8) & 0xff;
+    header.riff_length[2] = (riff_length >> 16) & 0xff;
+    header.riff_length[3] = (riff_length >> 24) & 0xff;
+    memcpy(header.fmt_id, "WAVEfmt ", 8);
+    header.fmt_size[0] = 0x10 + extra_bytes;
+    header.fmt_size[1] = header.fmt_size[2] = header.fmt_size[3] = 0;
+    header.data_fmt[0] = 1; header.data_fmt[1] = 0; // PCM format
+    header.channels[0] = channels; header.channels[1] = 0;
+    header.frequency[0] = rate & 0xff;
+    header.frequency[1] = (rate >> 8) & 0xff;
+    header.frequency[2] = (rate >> 16) & 0xff;
+    header.frequency[3] = (rate >> 24) & 0xff;
+
+    int sample_byte_size = channels * bits / 8;
+    unsigned long byte_size = sample_byte_size * rate;
+    header.byte_size[0] = byte_size & 0xff;
+    header.byte_size[1] = (byte_size >> 8) & 0xff;
+    header.byte_size[2] = (byte_size >> 16) & 0xff;
+    header.byte_size[3] = (byte_size >> 24) & 0xff;
+    header.sample_byte_size[0] = sample_byte_size;
+    header.sample_byte_size[1] = 0;
+    header.sample_bit_size[0] = bits;
+    header.sample_bit_size[1] = 0;
+
+    memcpy(data_header.chunk_id, "data", 4);
+    data_header.data_length[0] = (char)(data_length & 0xff);
+    data_header.data_length[1] = (char)((data_length >> 8) & 0xff);
+    data_header.data_length[2] = (char)((data_length >> 16) & 0xff);
+    data_header.data_length[3] = (char)((data_length >> 24) & 0xff);
+
+    memcpy(buffer, &header, sizeof(header));
+    if (extra_bytes > 0) {
+        if (extra_ptr != NULL)
+            memcpy(buffer + sizeof(header), extra_ptr, extra_bytes);
+        else
+            memset(buffer + sizeof(header), 0, extra_bytes);
+    }
+    memcpy(buffer + sizeof(header) + extra_bytes, &data_header, sizeof(data_header));
+}
+
+Mix_MusicType detect_music_type(SDL_RWops* src)
+{
+    Uint8 magic[12];
+
+    if (SDL_RWread(src, magic, 1, 12) != 12) {
+        Mix_SetError("Couldn't read first 12 bytes of audio data");
+        return MUS_NONE;
+    }
+    SDL_RWseek(src, -12, RW_SEEK_CUR);
+
+    /* WAVE files have the magic four bytes "RIFF"
+       AIFF files have the magic 12 bytes "FORM" XXXX "AIFF" */
+    if (((SDL_memcmp(magic, "RIFF", 4) == 0) && (SDL_memcmp((magic + 8), "WAVE", 4) == 0)) ||
+        (SDL_memcmp(magic, "FORM", 4) == 0)) {
+        return MUS_WAV;
+    }
+
+    /* Ogg Vorbis files have the magic four bytes "OggS" */
+    if (SDL_memcmp(magic, "OggS", 4) == 0) {
+        SDL_RWseek(src, 28, RW_SEEK_CUR);
+        SDL_RWread(src, magic, 1, 8);
+        SDL_RWseek(src, -36, RW_SEEK_CUR);
+        if (SDL_memcmp(magic, "OpusHead", 8) == 0) {
+            return MUS_OPUS;
+        }
+        if (magic[0] == 0x7F && SDL_memcmp(magic + 1, "FLAC", 4) == 0) {
+            return MUS_FLAC;
+        }
+        return MUS_OGG;
+    }
+
+    /* FLAC files have the magic four bytes "fLaC" */
+    if (SDL_memcmp(magic, "fLaC", 4) == 0) {
+        return MUS_FLAC;
+    }
+
+    /* WavPack files have the magic four bytes "wvpk" */
+    if (SDL_memcmp(magic, "wvpk", 4) == 0) {
+        return MUS_WAVPACK;
+    }
+
+    /* MIDI files have the magic four bytes "MThd" */
+    if (SDL_memcmp(magic, "MThd", 4) == 0) {
+        return MUS_MID;
+    }
+
+    /* RIFF MIDI files have the magic four bytes "RIFF" and then "RMID" */
+    if ((SDL_memcmp(magic, "RIFF", 4) == 0) && (SDL_memcmp(magic + 8, "RMID", 4) == 0)) {
+        return MUS_MID;
+    }
+
+    if (SDL_memcmp(magic, "ID3", 3) == 0 ||
+        /* see: https://bugzilla.libsdl.org/show_bug.cgi?id=5322 */
+        (magic[0] == 0xFF && (magic[1] & 0xE6) == 0xE2)) {
+        return MUS_MP3;
+    }
+
+    /* GME Specific files */
+    if (SDL_memcmp(magic, "ZXAY", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "GBS\x01", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "GYMX", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "HESM", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "KSCC", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "KSSX", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "NESM", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "NSFE", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "SAP\x0D", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "SNES", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "Vgm ", 4) == 0)
+        return MUS_GME;
+    if (SDL_memcmp(magic, "\x1f\x8b", 2) == 0)
+        return MUS_GME;
+
+    /* Assume MOD format.
+     *
+     * Apparently there is no way to check if the file is really a MOD,
+     * or there are too many formats supported by libmodplug or libxmp.
+     * The mod library does this check by itself. */
+    return MUS_MOD;
 }

@@ -403,13 +403,13 @@ void ONScripterLabel::SetSfxVolume(int volume)
     {
         channelvolumes[i] = volume;
         if (wave_sample[i])
-            Mix_Volume(i, !volume_on_flag ? 0 : se_volume * 128 / 100);
+            Mix_Volume(i, calculateVolume(se_volume));
     }
     if (wave_sample[MIX_LOOPBGM_CHANNEL0]) {
-        Mix_Volume(MIX_LOOPBGM_CHANNEL0, !volume_on_flag ? 0 : se_volume * 128 / 100);
+        Mix_Volume(MIX_LOOPBGM_CHANNEL0, calculateVolume(se_volume));
     }
     if (wave_sample[MIX_LOOPBGM_CHANNEL1]) {
-        Mix_Volume(MIX_LOOPBGM_CHANNEL1, !volume_on_flag ? 0 : se_volume * 128 / 100);
+        Mix_Volume(MIX_LOOPBGM_CHANNEL1, calculateVolume(se_volume));
     }
 }
 
@@ -420,7 +420,7 @@ void ONScripterLabel::SetVoiceVolume(int volume)
 
     // Voice Volume
     if (wave_sample[0])
-        Mix_Volume(0, !volume_on_flag ? 0 : voice_volume * 128 / 100);
+        Mix_Volume(0, calculateVolume(voice_volume));
 }
 
 
@@ -433,15 +433,17 @@ void ONScripterLabel::initSDL()
     /* ---------------------------------------- */
     /* Initialize SDL */
 
+    SDL_SetHint("SDL_AUDIODRIVER", "directsound");
+
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         errorAndExit("Couldn't initialize SDL", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
-    if (0 == Sound_Init()) {
-        errorAndExit("Couldn't initialize SDL_Sound", Sound_GetError(), "Init Error", true);
-    }
+    SDL_SetHint("SDL_NATIVE_MUSIC", "1");
+
+    
 
     if (cdaudio_flag && SDL_CDROMInit() < 0) {
         errorAndExit("Couldn't initialize CD-ROM", SDL_GetError(), "Init Error", true);
@@ -474,10 +476,11 @@ void ONScripterLabel::initSDL()
         fprintf(stderr, "SDL_Mixer initialization issue: %s", SDL_GetError());
     }
 
-    std::string soundFontPath = SDL_GetBasePath();
-    soundFontPath += "/GeneralUser_GS _1.471.sf2";
 
-    Mix_SetSoundFonts(soundFontPath.c_str());
+    // Only do this for non-native MIDI, also make this configurable
+    //std::string soundFontPath = SDL_GetBasePath();
+    //soundFontPath += "/GeneralUser_GS_1.471.sf2";
+    //Mix_SetSoundFonts(soundFontPath.c_str());
 
 #if 0
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
@@ -494,6 +497,8 @@ void ONScripterLabel::initSDL()
     {
         fprintf(stdout, "\tAudioDriver: %s\n", SDL_GetAudioDriver(i));
     }
+
+    fprintf(stdout, "Chosen AudioDriver: %s\n", SDL_GetCurrentAudioDriver());
 
     // We're about to resize up to roughly the display size, we should try to fill as much of it as possible, without
     // pushing the top window frame offscreen.
@@ -838,7 +843,7 @@ ONScripterLabel::ONScripterLabel(int argc, char** argv)
   shelter_select_link(NULL), default_cdrom_drive(NULL),
   wave_file_name(NULL), seqmusic_file_name(NULL), seqmusic_info(NULL),
   cdrom_info(NULL),
-  music_file_name(NULL), mp3_sample(NULL),
+  music_file_name(NULL),
   music_info(NULL), music_cmd(NULL), seqmusic_cmd(NULL),
   async_movie(NULL),
   text_font(NULL), cached_page(NULL), system_menu_title(NULL),
@@ -1921,7 +1926,7 @@ bool intersectRects( SDL_Rect &result, SDL_Rect rect1, SDL_Rect rect2) {
 
 void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
-    printf("\t\tRefresh Mode %d\n", refresh_mode);
+    //printf("\t\tRefresh Mode %d\n", refresh_mode);
 
     if ( direct_flag ){
         flushDirect( *rect, refresh_mode );

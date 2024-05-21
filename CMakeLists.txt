@@ -539,6 +539,8 @@ if(WIN32)
     target_sources(onscripter_en
     PRIVATE
         onscripter.rc
+        Win32Window.cpp
+        Win32Window.h
     )
 
     target_link_options(onscripter_en 

@@ -1201,6 +1201,9 @@ private:
     friend QtBasicWindow;
 #endif
 
+#ifdef WIN32
+    friend Win32Window;
+#endif
 
 #ifdef USE_WX_WINDOW
     friend WxWindow;

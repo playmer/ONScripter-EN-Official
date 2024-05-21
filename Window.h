@@ -198,7 +198,10 @@ class WxWindow;
 Window* CreateWxWindow(ONScripterLabel* onscripter, int w, int h, int x, int y);
 #endif
 
-
+#ifdef WIN32
+class Win32Window;
+Window* CreateWin32Window(ONScripterLabel* onscripter, int w, int h, int x, int y);
+#endif
 
 #ifdef USE_IMGUIWINDOW
 class ImguiWindow;

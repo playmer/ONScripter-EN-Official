@@ -1,6 +1,6 @@
 ## Windows Build
 
-```batch
+```powershell
 git clone --recurse-submodules https://github.com/microsoft/vcpkg.git
 git clone https://github.com/playmer/onscriper-en.git
 cd onscripter-en

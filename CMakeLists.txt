@@ -438,11 +438,13 @@ endif()
 
 #########
 # onScripter_en settings and libraries
-add_custom_command(TARGET onscripter_en POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/resources/GeneralUser_GS _1.471.sf2"
-        $<TARGET_FILE_DIR:onscripter_en>
-)
+
+# TODO: Make this required if we don't have Native MIDI availible.
+#add_custom_command(TARGET onscripter_en POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#        "${CMAKE_CURRENT_SOURCE_DIR}/resources/GeneralUser_GS _1.471.sf2"
+#        $<TARGET_FILE_DIR:onscripter_en>
+#)
 
 target_link_libraries(onscripter_en
 PRIVATE

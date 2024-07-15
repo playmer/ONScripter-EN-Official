@@ -16,23 +16,12 @@ while(NOT ${i} STREQUAL ${CMAKE_ARGC})
     message(STATUS "File name to blit ${CMAKE_ARGV${i}}")
 
     file(READ ${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_ARGV${i}} currentFileData HEX)
-    string(REGEX MATCHALL "([A-Fa-f0-9][A-Fa-f0-9])" currentFileDataList ${currentFileData})
+    
+    string(REPEAT "[0-9a-f]" 32 column_pattern)
+    string(REGEX REPLACE "(${column_pattern})" "\\1\n\t" content "${currentFileData}")
+    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1, " hexData ${content})
 
-    set(generatedFile "${generatedFile}\nstatic const unsigned char resource_${i}_buffer[] = {\n\t")
-
-    set(elementCounter 0)
-    foreach(byteHex IN LISTS currentFileDataList)
-        math(EXPR byteDecimal "0x${byteHex}" OUTPUT_FORMAT DECIMAL)
-        string(APPEND generatedFile "${byteDecimal}, ")
-
-        math(EXPR elementCounter "${elementCounter}+1")
-        if (elementCounter GREATER 16)
-            set(generatedFile "${generatedFile} \n\t")
-            set(elementCounter 0)
-        endif()
-    endforeach()
-
-    set(generatedFile "${generatedFile}\n}\n")
+    set(generatedFile "${generatedFile}\nstatic const unsigned char resource_${i}_buffer[] = {\n\t${hexData}\n}\n")
     message(STATUS "${CMAKE_ARGV${i}}")
     math(EXPR i "${i}+1")
 endwhile()

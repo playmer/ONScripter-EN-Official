@@ -511,8 +511,8 @@ void ONScripterLabel::initSDL()
 #ifdef MACOSX
     m_window = CreateQtBasicWindow(this, 800, 600, 50, 50);
 #else
-    //m_window = CreateQtWindow(this, 800, 600, 50, 50);
-    m_window = CreateWin32Window(this, 800, 600, 50, 50);
+    m_window = CreateQtWindow(this, 800, 600, 50, 50);
+    //m_window = CreateWin32Window(this, 800, 600, 50, 50);
     //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
 #endif
 #elif USE_WX_WINDOW

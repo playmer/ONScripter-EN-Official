@@ -31,8 +31,8 @@
       "features": [ "libjpeg-turbo" ]
     },
     {
-      "name": "sdl2-mixer",
-      "features": [ "mpg123" ]
+      "name": "sdl2-mixer-ext",
+      "features": [ "libvorbis", "mpg123", "nativemidi" ]
     },
     "sdl2-ttf",
     "zlib"

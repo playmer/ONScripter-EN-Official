@@ -112,7 +112,7 @@ find_package(PNG REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2_image CONFIG REQUIRED)
-find_package(SDL2_mixer CONFIG REQUIRED)
+find_package(SDL2_mixer_ext CONFIG REQUIRED)
 find_package(SDL2_ttf CONFIG REQUIRED)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -159,20 +159,21 @@ endif()
 # Things get complicated on Apple under the XCode generator for example, these docs will help:
 # https://cmake.org/cmake/help/latest/variable/CMAKE_CROSSCOMPILING.html
 if (ANDROID OR EMSCRIPTEN OR CMAKE_CROSSCOMPILING)
-    find_program(TOOL_POWERSHELL NAMES powershell powershell.exe)
-    find_program(TOOL_PYTHON NAMES python python3)
-
-    message(STATUS "Python: ${TOOL_PYTHON}")
-    message(STATUS "Powershell: ${TOOL_POWERSHELL}")
-
-    if(TOOL_PYTHON)
-        set(EMBED_COMMAND ${TOOL_PYTHON} cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
-    elseif (TOOL_POWERSHELL)
-        set(EMBED_COMMAND ${TOOL_POWERSHELL} cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
-    else()
-        message(STATUS "We're cross compiling, and couldn't find Powershell or Python 3, we're going to use CMake to generate the Resources file, but it'll be prohibitively slow (~15 minutes). Consider installing one of the above.")
-        set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
-    endif()
+#    find_program(TOOL_POWERSHELL NAMES powershell powershell.exe)
+#    find_program(TOOL_PYTHON NAMES python python3)
+#
+#    message(STATUS "Python: ${TOOL_PYTHON}")
+#    message(STATUS "Powershell: ${TOOL_POWERSHELL}")
+#
+#    if(TOOL_PYTHON)
+#        set(EMBED_COMMAND ${TOOL_PYTHON} cmake/ResourceGenerator.py ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+#    elseif (TOOL_POWERSHELL)
+#        set(EMBED_COMMAND ${TOOL_POWERSHELL} cmake/ResourceGenerator.ps1 ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+#    else()
+#        message(STATUS "We're cross compiling, and couldn't find Powershell or Python 3, we're going to use CMake to generate the Resources file, but it'll be prohibitively slow (~15 minutes). Consider installing one of the above.")
+#        set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
+#    endif()
+    set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico gamecontrollerdb.txt)
     
     set(ADDITIONAL_EMBED_DEPENDENCIES "")
 else()
@@ -229,7 +230,7 @@ add_subdirectory(SDLHelper_CD)
 ###############
 # onscripter-en Tools
 if (NOT ANDROID AND NOT EMSCRIPTEN)
-    add_subdirectory(tools)
+    #add_subdirectory(tools)
 endif()
 
 ###############
@@ -451,7 +452,7 @@ PRIVATE
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
-    $<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
+    $<IF:$<TARGET_EXISTS:SDL2_mixer_ext::SDL2_mixer_ext>,SDL2_mixer_ext::SDL2_mixer_ext,SDL2_mixer_ext::SDL2_mixer_ext_Static>
     $<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static>
     SDLHelper_CD
     #$<IF:$<TARGET_EXISTS:SDL2_sound::SDL2_sound>,SDL2_sound::SDL2_sound,SDL2_sound::SDL2_sound-static>

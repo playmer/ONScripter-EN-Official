@@ -51,7 +51,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
-#include <SDL_mixer.h>
+#include <SDL_mixer_ext.h>
 #include "SDL_cdrom.h"
 
 #include "SDL2/SDL_mutex.h"

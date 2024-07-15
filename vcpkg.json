@@ -1,0 +1,40 @@
+{
+  "name": "onscripter-en",
+  "version-string": "0.1.0-dev",
+  "dependencies": [
+    "bzip2",
+    {
+      "name": "dirent",
+      "platform": "(windows)&(!mingw)"
+    },
+    {
+      "name": "ffmpeg",
+      "features": [ "avcodec", "avdevice", "avfilter", "avformat" ],
+      "platform": "(windows|osx|ios|linux)"
+    },
+    "libjpeg-turbo",
+    "libass",
+    "libpng",
+    "lua",
+    {
+      "name": "pkgconf",
+      "platform": "(windows)&(!mingw)"
+    },
+    "qtbase",
+    {
+      "name": "sdl2",
+      "features": [ "vulkan", "wayland", "x11" ],
+      "platform": "linux"
+    },
+    {
+      "name": "sdl2-image",
+      "features": [ "libjpeg-turbo" ]
+    },
+    {
+      "name": "sdl2-mixer-ext",
+      "features": [ "libvorbis", "mpg123", "nativemidi" ]
+    },
+    "sdl2-ttf",
+    "zlib"
+  ]
+}

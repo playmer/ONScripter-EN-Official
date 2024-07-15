@@ -2,22 +2,24 @@
 // Usage: embed [input1 internalname1 input2...]
 
 #include <stdio.h>
+#include <vector>
 
 struct item {
     const char *file;
     int len;
-    item *next;
-    item(): file(0), len(0), next(0) {};
-    item(const char *f, int l): file(f), len(l), next(0) {};
-} names;
+    item(): file(0), len(0) {};
+    item(const char *f, int l): file(f), len(l) {};
+};
 
 int main(int argc, char** argv)
 {
+    std::vector<item> names;
+
     puts("// Generated file - do not edit");
     puts("");
     puts("#include <string.h>");
     puts("#include \"resources.h\"");
-    for (int i = 1, j = 1; i < argc; i += 2, ++j) {
+    for (int i = 1, j = 1; i < argc; i += 1, ++j) {
         FILE* f = fopen(argv[i], "rb");
         if (f) {
             int len = 0, c;
@@ -31,21 +33,17 @@ int main(int argc, char** argv)
             }
             fclose(f);
             puts("\n};");
-            names.next = new item(argv[i+1], len);
+            names.emplace_back(argv[i], len);
         }
     }
 
     printf("\nstatic const InternalResource resource_list[] = {");
     int i = 1;
     
-    for (item *iptr = names.next; iptr != 0; ++i) {
+    for (auto iptr = names.begin(); iptr != names.end(); ++iptr, ++i) {
         printf("\n\t{ \"%s\", resource_%d_buffer, %d },",
                iptr->file, i, iptr->len);
-        item *tmp = iptr;
-        iptr = iptr->next;
-        delete tmp;
     }
-    names.next = 0;
 
     puts("\n\t{ 0, 0, 0 }\n};");
     puts("");

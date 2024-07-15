@@ -43,19 +43,18 @@
 #ifndef __ONSCRIPTER_LABEL_H__
 #define __ONSCRIPTER_LABEL_H__
 
+#include <algorithm>
+
 #include "DirPaths.h"
 #include "ScriptParser.h"
 #include "DirtyRect.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
-#include <SDL_mixer.h>
+#include <SDL_mixer_ext.h>
+#include "SDL_cdrom.h"
 
-#ifdef MP3_MAD
-#include "MadWrapper.h"
-#else
-#include <smpeg.h>
-#endif
+#include "SDL2/SDL_mutex.h"
 
 #define DEFAULT_VIDEO_SURFACE_FLAG (SDL_SWSURFACE)
 
@@ -95,18 +94,20 @@
 #endif
 
 #define DEFAULT_WM_TITLE "ONScripter-EN"
-#define DEFAULT_WM_ICON  "Ons-en"
+#define DEFAULT_WM_ICON  "ons-en.ico"
 
 #define NUM_GLYPH_CACHE 30
 
-#define KEYPRESS_NULL ((SDLKey)(SDLK_LAST+1)) // "null" for keypress variables
+#define KEYPRESS_NULL ((SDL_Keycode)(SDLK_AUDIOFASTFORWARD+1)) // "null" for keypress variables
+
+class FFMpegWrapper;
 
 class ONScripterLabel : public ScriptParser
 {
 public:
     typedef AnimationInfo::ONSBuf ONSBuf;
 
-    ONScripterLabel();
+    ONScripterLabel(int argc, char** argv);
     ~ONScripterLabel();
 
     void executeLabel();
@@ -287,6 +288,7 @@ public:
     int isfullCommand();
     int isskipCommand();
     int isdownCommand();
+    int inputstrCommand();
     int inputCommand();
     int indentCommand();
     int humanorderCommand();
@@ -381,10 +383,25 @@ public:
     int allsp2hideCommand();
     int allsphideCommand();
     int amspCommand();
-
-    int insertmenuCommand();
-    int resetmenuCommand();
+    
     int layermessageCommand();
+
+    static void clearTimer(SDL_TimerID& timer_id);
+
+    void SetMusicVolume(int volume);
+    void SetSfxVolume(int volume);
+    void SetVoiceVolume(int volume);
+
+
+    struct FontOption {
+        std::string m_name;
+        std::vector<std::string> m_paths;
+        std::string m_availiblePath;
+        FontOption* m_fontToUse; // This will be set if we find this font, or a fallback font to use.
+        std::vector<FontOption> m_fallbackFonts;
+    };
+
+    void ChangeFont(FontOption* fontOption);
 
 protected:
     /* ---------------------------------------- */
@@ -425,12 +442,13 @@ protected:
     bool file_exists(const char *fileName);
     char* create_filepath(DirPaths archive_path, const char* filename);
 
-    SDL_keysym transKey(SDL_keysym key, bool isdown);
+    SDL_Keysym transKey(SDL_Keysym key, bool isdown);
     void variableEditMode( SDL_KeyboardEvent *event );
     bool keyDownEvent( SDL_KeyboardEvent *event );
     void keyUpEvent( SDL_KeyboardEvent *event );
     bool keyPressEvent( SDL_KeyboardEvent *event );
     bool mousePressEvent( SDL_MouseButtonEvent *event );
+    bool mouseWheelEvent( SDL_MouseWheelEvent* event);
     bool mouseMoveEvent( SDL_MouseMotionEvent *event );
     void animEvent();
     void timerEvent();
@@ -443,6 +461,20 @@ protected:
     void trapHandler();
     void initSDL();
     void openAudio(int freq=DEFAULT_AUDIO_RATE, Uint16 format=MIX_DEFAULT_FORMAT, int channels=MIX_DEFAULT_CHANNELS);
+
+    int HandleGamepadEvent(SDL_Event& event, bool had_automode, bool& ctrl_toggle);
+
+
+    //static void SmpegDisplayCallback(void* data, SMPEG_Frame* frame);
+    //SMPEG_Frame* frame;
+    //size_t frame_number = 0;
+    //SDL_mutex* frame_mutex;
+    //SDL_Texture* frame_texture;
+    //
+    //int smpeg_scale_x;
+    //int smpeg_scale_y;
+    //int smpeg_move_x;
+    //int smpeg_move_y;
 
 private:
     enum {
@@ -525,6 +557,7 @@ private:
     // Global definitions
     long internal_timer;
     bool automode_flag;
+    bool return_from_event = false;
     bool preferred_automode_time_set;
     long preferred_automode_time;
     long automode_time;
@@ -564,7 +597,7 @@ private:
     bool btndown_flag;
     bool transbtn_flag;
 
-    SDLKey last_keypress;
+    SDL_Keycode last_keypress;
 
     void quit(bool no_error=false);
 
@@ -586,11 +619,13 @@ private:
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ text_window + text_surface)
     SDL_Surface *backup_surface; // Final image w/o (text_window + text_surface) used in leaveTextDisplayMode()
     SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
+    SDL_Surface *temp_screen_surface; // Text + Select_image + Tachi image + background
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destination buffer for effect
     SDL_Surface *effect_tmp_surface; // Intermediate buffer for effect
     SDL_Surface *screenshot_surface; // Screenshot
     SDL_Surface *image_surface; // Reference for loadImage() - 32bpp
+    SDL_Cursor *cursor;
 
     unsigned char *tmp_image_buf;
     unsigned long tmp_image_buf_length;
@@ -800,7 +835,7 @@ private:
     /* Text related variables */
     AnimationInfo text_info, shelter_text_info;
     AnimationInfo sentence_font_info;
-    char *font_file;
+    const char *font_file;
     int erase_text_window_mode;
     bool text_on_flag; // suppress the effect of erase_text_window_mode
     bool draw_cursor_flag;
@@ -847,6 +882,11 @@ private:
     //float getPixelLength(const char *buf, Fontinfo *fi, bool *bold_flag, bool *italics_flag);
     // May be unnecessary, I haven't been using it so far bc I didn't realise it existed lol
     //void getNextChar(const char *buf, int offset, char *out_chars);
+
+    void ProcessFonts(std::vector<FontOption>& fonts);
+    void InitFonts();
+    const std::vector<FontOption>& GetFonts();
+    std::vector<FontOption> m_fonts;
 
     //Mion: variables & functions for special text processing
     bool *string_buffer_breaks;  // can it break before a particular offset?
@@ -957,6 +997,7 @@ private:
 
     /* ---------------------------------------- */
     /* Sound related variables */
+
     enum{
         SOUND_NONE          =  0,
         SOUND_PRELOAD       =  1,
@@ -986,10 +1027,8 @@ private:
     bool cd_play_loop_flag;
     bool music_play_loop_flag;
     bool mp3save_flag;
-    char *music_file_name;
-    unsigned char *music_buffer; // for looped music
-    long music_buffer_length;
-    SMPEG *mp3_sample;
+    std::vector<unsigned char> sound_buffer;
+    char* music_file_name;
     Uint32 mp3fade_start;
     Uint32 mp3fadeout_duration;
     Uint32 mp3fadein_duration;
@@ -998,16 +1037,16 @@ private:
 
     int channelvolumes[ONS_MIX_CHANNELS]; //insani's addition
     bool channel_preloaded[ONS_MIX_CHANNELS]; //seems we need to track this...
-    Mix_Chunk *wave_sample[ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS];
+    Mix_Chunk* wave_sample[ONS_MIX_CHANNELS + ONS_MIX_EXTRA_CHANNELS];
 
     char *music_cmd;
     char *seqmusic_cmd;
 
+    int calculateVolume(int volume /* between [0, 100]*/);
+
     int playSound(const char *filename, int format, bool loop_flag, int channel=0);
     void playCDAudio();
-    int playWave(Mix_Chunk *chunk, int format, bool loop_flag, int channel);
-    int playMP3();
-    int playOGG(int format, unsigned char *buffer, long length, bool loop_flag, int channel);
+    int playWave(Mix_Chunk*chunk, int format, bool loop_flag, int channel);
     int playExternalMusic(bool loop_flag);
     int playSequencedMusic(bool loop_flag);
     // Mion: for music status and fades
@@ -1023,20 +1062,21 @@ private:
     void stopDWAVE( int channel );
     void stopAllDWAVE();
     void playClickVoice();
-    OVInfo *openOggVorbis(unsigned char *buf, long len, int &channels, int &rate);
-    int  closeOggVorbis(OVInfo *ovi);
 
     /* ---------------------------------------- */
     /* Movie related variables */
-    SMPEG *async_movie;
-    unsigned char *movie_buffer;
-    SDL_Surface *async_movie_surface;
+    //SMPEG *async_movie;
+    //unsigned char *movie_buffer;
+    //SDL_Surface *async_movie_surface;
     SDL_Rect async_movie_rect;
-    SDL_Rect *surround_rects;
+    FFMpegWrapper* async_movie = NULL;
+    SDL_Rect surround_rects[4];
     bool movie_click_flag, movie_loop_flag;
     int playMPEG( const char *filename, bool async_flag, bool use_pos=false, int xpos=0, int ypos=0, int width=0, int height=0 );
     int playAVI( const char *filename, bool click_flag );
-    void stopMovie(SMPEG *mpeg);
+
+    static Uint32 SDLCALL silentmovieCallback(Uint32 interval, void* param);
+    //void stopMovie(SMPEG *mpeg);
 
     /* ---------------------------------------- */
     /* Text event related variables */
@@ -1148,6 +1188,30 @@ private:
     bool executeSystemYesNo( int caller, int file_no=0 );
     void setupLookbackButton();
     void executeSystemLookback();
+
+    int argc;
+    char** argv;
+
+    friend FFMpegWrapper;
+    friend Window;
+    friend BasicWindow;
+
+#ifdef USE_QT_WINDOW
+    friend QtWindow;
+    friend QtBasicWindow;
+#endif
+
+#ifdef WIN32
+    friend Win32Window;
+#endif
+
+#ifdef USE_WX_WINDOW
+    friend WxWindow;
+#endif
+
+#ifdef USE_IMGUIWINDOW
+    friend ImguiWindow;
+#endif
 };
 
 #endif // __ONSCRIPTER_LABEL_H__

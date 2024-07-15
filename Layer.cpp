@@ -448,7 +448,7 @@ void OldMovieLayer::refresh(SDL_Surface *surface, SDL_Rect &clip)
 
 static float *base_disp_table = NULL;
 static int furu_count = 0;
-static const float fall_mult[N_FURU_ELEMENTS] = {0.9, 0.7, 0.6};
+static const float fall_mult[N_FURU_ELEMENTS] = {0.9f, 0.7f, 0.6f};
 
 static void buildBaseDispTable()
 {

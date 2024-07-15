@@ -93,7 +93,7 @@ void ONScripterLabel::searchSaveFile( SaveFileInfo &save_file_info, int no )
     FILETIME    tm, ltm;
     SYSTEMTIME  stm;
 
-    handle = CreateFile( file_name, GENERIC_READ, 0, NULL,
+    handle = CreateFileA( file_name, GENERIC_READ, 0, NULL,
                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
     if ( handle == INVALID_HANDLE_VALUE ){
         save_file_info.valid = false;

@@ -428,7 +428,7 @@ extern "C" int main( int argc, char **argv )
 int main( int argc, char **argv )
 #endif
 {
-    ONScripterLabel ons;
+    ONScripterLabel ons(argc, argv);
 
 #ifdef PSP
     ons.disableRescale();

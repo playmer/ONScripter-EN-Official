@@ -35,7 +35,7 @@ public:
     ~Encoding();
 
     void setEncoding(int code);
-    int getEncoding(){ return code; };
+    int getEncoding(){ return m_code; };
     
     char getTextMarker();
 
@@ -45,7 +45,7 @@ public:
     unsigned short getUTF16(const char *text, int code = -1);
 
 private:
-    int code;
+    int m_code;
 };
 
 #endif // __ENCODING_H__ 

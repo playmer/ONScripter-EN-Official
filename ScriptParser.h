@@ -46,7 +46,7 @@
 #include <math.h>
 #include <time.h>
 
-#include <SDL_mixer.h>
+#include <SDL_mixer_ext.h>
 #include "DirPaths.h"
 #include "ScriptHandler.h"
 #include "NsaReader.h"
@@ -66,6 +66,8 @@
 #endif
 #endif
 
+#include "Window.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -78,8 +80,10 @@
 #define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
 
 // Mion: kinsoku
-#define DEFAULT_START_KINSOKU "ÅvÅxÅjÅnÅpÅAÅBÅCÅDÅEÅHÅIÅRÅSÅTÅUÅXÅ["
-#define DEFAULT_END_KINSOKU   "ÅuÅwÅiÅmÅo"
+//The following sting in Shift-JIS "„Äç„ÄèÔºâÔºΩÔΩù„ÄÅ„ÄÇÔºåÔºé„ÉªÔºüÔºÅ„ÉΩ„Éæ„Çù„Çû„ÄÖ„Éº"
+const char DEFAULT_START_KINSOKU[] = { -127, 118, -127, 120, -127, 106, -127, 110, -127, 112, -127, 65, -127, 66, -127, 67, -127, 68, -127, 69, -127, 72, -127, 73, -127, 82, -127, 83, -127, 84, -127, 85, -127, 88, -127, 91, 0 };
+//The following sting in Shift-JIS  "„Äå„ÄéÔºàÔºªÔΩõ"
+const char DEFAULT_END_KINSOKU[] = {-127, 117, -127, 119, -127, 105, -127, 109, -127, 111, 0};
 
 typedef unsigned char uchar3[3];
 
@@ -101,12 +105,11 @@ class ScriptParser
 {
 public:
     struct MusicStruct{
-        OVInfo *ovi;
         int volume;
         bool is_mute;
-        Mix_Chunk **voice_sample; //Mion: for bgmdownmode
+        Mix_Chunk** voice_sample; //Mion: for bgmdownmode
         MusicStruct()
-        : ovi(NULL), volume(0), is_mute(false), voice_sample(NULL) {}
+        : volume(0), is_mute(false), voice_sample(NULL) {}
     };
 
     ScriptParser();
@@ -236,6 +239,11 @@ public:
     int addnsadirCommand();
     int addkinsokuCommand();
     int addCommand();
+
+    int deletemenuCommand();
+    int insertmenuCommand();
+    int killmenuCommand();
+    int resetmenuCommand();
     
     void add_debug_level();
     void errorAndExit( const char *str, const char *reason=NULL, const char *title=NULL, bool is_simple=false );
@@ -625,6 +633,20 @@ protected:
     unsigned char *key_table;
 
     void createKeyTable( const char *key_exe );
+
+    Window* m_window = NULL;
+
+    friend Window;
+    friend BasicWindow;
+
+#ifdef USE_QT_WINDOW
+    friend QtWindow;
+    friend QtBasicWindow;
+#endif
+
+#ifdef USE_IMGUIWINDOW
+    friend ImguiWindow;
+#endif
 };
 
 #endif // __SCRIPT_PARSER_H__

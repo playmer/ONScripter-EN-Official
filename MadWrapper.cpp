@@ -21,6 +21,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef MP3_MAD
+
 #include "MadWrapper.h"
 #include <mad.h>
 
@@ -87,8 +89,9 @@ MAD_WRAPPER* MAD_WRAPPER_new( const char *file, void* info, int sdl_audio )
     return init( src );
 }
 
-MAD_WRAPPER* MAD_WRAPPER_new_rwops( SDL_RWops *src, void* info, int sdl_audio )
+MAD_WRAPPER* MAD_WRAPPER_new_rwops( SDL_RWops *src, void* info, int free_src, int sdl_audio )
 {
+    // FIXME: init should respect free_src
     return init( src );
 }
 
@@ -269,4 +272,6 @@ int main(void)
     MAD_WRAPPER_stop( mad );
     MAD_WRAPPER_delete( mad );
 }
+#endif
+
 #endif

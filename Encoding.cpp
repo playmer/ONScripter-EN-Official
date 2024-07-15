@@ -28,7 +28,7 @@ extern unsigned short convUTF8ToUTF16(const char **src);
 
 Encoding::Encoding()
 {
-    code = CODE_CP932;
+    m_code = CODE_CP932;
 }
 
 Encoding::~Encoding()
@@ -37,12 +37,12 @@ Encoding::~Encoding()
 
 void Encoding::setEncoding(int code)
 {
-    this->code = code;
+    m_code = code;
 }
 
 int Encoding::getBytes(unsigned char ch, int code)
 {
-    if (code == -1) code = this->code;
+    if (code == -1) code = m_code;
     
     if (code == CODE_CP932){
         if ((ch & 0xe0) == 0xe0 || (ch & 0xe0) == 0x80) return 2;
@@ -57,7 +57,7 @@ int Encoding::getBytes(unsigned char ch, int code)
     return 1;
 }
 
-int Encoding::getNum(const unsigned char *buf)
+int Encoding::getNum(const unsigned char* buf)
 {
     int n = 0;
     
@@ -73,17 +73,17 @@ int Encoding::getNum(const unsigned char *buf)
 
 char Encoding::getTextMarker()
 {
-    if (code == CODE_UTF8)
+    if (m_code == CODE_UTF8)
         return '^';
     
     return '`';
 }
 
-unsigned short Encoding::getUTF16(const char *text, int code)
+unsigned short Encoding::getUTF16(const char* text, int code)
 {
     unsigned short unicode = 0;
 
-    if (code == -1) code = this->code;
+    if (code == -1) code = m_code ;
     
     if (code == CODE_CP932){
         if ((text[0] & 0xe0) == 0xe0 || (text[0] & 0xe0) == 0x80){

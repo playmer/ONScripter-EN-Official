@@ -32,6 +32,7 @@
  */
 
 #include "Encoding.h"
+#include "FFMpegWrapper.h"
 #include "ONScripterLabel.h"
 #include "graphics_resize.h"
 #include "version.h"
@@ -45,6 +46,7 @@
 #ifdef WIN32
 #include <direct.h>
 #include <windows.h>
+#undef InsertMenu
 #include "SDL_syswm.h"
 #endif
 
@@ -68,6 +70,7 @@ int message_main(int mode, char *title, char *message);
 
 extern SDL_TimerID timer_bgmfade_id;
 extern "C" Uint32 SDLCALL bgmfadeCallback( Uint32 interval, void *param );
+extern "C" void waveCallback(int channel);
 
 int ONScripterLabel::yesnoboxCommand()
 {
@@ -115,9 +118,9 @@ int ONScripterLabel::yesnoboxCommand()
         HWND pwin = NULL;
         SDL_SysWMinfo info;
         SDL_VERSION(&info.version);
-        if (SDL_GetWMInfo(&info) == 1)
-            pwin = info.window;
-        res = MessageBox(pwin, msg, title, mb_type);
+        if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
+          pwin = info.info.win.window;
+        res = MessageBoxA(pwin, msg, title, mb_type);
         res = ((res == IDYES) || (res == IDOK)) ? 1 : 0;
 #elif defined(LINUX)
         strncat(msg, "\n", 1); // This is used in order to prevent a... wierd... bug -Galladite 2023-4-10
@@ -155,7 +158,8 @@ int ONScripterLabel::wavestopCommand()
 {
     if ( audio_open_flag && wave_sample[MIX_WAVE_CHANNEL] ){
         Mix_Pause( MIX_WAVE_CHANNEL );
-        Mix_FreeChunk( wave_sample[MIX_WAVE_CHANNEL] );
+        Mix_ChannelFinished(NULL);
+        delete wave_sample[MIX_WAVE_CHANNEL];
         wave_sample[MIX_WAVE_CHANNEL] = NULL;
     }
     setStr( &wave_file_name, NULL );
@@ -232,7 +236,7 @@ int ONScripterLabel::voicevolCommand()
     voice_volume = script_h.readInt();
 
     if ( wave_sample[0] )
-        Mix_Volume( 0, !volume_on_flag? 0 : voice_volume * 128 / 100 );
+        Mix_Volume( 0, calculateVolume(voice_volume) );
 
     channelvolumes[0] = voice_volume;
 
@@ -795,7 +799,7 @@ int ONScripterLabel::shellCommand()
 {
 #ifdef WIN32
     const char *url = script_h.readStr();
-    HMODULE shdll = LoadLibrary("shell32");
+    HMODULE shdll = LoadLibraryA("shell32");
     if (shdll) {
         typedef HINSTANCE (WINAPI *SHELLEXECUTE)(HWND, LPCSTR, LPCSTR, LPCSTR,
 						 LPCSTR, int);
@@ -870,14 +874,14 @@ int ONScripterLabel::sevolCommand()
 
     for ( int i=1 ; i<ONS_MIX_CHANNELS ; i++ ) {
         if ( wave_sample[i] )
-            Mix_Volume( i, !volume_on_flag? 0 : se_volume * 128 / 100 );
+            Mix_Volume( i, calculateVolume(se_volume) );
         channelvolumes[i] = se_volume;
      }
 
     if ( wave_sample[MIX_LOOPBGM_CHANNEL0] )
-        Mix_Volume( MIX_LOOPBGM_CHANNEL0, !volume_on_flag? 0 : se_volume * 128 / 100 );
+        Mix_Volume( MIX_LOOPBGM_CHANNEL0, calculateVolume(se_volume) );
     if ( wave_sample[MIX_LOOPBGM_CHANNEL1] )
-        Mix_Volume( MIX_LOOPBGM_CHANNEL1, !volume_on_flag? 0 : se_volume * 128 / 100 );
+        Mix_Volume( MIX_LOOPBGM_CHANNEL1, calculateVolume(se_volume) );
 
     return RET_CONTINUE;
 }
@@ -1451,7 +1455,7 @@ int ONScripterLabel::resetCommand()
 {
     //clear out the event queue
     SDL_Event event;
-    while( SDL_PollEvent( &event ) )
+    while (m_window->PollEvents(event))
         if (event.type == SDL_QUIT) endCommand();
 
     int fadeout = mp3fadeout_duration;
@@ -1655,7 +1659,13 @@ int ONScripterLabel::playCommand()
 
 int ONScripterLabel::ofscopyCommand()
 {
-    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+    SDL_Rect rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = accumulation_surface->w;
+    rect.h = accumulation_surface->h;
+    //SDL_Rect real_src_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
+    SDL_BlitSurface( temp_screen_surface, NULL, accumulation_surface, NULL );
 
     return RET_CONTINUE;
 }
@@ -1826,6 +1836,7 @@ int ONScripterLabel::mp3Command()
                   SOUND_WAVE | SOUND_OGG_STREAMING | SOUND_MP3 | SOUND_SEQMUSIC,
                   music_play_loop_flag, MIX_BGM_CHANNEL);
 
+
         music_volume = tmp;
 
         if (mp3fadein_duration > 0) {
@@ -1852,7 +1863,9 @@ int ONScripterLabel::movieCommand()
     } else {
         if ( script_h.compareString( "stop" ) ){
             script_h.readName();
-            if (async_movie) stopMovie(async_movie);
+#ifdef USE_AVIFILE
+            if (async_movie) async_movie->stopMovie();
+#endif
             async_movie = NULL;
 
             return RET_CONTINUE;
@@ -1902,7 +1915,7 @@ int ONScripterLabel::movemousecursorCommand()
     int x = StretchPosX(script_h.readInt());
     int y = StretchPosY(script_h.readInt());
 
-    SDL_WarpMouse( x, y );
+    m_window->WarpMouse( x, y );
 
     return RET_CONTINUE;
 }
@@ -1945,7 +1958,7 @@ int ONScripterLabel::monocroCommand()
 int ONScripterLabel::minimizewindowCommand()
 {
 #ifndef PSP
-    SDL_WM_IconifyWindow();
+    SDL_MinimizeWindow(m_window->GetWindow());
 #endif
 
     return RET_CONTINUE;
@@ -1967,9 +1980,9 @@ int ONScripterLabel::mesboxCommand()
     HWND pwin = NULL;
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
-    if (SDL_GetWMInfo(&info) == 1)
-        pwin = info.window;
-    MessageBox(pwin, msg, title, MB_OK);
+    if (SDL_GetWindowWMInfo(m_window->GetWindow(), &info))
+      pwin = info.info.win.window;
+    MessageBoxA(pwin, msg, title, MB_OK);
 #endif
     fprintf(stderr,"Got message box '%s': '%s'\n", title, msg);
     delete[] msg;
@@ -1980,16 +1993,17 @@ int ONScripterLabel::mesboxCommand()
 int ONScripterLabel::menu_windowCommand()
 {
     if ( fullscreen_mode ){
-#ifndef PSP
-        if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
-        SDL_Rect rect = {0, 0, screen_width, screen_height};
-        flushDirect( rect, refreshMode() );
-        if (async_movie){
-            SMPEG_setdisplay( async_movie, screen_surface, NULL, NULL );
-            SMPEG_play( async_movie );
-        }
+#ifdef USE_AVIFILE
+        if (async_movie) async_movie->pause();
 #endif
+        screen_surface = m_window->SetVideoMode(screen_width, screen_height, screen_bpp, false);
+        SDL_Rect rect = { 0, 0, screen_width, screen_height };
+        flushDirect(rect, refreshMode());
+        if (async_movie) {
+#ifdef USE_AVIFILE
+            async_movie->play();
+#endif
+        }
         fullscreen_mode = false;
     }
 
@@ -2014,22 +2028,25 @@ int ONScripterLabel::menu_waveoffCommand()
 
 int ONScripterLabel::menu_fullCommand()
 {
-    if ( !fullscreen_mode ){
+    if (!fullscreen_mode) {
 #ifndef PSP
-        if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+#ifdef USE_AVIFILE
+        if (async_movie) async_movie->pause();
+#endif
+        screen_surface = m_window->SetVideoMode(screen_width, screen_height, screen_bpp, true);
         if (screen_surface)
             fullscreen_mode = true;
         else {
             fprintf(stderr, "*** menu_full: Error: %s (using windowed surface instead) ***\n", SDL_GetError());
-            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+            screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, false );
             fullscreen_mode = false;
         }
         SDL_Rect rect = {0, 0, screen_width, screen_height};
         flushDirect( rect, refreshMode() );
         if (async_movie){
-            SMPEG_setdisplay( async_movie, screen_surface, NULL, NULL );
-            SMPEG_play( async_movie );
+#ifdef USE_AVIFILE
+            async_movie->play();
+#endif
         }
 #else
         fullscreen_mode = true;
@@ -2198,12 +2215,14 @@ int ONScripterLabel::loopbgmstopCommand()
 {
     if ( wave_sample[MIX_LOOPBGM_CHANNEL0] ){
         Mix_Pause(MIX_LOOPBGM_CHANNEL0);
-        Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL0] );
+        Mix_ChannelFinished(NULL);
+        delete wave_sample[MIX_LOOPBGM_CHANNEL0];
         wave_sample[MIX_LOOPBGM_CHANNEL0] = NULL;
     }
     if ( wave_sample[MIX_LOOPBGM_CHANNEL1] ){
         Mix_Pause(MIX_LOOPBGM_CHANNEL1);
-        Mix_FreeChunk( wave_sample[MIX_LOOPBGM_CHANNEL1] );
+        Mix_ChannelFinished(NULL);
+        delete wave_sample[MIX_LOOPBGM_CHANNEL1];
         wave_sample[MIX_LOOPBGM_CHANNEL1] = NULL;
     }
     setStr(&loop_bgm_name[0], NULL);
@@ -2587,6 +2606,43 @@ int ONScripterLabel::isdownCommand()
         script_h.setInt( &script_h.current_variable, 1 );
     else
         script_h.setInt( &script_h.current_variable, 0 );
+
+    return RET_CONTINUE;
+}
+
+int ONScripterLabel::inputstrCommand()
+{
+    script_h.readStr();
+
+    if (script_h.current_variable.type != ScriptHandler::VAR_STR)
+        errorAndExit("input: no string variable.");
+    int no = script_h.current_variable.var_no;
+
+    std::string description = script_h.readStr();
+    int maxInputLength = script_h.readInt();
+    int doubleByteInput = script_h.readInt();
+
+    bool setOptionals = false;
+    int windowHeight;
+    int windowWidth;
+    int inputAreaWidth;
+    int inputAreaHeight;
+    if (script_h.getEndStatus() & ScriptHandler::END_COMMA) {
+        windowHeight = script_h.readInt();
+        windowWidth = script_h.readInt();
+        inputAreaWidth = script_h.readInt();
+        inputAreaHeight = script_h.readInt();
+        setOptionals = true;
+    }
+
+    std::string userInput = m_window->Dialog_InputStr(description, maxInputLength, doubleByteInput,
+        setOptionals ? &windowWidth : NULL,
+        setOptionals ? &windowHeight : NULL,
+        setOptionals ? &inputAreaWidth : NULL,
+        setOptionals ? &inputAreaHeight : NULL
+    );
+    
+    setStr(&script_h.getVariableData(no).str, userInput.c_str(), userInput.size());
 
     return RET_CONTINUE;
 }
@@ -3537,7 +3593,8 @@ int ONScripterLabel::dwaveCommand()
     else if (ch >= ONS_MIX_CHANNELS) ch = ONS_MIX_CHANNELS-1;
 
     if (play_mode == WAVE_PLAY_LOADED){
-        Mix_PlayChannel(ch, wave_sample[ch], loop_flag?-1:0);
+        Mix_ChannelFinished(waveCallback);
+        Mix_PlayChannel(ch, wave_sample[ch], loop_flag ? -1 : 0);
     }
     else{
         const char *buf = script_h.readStr();
@@ -3600,8 +3657,8 @@ int ONScripterLabel::drawsp3Command()
         si.inv_mat[1][1] =  si.mat[0][0] * 1000 / denom;
     }
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
-    si.blendOnSurface2( accumulation_surface, x, y, clip, alpha );
+    SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h };
+    si.blendOnSurface2(accumulation_surface, x, y, clip, alpha);
     si.setCell(old_cell_no);
 
     return RET_CONTINUE;
@@ -3623,7 +3680,7 @@ int ONScripterLabel::drawsp2Command()
     si.calcAffineMatrix();
     si.setCell(cell_no);
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
+    SDL_Rect clip = { 0, 0, accumulation_surface->w, accumulation_surface->h};
     si.blendOnSurface2( accumulation_surface, si.pos.x, si.pos.y, clip, alpha );
 
     return RET_CONTINUE;
@@ -3684,7 +3741,7 @@ int ONScripterLabel::drawbg2Command()
     bi.rot = script_h.readInt();
     bi.calcAffineMatrix();
 
-    SDL_Rect clip = {0, 0, screen_surface->w, screen_surface->h};
+    SDL_Rect clip = {0, 0, accumulation_surface->w, accumulation_surface->h};
     bi.blendOnSurface2( accumulation_surface, bi.pos.x, bi.pos.y,
                         clip, 256 );
 
@@ -3728,7 +3785,7 @@ int ONScripterLabel::defineresetCommand()
 {
     //clear out the event queue
     SDL_Event event;
-    while( SDL_PollEvent( &event ) )
+    while (m_window->PollEvents(event))
         if (event.type == SDL_QUIT) endCommand();
 
     script_h.reset();
@@ -3952,7 +4009,7 @@ int ONScripterLabel::chvolCommand()
     int vol = script_h.readInt();
 
     if ( wave_sample[ch] ){
-        Mix_Volume( ch, !volume_on_flag? 0 : vol * 128 / 100 );
+        Mix_Volume( ch, calculateVolume(vol) );
     }
 
     channelvolumes[ch] = vol;
@@ -4099,7 +4156,7 @@ int ONScripterLabel::captionCommand()
     setStr( &wm_icon_string,  buf2 );
     delete[] buf2;
     //printf("caption (utf8): '%s'\n", wm_title_string);
-    SDL_WM_SetCaption( wm_title_string, wm_icon_string );
+    m_window->SetWindowCaption( wm_title_string, wm_icon_string );
 #ifdef WIN32
     //convert from UTF-8 to Wide (Unicode) and thence to system ANSI
     len = MultiByteToWideChar(CP_UTF8, 0, wm_title_string, -1, NULL, 0);
@@ -4113,8 +4170,8 @@ int ONScripterLabel::captionCommand()
     //set the window caption directly
     SDL_SysWMinfo info;
     SDL_VERSION(&info.version);
-    SDL_GetWMInfo(&info);
-    SendMessageA(info.window, WM_SETTEXT, 0, (LPARAM)cvt);
+    SDL_GetWindowWMInfo(m_window->GetWindow(), &info);
+    SendMessageA(info.info.win.window, WM_SETTEXT, 0, (LPARAM)cvt);
     delete[] cvt;
 #endif //WIN32
 
@@ -4316,7 +4373,7 @@ int ONScripterLabel::btndefCommand()
 #else
             setupAnimationInfo( &btndef_info );
 #endif
-            SDL_SetAlpha( btndef_info.image_surface, DEFAULT_BLIT_FLAG, SDL_ALPHA_OPAQUE );
+            SDL_SetSurfaceBlendMode(btndef_info.image_surface, SDL_BLENDMODE_NONE);
         }
     }
 
@@ -4417,8 +4474,10 @@ int ONScripterLabel::bltCommand()
         SDL_Rect src_rect = {sx,sy,sw,sh};
         SDL_Rect dst_rect = {dx,dy,dw,dh};
 
-        SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
-        SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
+        SDL_Rect real_dst_rect = Window::ScaleRectToPixels(btndef_info.image_surface, screen_surface, dst_rect);
+        SDL_BlitSurface(btndef_info.image_surface, &src_rect, temp_screen_surface, &src_rect);
+        SDL_SoftStretchLinear(temp_screen_surface, &src_rect, screen_surface, &real_dst_rect);
+        SDL_UpdateWindowSurfaceRects(m_window->GetWindow(), &real_dst_rect, 1);
         dirty_rect.clear();
     }
     else{
@@ -4487,7 +4546,13 @@ int ONScripterLabel::bgmdownmodeCommand()
 
 int ONScripterLabel::bgcopyCommand()
 {
-    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+    SDL_Rect rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = accumulation_surface->w;
+    rect.h = accumulation_surface->h;
+    //SDL_Rect real_src_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
+    SDL_BlitScaled( temp_screen_surface, NULL, accumulation_surface, NULL );
 
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;
@@ -4720,18 +4785,5 @@ int ONScripterLabel::allsphideCommand()
         if (si.image_surface && si.visible)
             dirty_rect.add( si.bounding_rect );
     }
-    return RET_CONTINUE;
-}
-
-// Haeleth: Stub out some commands to suppress unwanted debug messages
-
-int ONScripterLabel::insertmenuCommand()
-{
-    script_h.skipToken();
-    return RET_CONTINUE;
-}
-int ONScripterLabel::resetmenuCommand()
-{
-    script_h.skipToken();
     return RET_CONTINUE;
 }

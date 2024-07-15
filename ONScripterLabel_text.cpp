@@ -232,6 +232,8 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, Fontinfo *info, SDL_C
 #endif
     TTF_GlyphMetrics( (TTF_Font*)info->ttf_font, unicode,
                       &minx, &maxx, &miny, &maxy, &advanced );
+
+    int font_ascent = TTF_FontAscent((TTF_Font*)info->ttf_font);
     //printf("min %d %d %d %d %d %d\n", minx, maxx, miny, maxy, advanced,TTF_FontAscent((TTF_Font*)info->ttf_font)  );
 
     SDL_Surface *tmp_surface = renderGlyph( (TTF_Font*)info->ttf_font, unicode );
@@ -251,12 +253,19 @@ void ONScripterLabel::drawGlyph( SDL_Surface *dst_surface, Fontinfo *info, SDL_C
     }
     else if ( rotate_flag ) {
         dst_rect.x = xy[0] + ExpandPos(info->font_size_xy[0]) -
-                     TTF_FontAscent((TTF_Font*)info->ttf_font) + miny;
+            font_ascent + miny;
         dst_rect.y = xy[1] + minx;
     }
     else {
-        dst_rect.x = xy[0] + minx;
-        dst_rect.y = xy[1] + TTF_FontAscent((TTF_Font*)info->ttf_font) - maxy;
+        //dst_rect.x = xy[0] + minx;
+        //dst_rect.y = xy[1] + font_ascent + maxy;
+
+
+        //dst_rect.x = xy[0] + minx;
+        //dst_rect.y = xy[1] + font_ascent - maxy;
+
+        dst_rect.x = xy[0];// +minx;
+        dst_rect.y = xy[1];// +fontAscent;// +maxy + miny;
     }
 
     if ( shadow_flag ){

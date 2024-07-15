@@ -45,14 +45,14 @@ static const char* messages[][8] = {
       "`Quit?",
       "Yes",
       "No" },
-    { "%s%s@%sŒŽ%s“ú%sŽž%s•ª",
-      "%s%s@||||||||||||",
-      "%s%s‚ÉƒZ[ƒu‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "%s%s‚ðƒ[ƒh‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "ƒŠƒZƒbƒg‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "I—¹‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "‚Í‚¢",
-      "‚¢‚¢‚¦" }
+    { "%s%sã€€%sæœˆ%sæ—¥%sæ™‚%såˆ†",
+      "%s%sã€€âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’",
+      "%s%sã«ã‚»ãƒ¼ãƒ–ã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "%s%sã‚’ãƒ­ãƒ¼ãƒ‰ã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "ãƒªã‚»ãƒƒãƒˆã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "çµ‚äº†ã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "ã¯ã„",
+      "ã„ã„ãˆ" }
 };
 
 const char* ONScripterLabel::getMessageString( MessageId which )
@@ -114,7 +114,7 @@ void ONScripterLabel::leaveSystemCall( bool restore_flag )
         event_mode = shelter_event_mode;
         draw_cursor_flag = shelter_draw_cursor_flag;
         if ( event_mode & WAIT_BUTTON_MODE ){
-            SDL_WarpMouse( shelter_mouse_state.x, shelter_mouse_state.y );
+            m_window->WarpMouse( shelter_mouse_state.x, shelter_mouse_state.y );
         }
     }
     display_mode = shelter_display_mode;
@@ -186,6 +186,7 @@ bool ONScripterLabel::executeSystemCall()
 
 void ONScripterLabel::executeSystemMenu()
 {
+    printf("Start\n");
     current_font = &menu_font;
 
     if ( menuselectvoice_file_name[MENUSELECTVOICE_OPEN] )
@@ -216,9 +217,11 @@ void ONScripterLabel::executeSystemMenu()
         menu_font.setXY( (menu_font.num_xy[0] - (rmenu_link_width * menu_font.pitch_xy[0])) / 2,
                          (menu_font.num_xy[1] - rmenu_link_num) / 2 );
 
+    printf("Start Buttons\n");
     RMenuLink *link = root_rmenu_link.next;
     int counter = 1;
     while( link ){
+        printf("\tButton: %s\n", link->label);
         ButtonLink *button = getSelectableSentence( link->label, &menu_font, false );
         root_button_link.insert( button );
         button->no = counter++;
@@ -226,9 +229,21 @@ void ONScripterLabel::executeSystemMenu()
         link = link->next;
         flush( refreshMode() );
     }
+    printf("End Buttons\n");
+
 
     flushEvent();
     refreshMouseOverButton();
+
+    //SDL_Rect rect = { 0, 0, screen_width, screen_height };
+    //refreshSurface(accumulation_surface, &rect, refreshMode());
+    //SDL_Rect dummyRect{0,0,0,0};
+    //UpdateScreen(dummyRect);
+
+    //SDL_Rect rect = { 0, 0, screen_width, screen_height };
+    //UpdateScreen(rect);
+
+    printf("Drew the screen\n");
 
     event_mode = WAIT_BUTTON_MODE;
     do waitEventSub(-1);
@@ -241,6 +256,7 @@ void ONScripterLabel::executeSystemMenu()
             playSound(menuselectvoice_file_name[MENUSELECTVOICE_CANCEL],
                       SOUND_WAVE|SOUND_OGG, false, MIX_WAVE_CHANNEL);
         leaveSystemCall();
+        printf("End Early\n");
         return;
     }
 
@@ -257,6 +273,8 @@ void ONScripterLabel::executeSystemMenu()
         }
         link = link->next;
     }
+
+    printf("End\n");
 }
 
 void ONScripterLabel::executeSystemSkip()

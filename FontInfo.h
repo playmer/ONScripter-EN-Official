@@ -37,6 +37,7 @@ public:
     enum { YOKO_MODE = 0,
            TATE_MODE = 1
     };
+    const char* m_font_file;
     void *ttf_font;
     uchar3 color;
     uchar3 on_color, off_color, nofile_color;
@@ -59,7 +60,7 @@ public:
 
     Fontinfo();
     void reset();
-    void *openFont( char *font_file, int ratio1, int ratio2 );
+    void *openFont( const char *font_file, int ratio1, int ratio2 );
     void setTateyokoMode( int tateyoko_mode );
     int getTateyokoMode();
     int getRemainingLine();

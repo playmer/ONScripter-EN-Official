@@ -1,0 +1,380 @@
+# Copyright (c) 2021-2022-2023 Luca Cappa
+# Released under the term specified in file LICENSE.txt
+# SPDX short identifier: MIT
+#
+# The peculiarity of this workflow is that assumes vcpkg stored as a submodule of this repository.
+# The workflow runs on x64 and ARM platforms.
+# Workflow steps:
+# - Setup vcpkg and cache it on the GitHub Action cloud based cache.
+# - Runs CMake with CMakePreset.json using a presest configuration
+#   that leverages the vcpkg's toolchain file. This will automatically run vcpkg 
+#   to install dependencies described by the vcpkg.json manifest file. 
+#   This stage also runs vcpkg with Binary Caching leveraging GitHub Action cache to 
+#   store the built packages artifacts, hence it will be a no-op if those are restored 
+#   from cache (e.g., already previously built).
+# - Finally builds the sources with Ninja, and tests as well.
+name: hosted-ninja-vcpkg_submod-autocache
+on:
+  push:
+    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork", "emscripten" ]
+#  pull_request:
+#    branches: [ "master", "extensions", "Qt_window_wrapper", "WorkflowWork" ]
+  workflow_dispatch:
+  schedule:
+  - cron: '0 1 * * *'
+
+jobs:
+#  linux:
+#    name: ubuntu-build
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [ubuntu-latest]
+#    runs-on: ubuntu-latest
+#    env:
+#      CMAKE_CXX_COMPILER: g++
+#      CMAKE_C_COMPILER: gcc
+#      CMAKE_MAKE_PROGRAM: ninja
+#    steps:
+#      - run: sudo apt update
+#      - run: sudo apt install -y apt autoconf automake autopoint build-essential cmake fcitx-libs-dev git gnome-desktop-testing libasound2-dev libaudio-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libpipewire-0.3-dev libpulse-dev libsamplerate0-dev libsndio-dev libtool libudev-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make nasm ninja-build pkg-config xorg-dev zlib1g-dev
+#      - run: ninja --version
+#      - run: nasm -v
+#      
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: true
+#
+#      - uses: lukka/get-cmake@latest
+#
+#      #- name: Install Qt
+#      #  uses: jurplel/install-qt-action@v3
+#      #  with:
+#      #    aqtversion: '==3.1.*'
+#      #    version: '6.6.0'
+#      #    host: 'linux'
+#      #    target: 'desktop'
+#      #    arch: 'gcc_64'
+#
+#      - name: Restore from cache and setup vcpkg executable and data files.
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          vcpkgJsonGlob: 'vcpkg.json'
+#          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+#
+#      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+#      # configuration with the additional `--config` flag, e.g.:
+#      #   buildPreset: 'ninja-vcpkg'
+#      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+#      #   testPreset: 'ninja-vcpkg'
+#      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+#      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+#        uses: lukka/run-cmake@v10
+#        with:
+#          configurePreset: 'ninja'
+#          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=g++','-DCMAKE_C_COMPILER=gcc','-DCMAKE_MAKE_PROGRAM=ninja']"
+#          buildPreset: 'ninja-release'
+#          packagePreset: 'ninja-package-release'
+#      
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: Linux Build
+#          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
+          
+#  linux_emscripten:
+#    name: ubuntu-build-emscripten
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [ubuntu-latest]
+#    runs-on: ubuntu-latest
+#    env:
+#      CMAKE_CXX_COMPILER: g++
+#      CMAKE_C_COMPILER: gcc
+#      CMAKE_MAKE_PROGRAM: ninja
+#    steps:
+#      - run: sudo apt update
+#      - run: sudo apt install -y build-essential cmake ninja-build
+#      - run: ninja --version
+#      - run: nasm -v
+#      
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: true
+#
+#      - uses: lukka/get-cmake@latest
+#      
+#      - uses: mymindstorm/setup-emsdk@v11
+#
+#      - name: Verify
+#        run: emcc -v
+#
+#      - name: Restore from cache and setup vcpkg executable and data files.
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          vcpkgJsonGlob: 'vcpkg.json'
+#          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+#
+#      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+#      # configuration with the additional `--config` flag, e.g.:
+#      #   buildPreset: 'ninja-vcpkg'
+#      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+#      #   testPreset: 'ninja-vcpkg'
+#      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+#      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+#        uses: lukka/run-cmake@v10
+#        with:
+#          configurePreset: 'emscripten'
+#          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=g++','-DCMAKE_C_COMPILER=gcc','-DCMAKE_MAKE_PROGRAM=ninja']"
+#          buildPreset: 'emscripten-release'
+#          packagePreset: 'emscripten-package-release'
+#      
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: Emscripten Build
+#          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
+          
+#  linux_android:
+#    name: ubuntu-build-android
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [ubuntu-latest]
+#    runs-on: ubuntu-latest
+#    env:
+#      CMAKE_MAKE_PROGRAM: ninja
+#    steps:
+#      - run: sudo apt update
+#      - run: sudo apt install -y apt autoconf automake build-essential build-essential cmake cmake fcitx-libs-dev git gnome-desktop-testing libasound2-dev libaudio-dev libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libbz2-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libfreetype-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libmad0-dev libogg-dev libpipewire-0.3-dev libpng-dev libpulse-dev libsamplerate0-dev libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsmpeg-dev libsndio-dev libtool libudev-dev libvorbis-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev lua5.4 make nasm ninja-build pkg-config zlib1g-dev
+#      - run: ninja --version
+#      - run: nasm -v
+#      
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: true
+#
+#      - uses: lukka/get-cmake@latest
+#
+#      - name: Install Qt
+#        uses: jurplel/install-qt-action@v3
+#        with:
+#          aqtversion: '==3.1.*'
+#          version: '6.6.0'
+#          host: 'linux'
+#          target: 'desktop'
+#          arch: 'gcc_64'
+#
+#      - name: Restore from cache and setup vcpkg executable and data files.
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          vcpkgJsonGlob: 'vcpkg.json'
+#          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+#
+#      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+#      # configuration with the additional `--config` flag, e.g.:
+#      #   buildPreset: 'ninja-vcpkg'
+#      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+#      #   testPreset: 'ninja-vcpkg'
+#      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+#      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+#        uses: lukka/run-cmake@v10
+#        with:
+#          configurePreset: 'android'
+#          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=g++','-DCMAKE_C_COMPILER=gcc','-DCMAKE_MAKE_PROGRAM=ninja']"
+#          buildPreset: 'android-release'
+  
+#  mac:
+#    name: macos-build
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [macos-latest]
+#
+#    runs-on: macos-latest
+#    env:
+#      CMAKE_CXX_COMPILER: clang++
+#      CMAKE_C_COMPILER: clang
+#      CMAKE_MAKE_PROGRAM: ninja
+#    steps:
+#      - run: brew install ninja nasm cmake
+#      - run: ninja --version
+#      - run: nasm -v
+#      
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: true
+#
+#      - uses: lukka/get-cmake@latest
+#
+#      #- name: Install Qt
+#      #  uses: jurplel/install-qt-action@v3
+#      #  with:
+#      #    aqtversion: '==3.1.*'
+#      #    version: '6.6.0'
+#      #    host: 'mac'
+#      #    target: 'desktop'
+#      #    arch: 'clang_64'
+#
+#      - name: Restore from cache and setup vcpkg executable and data files.
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          vcpkgJsonGlob: 'vcpkg.json'
+#          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+#
+#      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+#      # configuration with the additional `--config` flag, e.g.:
+#      #   buildPreset: 'ninja-vcpkg'
+#      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+#      #   testPreset: 'ninja-vcpkg'
+#      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+#      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+#        uses: lukka/run-cmake@v10
+#        with:
+#          configurePreset: 'ninja'
+#          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++','-DCMAKE_C_COMPILER=clang','-DCMAKE_MAKE_PROGRAM=ninja']"
+#          buildPreset: 'ninja-release'
+#          packagePreset: 'ninja-package-release'
+#      
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: Mac Build
+#          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
+  
+  windows:
+    name: windows-build-msvc
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+
+    runs-on: TIMESTAR_RUNNER_WIN
+    
+    env:
+      CMAKE_CXX_COMPILER: cl
+    steps:      
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: lukka/get-cmake@latest
+        with:
+          useLocalCache: true         # <--= Use the local cache (default is 'false').
+          useCloudCache: false        # <--= Ditch the cloud cache (default is 'true').
+      #- uses: ilammy/msvc-dev-cmd@v1
+      #- uses: TheMrMilchmann/setup-msvc-dev@v3
+      #  with:
+      #    arch: x64
+
+      #- name: Install Qt
+      #  uses: jurplel/install-qt-action@v3
+      #  with:
+      #    aqtversion: '==3.1.*'
+      #    version: '6.6.0'
+      #    host: 'windows'
+      #    target: 'desktop'
+      #    arch: 'win64_msvc2019_64'
+
+#      - name: Restore from cache and setup vcpkg executable and data files.
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          vcpkgJsonGlob: 'vcpkg.json'
+#          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+
+      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+      # configuration with the additional `--config` flag, e.g.:
+      #   buildPreset: 'ninja-vcpkg'
+      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+      #   testPreset: 'ninja-vcpkg'
+      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+
+      #- name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+      #  uses: lukka/run-cmake@v10
+      #  with:
+      #    configurePreset: 'ninja'
+      #    configurePresetAdditionalArgs: "[ '-DCMAKE_MAKE_PROGRAM=ninja', '-DONSCRIPTER_EN_CI=ON', '-DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build']"
+      #    buildPreset: 'ninja-release'
+      #    packagePreset: 'ninja-package-release'
+
+      - uses: TheMrMilchmann/setup-msvc-dev@v3
+        with:
+          arch: x64
+      - name: Configure, Build, and Package
+        run: |
+          cmake --preset=ninja -DCMAKE_MAKE_PROGRAM=ninja -DONSCRIPTER_EN_CI=ON -DONSCRIPTER_EN_VCPKG_BUILDTREE=D:/vcpkg_build -DONSCRIPTER_EN_VCPKG_PACKAGES=D:/vcpkg_packages .
+          cmake --build --preset ninja-release
+          cpack --preset=ninja-package-release
+          
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Windows-MSVC Build
+          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip
+  
+#  windows_msys2:
+#    name: windows-build-msys2
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [windows-latest]
+#
+#    runs-on: windows-latest
+#    
+#    env:
+#      CMAKE_CXX_COMPILER: g++
+#      CMAKE_C_COMPILER: gcc
+#      CMAKE_MAKE_PROGRAM: ninja
+#    defaults:
+#        run:
+#            shell: msys2 {0}
+#          
+#    steps:
+#      - uses: msys2/setup-msys2@v2
+#        with:
+#          msystem: mingw64
+#          update: true
+#          install: >-
+#            curl
+#            git
+#            cmake
+#            ninja
+#            base-devel
+#            nasm
+#            mingw-w64-x86_64-toolchain
+#
+#
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: true
+#
+#      - name: Install Qt
+#        uses: jurplel/install-qt-action@v3
+#        with:
+#          aqtversion: '==3.1.*'
+#          version: '6.6.0'
+#          host: 'windows'
+#          target: 'desktop'
+#          arch: 'win64_mingw'
+#
+#      - name: Restore from cache and setup vcpkg executable and data files.
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          vcpkgJsonGlob: 'vcpkg.json'
+#          vcpkgDirectory: '${{ github.workspace }}/extlib/vcpkg'
+#
+#      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+#      # configuration with the additional `--config` flag, e.g.:
+#      #   buildPreset: 'ninja-vcpkg'
+#      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+#      #   testPreset: 'ninja-vcpkg'
+#      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+#      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
+#        uses: lukka/run-cmake@v10
+#        with:
+#          configurePreset: 'ninja'
+#          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=g++','-DCMAKE_C_COMPILER=gcc','-DCMAKE_MAKE_PROGRAM=ninja','-DVCPKG_TARGET_TRIPLET=x64-mingw-static']"
+#          buildPreset: 'ninja-release'
+#          packagePreset: 'ninja-package-release'
+#
+#      - uses: actions/upload-artifact@v3
+#        with:
+#          name: Windows-MinGW64-Msys2 Build
+#          path: ${{ github.workspace }}/builds/ninja/ONScripter-EN-*.zip

@@ -21,6 +21,8 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#if 0
+
 #include "AVIWrapper.h"
 #include <SDL_mixer.h>
 #include <audiodecoder.h>
@@ -313,7 +315,7 @@ int AVIWrapper::play( bool click_flag )
     while( !(done_flag & click_flag) && status == AVI_PLAYING ){
         SDL_Event event;
 
-        while( SDL_PollEvent( &event ) ){
+        for (SDL_Event& event : m_window->PollEvents()) {
             switch (event.type){
               case SDL_KEYUP:
                 if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_RETURN ||
@@ -379,3 +381,5 @@ int AVIWrapper::drawFrame( avm::CImage *image )
 
     return 0;
 }
+
+#endif

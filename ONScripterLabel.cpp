@@ -41,16 +41,19 @@
 #include "ONScripterLabel.h"
 #include "graphics_cpu.h"
 #include "graphics_resize.h"
+#include "FFMpegWrapper.h"
 #include <cstdio>
 #include <fstream>
+
+#include "SDLHelper_CD/SDL_cdrom.h"
 
 #ifdef MACOSX
 #include "cocoa_alertbox.h"
 #include "cocoa_directories.h"
-#import <CoreFoundation/CoreFoundation.h>
-#import <Foundation/NSString.h>
-#import <Foundation/NSObject.h>
-#import <Foundation/NSFileManager.h>
+//#import <CoreFoundation/CoreFoundation.h>
+//#import <Foundation/NSString.h>
+//#import <Foundation/NSObject.h>
+//#import <Foundation/NSFileManager.h>
 
 #ifdef USE_PPC_GFX
 #include <sys/types.h>
@@ -61,10 +64,12 @@
 
 
 #ifdef WIN32
+#define NOMINMAX
 #include <windows.h>
-#include "SDL_syswm.h"
 #include "winres.h"
-typedef HRESULT (WINAPI *GETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
+
+typedef HRESULT (WINAPI *GETFOLDERPATHW)(HWND, int, HANDLE, DWORD, LPTSTR);
+typedef HRESULT(WINAPI *GETFOLDERPATHA)(HWND, int, HANDLE, DWORD, LPSTR);
 #endif
 #ifdef LINUX
 #include <unistd.h>
@@ -72,9 +77,8 @@ typedef HRESULT (WINAPI *GETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
 #include <sys/types.h>
 #include <pwd.h>
 #endif
-#if !defined(WIN32) && !defined(MACOSX)
+
 #include "resources.h"
-#endif
 
 extern void initSJIS2UTF16();
 extern "C" void waveCallback( int channel );
@@ -229,6 +233,7 @@ static struct FuncLUT{
     {"ispage", &ONScripterLabel::ispageCommand},
     {"isdown", &ONScripterLabel::isdownCommand},
     {"insertmenu", &ONScripterLabel::insertmenuCommand},
+    {"inputstr", &ONScripterLabel::inputstrCommand},
     {"input", &ONScripterLabel::inputCommand},
     {"indent", &ONScripterLabel::indentCommand},
     {"humanorder", &ONScripterLabel::humanorderCommand},
@@ -297,6 +302,7 @@ static struct FuncLUT{
     {"drawbg", &ONScripterLabel::drawbgCommand},
     {"draw", &ONScripterLabel::drawCommand},
     {"deletescreenshot", &ONScripterLabel::deletescreenshotCommand},
+    {"deletemenu", &ONScripterLabel::deletemenuCommand},
     {"delay", &ONScripterLabel::delayCommand},
     {"definereset", &ONScripterLabel::defineresetCommand},
     {"csp2", &ONScripterLabel::cspCommand},
@@ -360,21 +366,121 @@ static void SDL_Quit_Wrapper()
     SDL_Quit();
 }
 
+static int onscripter_putenv(const char* _var)
+{
+  char* ptr = NULL;
+  char* var = SDL_strdup(_var);
+  if (var == NULL) {
+    return -1;  /* we don't set errno. */
+  }
+
+  ptr = SDL_strchr(var, '=');
+  if (ptr == NULL) {
+    SDL_free(var);
+    return -1;
+  }
+
+  *ptr = '\0';  /* split the string into name and value. */
+  SDL_setenv(var, ptr + 1, 1);
+  SDL_free(var);
+  return 0;
+}
+
+void ONScripterLabel::SetMusicVolume(int volume)
+{
+    music_volume = volume;
+
+    // Music Volume
+    setCurMusicVolume(music_volume);
+}
+
+void ONScripterLabel::SetSfxVolume(int volume)
+{
+    se_volume = volume;
+
+    // SFX Volume
+    for (int i = 1; i < ONS_MIX_CHANNELS; i++)
+    {
+        channelvolumes[i] = volume;
+        if (wave_sample[i])
+            Mix_Volume(i, calculateVolume(se_volume));
+    }
+    if (wave_sample[MIX_LOOPBGM_CHANNEL0]) {
+        Mix_Volume(MIX_LOOPBGM_CHANNEL0, calculateVolume(se_volume));
+    }
+    if (wave_sample[MIX_LOOPBGM_CHANNEL1]) {
+        Mix_Volume(MIX_LOOPBGM_CHANNEL1, calculateVolume(se_volume));
+    }
+}
+
+void ONScripterLabel::SetVoiceVolume(int volume)
+{
+    voice_volume = volume;
+    channelvolumes[0] = volume;
+
+    // Voice Volume
+    if (wave_sample[0])
+        Mix_Volume(0, calculateVolume(voice_volume));
+}
+
+
+int SDLCALL
+SDL_BuildAudioCVT_Original(SDL_AudioCVT* cvt12, Uint16 src_format, Uint8 src_channels, int src_rate, Uint16 dst_format, Uint8 dst_channels, int dst_rate);
+
+
 void ONScripterLabel::initSDL()
 {
     /* ---------------------------------------- */
     /* Initialize SDL */
 
-    if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO ) < 0 ){
+    SDL_SetHint("SDL_AUDIODRIVER", "directsound");
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         errorAndExit("Couldn't initialize SDL", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
-    if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){
+    SDL_SetHint("SDL_NATIVE_MUSIC", "1");
+
+    
+
+    if (cdaudio_flag && SDL_CDROMInit() < 0) {
         errorAndExit("Couldn't initialize CD-ROM", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
+
+    SDL_RWops* gamecontrollerdbFile = SDL_RWFromFile("gamecontrollerdb.txt", "r");
+    if (gamecontrollerdbFile != NULL) {
+        SDL_GameControllerAddMappingsFromRW(gamecontrollerdbFile, SDL_TRUE);
+    }
+    else {
+        const InternalResource* internal_file = getResource("gamecontrollerdb.txt");
+        SDL_GameControllerAddMappingsFromRW(SDL_RWFromConstMem(internal_file->buffer, internal_file->size), SDL_TRUE);
+    }
+
+    SDL_GameControllerEventState(SDL_ENABLE);
+
+    // Open any controllers that may already be connected.
+    for (int i = 0; i < SDL_NumJoysticks(); i++) {
+        if (SDL_IsGameController(i)) {
+            SDL_GameControllerOpen(i);
+        }
+    }
+
+    IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+    int ret = Mix_Init(MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_MID);
+
+    if (ret != (MIX_INIT_MP3 | MIX_INIT_OGG | MIX_INIT_MID))
+    {
+        fprintf(stderr, "SDL_Mixer initialization issue: %s", SDL_GetError());
+    }
+
+
+    // Only do this for non-native MIDI, also make this configurable
+    //std::string soundFontPath = SDL_GetBasePath();
+    //soundFontPath += "/GeneralUser_GS_1.471.sf2";
+    //Mix_SetSoundFonts(soundFontPath.c_str());
 
 #if 0
     if(SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == 0 && SDL_JoystickOpen(0) != NULL)
@@ -385,7 +491,38 @@ void ONScripterLabel::initSDL()
     SDL_ShowCursor(SDL_DISABLE);
 #endif
 
-    SDL_EnableUNICODE(1);
+    fprintf(stdout, "\tAudioDrivers:\n");
+    int audioDrivers = SDL_GetNumAudioDrivers();
+    for (int i = 0; i < audioDrivers; ++i)
+    {
+        fprintf(stdout, "\tAudioDriver: %s\n", SDL_GetAudioDriver(i));
+    }
+
+    fprintf(stdout, "Chosen AudioDriver: %s\n", SDL_GetCurrentAudioDriver());
+
+    // We're about to resize up to roughly the display size, we should try to fill as much of it as possible, without
+    // pushing the top window frame offscreen.
+#ifdef USE_QT_WINDOW
+    // We have issues on Mac drawing onto the QtWindow (possibly caused by HiDPI discrepancies between Qt and SDL,
+    // these could be solved with a custom renderer, or possibly by changes in SDL or Qt. Instead, since all we use
+    // Qt for regarding the actual Window itself is the MenuBar, and because on Mac we can use a universal MenuBar,
+    // we instead use a Hybrid QtBasicWindow which only overrides the menubar code. This class is not intended for
+    // any other platform and is not tested on them.
+#ifdef MACOSX
+    m_window = CreateQtBasicWindow(this, 800, 600, 50, 50);
+#else
+    m_window = CreateQtWindow(this, 800, 600, 50, 50);
+    //m_window = CreateWin32Window(this, 800, 600, 50, 50);
+    //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
+#endif
+#elif USE_WX_WINDOW
+    m_window = CreateWxWindow(this, 800, 600, 50, 50);
+    //m_window = CreateBasicWindow(this, 800, 600, 50, 50);
+#else
+    m_window = CreateBasicWindow(this, 800, 600, 50, 50);
+#endif
+
+    //SDL_EnableUNICODE(1);
 
     /* ---------------------------------------- */
     /* Initialize SDL */
@@ -393,6 +530,56 @@ void ONScripterLabel::initSDL()
         errorAndExit("can't initialize SDL TTF", NULL, "Init Error", true);
         return; //dummy
     }
+
+    // Mac cursor from SDL1, which is what ONScripter seems to use typically.
+    const int DEFAULT_CWIDTH = 16;
+    const int DEFAULT_CHEIGHT = 16;
+    const int DEFAULT_CHOTX = 0;
+    const int DEFAULT_CHOTY = 0;
+
+    static unsigned char default_cdata[] =
+    {
+        0x00,0x00,
+        0x40,0x00,
+        0x60,0x00,
+        0x70,0x00,
+        0x78,0x00,
+        0x7C,0x00,
+        0x7E,0x00,
+        0x7F,0x00,
+        0x7F,0x80,
+        0x7C,0x00,
+        0x6C,0x00,
+        0x46,0x00,
+        0x06,0x00,
+        0x03,0x00,
+        0x03,0x00,
+        0x00,0x00
+    };
+    static unsigned char default_cmask[] =
+    {
+        0xC0,0x00,
+        0xE0,0x00,
+        0xF0,0x00,
+        0xF8,0x00,
+        0xFC,0x00,
+        0xFE,0x00,
+        0xFF,0x00,
+        0xFF,0x80,
+        0xFF,0xC0,
+        0xFF,0xE0,
+        0xFE,0x00,
+        0xEF,0x00,
+        0xCF,0x00,
+        0x87,0x80,
+        0x07,0x80,
+        0x03,0x00
+    };
+
+    SDL_Cursor* cursor = SDL_CreateCursor(default_cdata, default_cmask,
+        DEFAULT_CWIDTH, DEFAULT_CHEIGHT,
+        DEFAULT_CHOTX, DEFAULT_CHOTY);
+    SDL_SetCursor(cursor);
 
 //insani added app icon
     SDL_Surface* icon = IMG_Load("icon.png");
@@ -406,10 +593,7 @@ void ONScripterLabel::initSDL()
         //use the (first) Windows icon resource
         HICON wicon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(ONSCRICON));
         if (wicon) {
-            SDL_SysWMinfo info;
-            SDL_VERSION(&info.version);
-            SDL_GetWMInfo(&info);
-            SendMessage(info.window, WM_SETICON, ICON_BIG, (LPARAM)wicon);
+            SendMessage((HWND)m_window->GetWindowHandle(), WM_SETICON, ICON_BIG, (LPARAM)wicon);
         }
 #else
         //backport from ponscripter
@@ -454,7 +638,7 @@ void ONScripterLabel::initSDL()
             SDL_FreeSurface(tmp);
         }
 #endif //MACOSX || WIN32
-        SDL_WM_SetIcon(icon, NULL);
+        SDL_SetWindowIcon(m_window->GetWindow(), icon);
     }
     if (icon)
         SDL_FreeSurface(icon);
@@ -497,10 +681,11 @@ void ONScripterLabel::initSDL()
     scr_stretch_x = 1.0;
     scr_stretch_y = 1.0;
 #endif
-    if (scaled_flag) {
-        const SDL_VideoInfo* info = SDL_GetVideoInfo();
-        int native_width = info->current_w;
-        int native_height = info->current_h;
+      if (scaled_flag) {
+        SDL_DisplayMode DM;
+        SDL_GetDesktopDisplayMode(0, &DM);
+        int native_width = DM.w;
+        int native_height = DM.h;
         
         // Resize up to fill screen
 #ifndef RCA_SCALE
@@ -559,7 +744,8 @@ void ONScripterLabel::initSDL()
         }
     }
 #endif
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+    screen_surface = m_window->SetVideoMode( screen_width, screen_height, screen_bpp, fullscreen_mode );
+    temp_screen_surface = SDL_CreateRGBSurfaceWithFormat(0, screen_width, screen_height, screen_surface->format->BitsPerPixel, screen_surface->format->format);
 
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
@@ -568,7 +754,7 @@ void ONScripterLabel::initSDL()
         screen_ratio1 /= 2;
         screen_width  /= 2;
         screen_height /= 2;
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
 #endif
 
@@ -586,13 +772,12 @@ void ONScripterLabel::initSDL()
 
     setStr(&wm_title_string, DEFAULT_WM_TITLE);
     setStr(&wm_icon_string, DEFAULT_WM_ICON);
-    SDL_WM_SetCaption( wm_title_string, wm_icon_string );
+    m_window->SetWindowCaption( wm_title_string, wm_icon_string );
 
 #ifdef WIN32
     //check the audio driver setting
-    char audiodriver[16];
-    SDL_AudioDriverName(audiodriver,16);
-    //fprintf(stderr,"audio driver: %s\n", audiodriver);
+    const char* audiodriver = SDL_GetCurrentAudioDriver();
+    fprintf(stderr,"audio driver: %s\n", audiodriver);
     if ((audiobuffer_size < 8192) &&
         (strcmp(audiodriver, "waveout") == 0)){
         audiobuffer_size = 8192; //minimum buffer size for waveout
@@ -623,7 +808,6 @@ void ONScripterLabel::openAudio(int freq, Uint16 format, int channels)
         audio_open_flag = true;
 
         Mix_AllocateChannels( ONS_MIX_CHANNELS+ONS_MIX_EXTRA_CHANNELS );
-        Mix_ChannelFinished( waveCallback );
     }
 }
 
@@ -643,7 +827,7 @@ int ONScripterLabel::StretchPosY(int val) {
 }
 #endif
 
-ONScripterLabel::ONScripterLabel()
+ONScripterLabel::ONScripterLabel(int argc, char** argv)
 //Using an initialization list to make sure pointers start out NULL
 : default_font(NULL), registry_file(NULL), dll_file(NULL),
   getret_str(NULL), key_exe_file(NULL), trap_dest(NULL),
@@ -660,11 +844,11 @@ ONScripterLabel::ONScripterLabel()
   shelter_select_link(NULL), default_cdrom_drive(NULL),
   wave_file_name(NULL), seqmusic_file_name(NULL), seqmusic_info(NULL),
   cdrom_info(NULL),
-  music_file_name(NULL), music_buffer(NULL), mp3_sample(NULL),
+  music_file_name(NULL),
   music_info(NULL), music_cmd(NULL), seqmusic_cmd(NULL),
-  async_movie(NULL), movie_buffer(NULL), async_movie_surface(NULL),
-  surround_rects(NULL),
-  text_font(NULL), cached_page(NULL), system_menu_title(NULL)
+  async_movie(NULL),
+  text_font(NULL), cached_page(NULL), system_menu_title(NULL),
+  argc(argc), argv(argv)
 {
     //first initialize *everything* (static) to base values
 
@@ -714,7 +898,6 @@ ONScripterLabel::ONScripterLabel()
     effectspeed = EFFECTSPEED_NORMAL;
     shortcut_mouse_line = -1;
     skip_mode = SKIP_NONE;
-    music_buffer_length = 0;
     mp3fade_start = 0;
     wm_edit_string[0] = '\0';
 #ifdef PNG_AUTODETECT_NSCRIPTER_MASKS
@@ -724,6 +907,8 @@ ONScripterLabel::ONScripterLabel()
 #else
     png_mask_type = PNG_MASK_USE_ALPHA;
 #endif
+
+    InitFonts();
     
     //init arrays
     int i=0;
@@ -827,6 +1012,8 @@ ONScripterLabel::~ONScripterLabel()
 
     if (default_font) delete[] default_font;
     if (font_file) delete[] font_file;
+
+    SDL_FreeCursor(cursor);
 }
 
 void ONScripterLabel::enableCDAudio(){
@@ -845,7 +1032,7 @@ void ONScripterLabel::setAudiodriver(const char *driver)
         snprintf(buf, 128, "SDL_AUDIODRIVER=%s", driver);
     else
         strncpy(buf, "SDL_AUDIODRIVER=", 128);
-    SDL_putenv(buf);
+    onscripter_putenv(buf);
 }
 
 void ONScripterLabel::setAudioBufferSize(int kbyte_size)
@@ -1001,8 +1188,117 @@ void ONScripterLabel::setGameIdentifier(const char *gameid)
 
 bool ONScripterLabel::file_exists(const char *fileName)
 {
+    if (fileName == NULL)
+        return false;
+
     std::ifstream infile(fileName);
     return infile.good();
+}
+
+void ONScripterLabel::ProcessFonts(std::vector<FontOption>& fonts)
+{
+    std::string systemFontPath;
+    std::string userFontPath;
+
+#ifdef WIN32
+    systemFontPath = "C:\\Windows\\Fonts\\";
+    auto localAppDataSdl = SDL_getenv("LOCALAPPDATA");
+    userFontPath.append(localAppDataSdl);
+    userFontPath.append("\\Microsoft\\Windows\\Fonts\\");
+#elif defined(MACOSX)
+    systemFontPath = "/System/Library/Fonts/";
+    userFontPath = "";
+#endif
+
+    for (auto& font : fonts)
+    {
+        for (auto& fontPath : font.m_paths)
+        {
+            char* archiveFontPath = create_filepath(archive_path, fontPath.c_str());
+
+            if (file_exists(fontPath.c_str())) {
+                font.m_availiblePath = fontPath;
+            }
+            else if (archiveFontPath != NULL) {
+
+            }
+            else {
+                if (!systemFontPath.empty()) {
+                    font.m_availiblePath = systemFontPath + fontPath;
+
+                    if (!file_exists(font.m_availiblePath.c_str())) {
+                        font.m_availiblePath.clear();
+                    }
+                }
+
+                if (font.m_availiblePath.empty() && !userFontPath.empty()) {
+                    font.m_availiblePath = userFontPath + fontPath;
+
+                    if (!file_exists(font.m_availiblePath.c_str())) {
+                        font.m_availiblePath.clear();
+                    }
+                }
+            }
+
+            delete[] archiveFontPath;
+
+            if (!font.m_availiblePath.empty()) break;
+        }
+
+        // Didn't find it, look at the fallbacks.
+        if (font.m_availiblePath.empty()) {
+            ProcessFonts(font.m_fallbackFonts);
+        }
+        else {
+            font.m_fontToUse = &font;
+        }
+    }
+}
+
+void ONScripterLabel::InitFonts()
+{
+    std::vector<FontOption> fontInfos{
+        {"MS Gothic" /*"MS ゴシック"*/, {"msgothic.ttc", "msgothic.ttf"}, {}, NULL, {
+            {"ヒラギノ丸ゴ ProN" /*Mac Gothic*/, {"ヒラギノ丸ゴ ProN W4.ttc"}, {}, NULL}
+        }},
+        {"NSimSun" /*"NSimSun"*/, {"simsun.ttc"}, {}, NULL },
+        {"SimSun-ExtB" /*"SimSun-ExtB"*/, {"simsunb.ttf"}, {}, NULL },
+        {"BIZ UD Gothic" /*"BIZUDゴシック"*/, {"BIZ-UDGothicR.ttc"}, {}, NULL, {
+            {"BIZ UDGothic" /*"BIZ UD明朝 Medium"*/, {"BIZUDGothic-Regular.ttf"}, {}, NULL }
+        }},
+        {"BIZ UDP Mincho Medium" /*"BIZ UD明朝 Medium"*/, {"BIZ-UDMinchoM.ttc"}, {}, NULL, {
+            {"BIZ UDP Mincho" /*"BIZ UD明朝 Medium"*/, {"BIZUDPMincho-Regular.ttf"}, {}, NULL }
+        }},
+        {"MS Mincho" /*"MS 明朝"*/, {"Msmincho.ttc"}, {}, NULL },
+        {"UD Digi Kyokasho N-B" /*"UD デジタル教科書体N-B"*/, {"UDDigiKyokashoN-B.ttc"}, {}, NULL },
+        {"UD Digi Kyokasho N-R" /*"UD デジタル教科書体N-R"*/, {"UDDigiKyokashoN-R.ttc"}, {}, NULL },
+        {"Sazanami Gothic", {"sazanami-gothic.ttf", "sgothic.ttf"}, {}, NULL, {
+            {"Sazanami Mincho", {"sazanami-mincho.ttf", "smincho.ttf"}, {}, NULL}
+        }},
+        {"Default" /*"デフォルト"*/, {"default.ttf", "default.ttc", "default.otf", "default.otc"}, {}, NULL }
+    };
+
+    ProcessFonts(fontInfos);
+    m_fonts = std::move(fontInfos);
+
+    if (m_fonts[9].m_fontToUse) font_file = m_fonts[9].m_fontToUse->m_availiblePath.c_str();
+    else if (m_fonts[0].m_fontToUse) font_file = m_fonts[0].m_fontToUse->m_availiblePath.c_str();
+    else {
+        fprintf(stderr, "no font file detected\n");
+    }
+}
+
+void ONScripterLabel::ChangeFont(FontOption* fontOption)
+{
+    font_file = fontOption->m_availiblePath.data();
+
+    repaintCommand();
+}
+
+
+const std::vector<ONScripterLabel::FontOption>& ONScripterLabel::GetFonts()
+{
+    return m_fonts;
 }
 
 char* ONScripterLabel::create_filepath(DirPaths archive_path, const char* filename)
@@ -1045,16 +1341,11 @@ int ONScripterLabel::init()
                 char tmp[strlen(path) + 4];
                 sprintf(tmp, "%s%c%s", path, DELIMITER, "..");
                 archive_path.add(tmp);
-            } else {
-                //if we couldn't find the application path, we still need
-                //something - use current dir and parent (default)
-                archive_path.add(default_path);
             }
         }
-        else {
-            // Not in a bundle: just use current dir and parent as normal.
-            archive_path.add(default_path);
-        }
+
+        // Check current dir and parent as normal.
+        archive_path.add(default_path);
 #else
         // On Linux, the path is unpredictable and should be set by
         // using "-r PATH" or "--root PATH" in a launcher script.
@@ -1084,9 +1375,9 @@ int ONScripterLabel::init()
         // On Windows, store in [Profiles]/All Users/Application Data.
         // Permit saves to be per-user rather than shared if
         // option --current-user-appdata is specified
-        HMODULE shdll = LoadLibrary("shfolder");
+        HMODULE shdll = LoadLibraryA("shfolder");
         if (shdll) {
-            GETFOLDERPATH gfp = GETFOLDERPATH(GetProcAddress(shdll, "SHGetFolderPathA"));
+            GETFOLDERPATHA gfp = GETFOLDERPATHA(GetProcAddress(shdll, "SHGetFolderPathA"));
             if (gfp) {
                 char hpath[MAX_PATH];
 #define CSIDL_COMMON_APPDATA 0x0023 // for [Profiles]/All Users/Application Data
@@ -1100,7 +1391,7 @@ int ONScripterLabel::init()
                     script_h.save_path = new char[strlen(hpath) + strlen(gameid) + 3];
                     sprintf(script_h.save_path, "%s%c%s%c",
                             hpath, DELIMITER, gameid, DELIMITER);
-                    CreateDirectory(script_h.save_path, 0);
+                    CreateDirectoryA(script_h.save_path, 0);
                 }
             }
             FreeLibrary(shdll);
@@ -1112,10 +1403,9 @@ int ONScripterLabel::init()
         }
 #elif defined MACOSX
         // On Mac OS X, place in ~/Library/Application Support/<gameid>/
-        char *path;
-        ONSCocoa::getGameAppSupportPath(&path, gameid);
+        char* path = SDL_GetPrefPath("ONScripter-EN", gameid);
         setSavePath(path);
-        delete[] path;
+        SDL_free(path);
 #elif defined LINUX
         // On Linux (and similar *nixen), place in ~/.gameid
         passwd* pwd = getpwuid(getuid());
@@ -1178,121 +1468,17 @@ int ONScripterLabel::init()
     effect_src_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
     effect_dst_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
     effect_tmp_surface   = AnimationInfo::allocSurface( screen_width, screen_height );
-    SDL_SetAlpha( accumulation_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( backup_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( effect_src_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( effect_dst_surface, 0, SDL_ALPHA_OPAQUE );
-    SDL_SetAlpha( effect_tmp_surface, 0, SDL_ALPHA_OPAQUE );
+    SDL_SetSurfaceBlendMode( accumulation_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( backup_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( effect_src_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( effect_dst_surface, SDL_BLENDMODE_NONE );
+    SDL_SetSurfaceBlendMode( effect_tmp_surface, SDL_BLENDMODE_NONE );
 
     num_loaded_images = 10; // to suppress temporal increase at the start-up
 
     text_info.num_of_cells = 1;
     text_info.allocImage( screen_width, screen_height );
     text_info.fill(0, 0, 0, 0);
-
-    // ----------------------------------------
-    // Initialize font
-    delete[] font_file;
-
-    int font_picker = -1;
-
-    FILE *fp;
-    // No longer causes segfault :) -Galladite 2023-06-05
-    char* archive_default_font_ttf = create_filepath(archive_path, "default.ttf");
-    char* archive_default_font_ttc = create_filepath(archive_path, "default.ttc");
-    char* archive_default_font_otf = create_filepath(archive_path, "default.otf");
-    char* archive_default_font_otc = create_filepath(archive_path, "default.otc");
-
-#if defined(MACOSX)
-    char* macos_font_file;
-    NSFileManager *fm = [NSFileManager defaultManager];
-    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸ゴ ProN W4.ttc";
-    if ([fm fileExistsAtPath:hiraginoPath])
-    {
-        macos_font_file = new char[ strlen([hiraginoPath UTF8String]) + 1 ];
-        strcpy(macos_font_file, [hiraginoPath UTF8String]);
-    }
-#endif
-
-    if(file_exists("default.ttf")) font_picker = FONT_DEFAULT_TTF;
-    else if(file_exists("default.ttc")) font_picker = FONT_DEFAULT_TTC;
-    else if(file_exists("default.otf")) font_picker = FONT_DEFAULT_OTF;
-    else if(file_exists("default.otc")) font_picker = FONT_DEFAULT_OTC;
-    else if(file_exists(archive_default_font_ttf)) font_picker = FONT_ARCHIVE_TTF;
-    else if(file_exists(archive_default_font_ttc)) font_picker = FONT_ARCHIVE_TTC;
-    else if(file_exists(archive_default_font_otf)) font_picker = FONT_ARCHIVE_OTF;
-    else if(file_exists(archive_default_font_otc)) font_picker = FONT_ARCHIVE_OTC;
-#if defined(WIN32)
-    else if(file_exists("C:\\Windows\\Fonts\\msgothic.ttc")) font_picker = FONT_WIN32_MSGOTHIC_TTC;
-    else if(file_exists("C:\\Windows\\Fonts\\msgothic.ttf")) font_picker = FONT_WIN32_MSGOTHIC_TTF;
-#endif
-#if defined(MACOSX)
-    else if([fm fileExistsAtPath:hiraginoPath]) font_picker = FONT_MACOS_HIRAGINO;
-#endif
-
-    switch(font_picker)
-    {
-        case FONT_DEFAULT_TTF:
-            font_file = create_filepath("", "default.ttf");
-            break;
-        case FONT_DEFAULT_TTC:
-            font_file = create_filepath("", "default.ttc");
-            break;
-        case FONT_DEFAULT_OTF:
-            font_file = create_filepath("", "default.otf");
-            break;
-        case FONT_DEFAULT_OTC:
-            font_file = create_filepath("", "default.otc");
-            break;
-        case FONT_ARCHIVE_TTF:
-            font_file = archive_default_font_ttf;
-            delete archive_default_font_ttc;
-            delete archive_default_font_otf;
-            delete archive_default_font_otc;
-            break;
-        case FONT_ARCHIVE_TTC:
-            font_file = archive_default_font_ttc;
-            delete archive_default_font_ttf;
-            delete archive_default_font_otf;
-            delete archive_default_font_otc;
-            break;
-        case FONT_ARCHIVE_OTF:
-            font_file = archive_default_font_otf;
-            delete archive_default_font_ttf;
-            delete archive_default_font_ttc;
-            delete archive_default_font_otc;
-            break;
-        case FONT_ARCHIVE_OTC:
-            font_file = archive_default_font_otc;
-            delete archive_default_font_ttf;
-            delete archive_default_font_ttc;
-            delete archive_default_font_otf;
-            break;
-#if defined(WIN32)
-        case FONT_WIN32_MSGOTHIC_TTC:
-            font_file = create_filepath("", "C:\\Windows\\Fonts\\msgothic.ttc");
-            fprintf( stderr, "no font file detected; using system fallback (MS Gothic)\n" );
-            break;
-        case FONT_WIN32_MSGOTHIC_TTF:
-            font_file = create_filepath("", "C:\\Windows\\Fonts\\msgothic.ttf");
-            fprintf( stderr, "no font file detected; using system fallback (MS Gothic)\n" );
-            break;
-#endif
-#if defined(MACOSX)
-        case FONT_MACOS_HIRAGINO:
-            font_file = macos_font_file;
-            fprintf( stderr, "no font file detected; using system fallback (Hiragino Gothic)\n" );
-            break;
-#endif
-        default:
-            font_picker = -1;
-            break;
-    }
-    if(font_picker == -1)
-    {
-        fprintf( stderr, "no font file detected; exiting\n" );
-        return -1;
-    }
 
     // ----------------------------------------
     // Sound related variables
@@ -1420,12 +1606,12 @@ void ONScripterLabel::reset()
     setStr(&getret_str, NULL);
     getret_int = 0;
 
-    if (async_movie) stopMovie(async_movie);
-    async_movie = NULL;
-    if (movie_buffer) delete[] movie_buffer;
-    movie_buffer = NULL;
-    if (surround_rects) delete[] surround_rects;
-    surround_rects = NULL;
+    //if (async_movie) stopMovie(async_movie);
+    //async_movie = NULL;
+    //if (movie_buffer) delete[] movie_buffer;
+    //movie_buffer = NULL;
+    //if (surround_rects) delete[] surround_rects;
+    //surround_rects = NULL;
 
     resetSub();
 
@@ -1620,17 +1806,11 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool is
 #elif defined(WIN32) && defined(USE_MESSAGEBOX)
     char errtitle[256];
     HWND pwin = NULL;
-    SDL_SysWMinfo info;
     UINT mb_type = MB_OK;
-    SDL_VERSION(&info.version);
-    SDL_GetWMInfo(&info);
 
-    if (SDL_GetWMInfo(&info) == 1) {
-        pwin = info.window;
-        snprintf(errtitle, 256, "%s", title);
-    } else {
-        snprintf(errtitle, 256, "ONScripter-EN: %s", title);
-    }
+    if (m_window)
+        pwin = (HWND)m_window->GetWindowHandle();
+    snprintf(errtitle, 256, "%s", title);
 
     if (is_warning) {
         //Retry and Ignore both continue, Abort exits
@@ -1639,7 +1819,7 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool is
     }
     else
         mb_type |= MB_ICONERROR;
-    int res = MessageBox(pwin, errstr, errtitle, mb_type);
+    int res = MessageBoxA(pwin, errstr, errtitle, mb_type);
     if (is_warning)
         return (res == IDABORT); //should do exit if got Abort
 #else
@@ -1669,11 +1849,11 @@ void ONScripterLabel::openDebugFolders()
     // to make it easier to debug user issues on Windows, open
     // the current directory, save_path and ONScripter output folders
     // in Explorer
-    HMODULE shdll = LoadLibrary("shell32");
+    HMODULE shdll = LoadLibraryA("shell32");
     if (shdll) {
         char hpath[MAX_PATH];
         bool havefp = false;
-        GETFOLDERPATH gfp = GETFOLDERPATH(GetProcAddress(shdll, "SHGetFolderPathA"));
+        GETFOLDERPATHA gfp = GETFOLDERPATHA(GetProcAddress(shdll, "SHGetFolderPathA"));
         if (gfp) {
             HRESULT res = gfp(0, CSIDL_APPDATA, 0, 0, hpath); //now user-based
             if (res != S_FALSE && res != E_FAIL && res != E_INVALIDARG) {
@@ -1747,6 +1927,8 @@ bool intersectRects( SDL_Rect &result, SDL_Rect rect1, SDL_Rect rect2) {
 
 void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_flag, bool direct_flag )
 {
+    //printf("\t\tRefresh Mode %d\n", refresh_mode);
+
     if ( direct_flag ){
         flushDirect( *rect, refresh_mode );
     }
@@ -1762,22 +1944,29 @@ void ONScripterLabel::flush( int refresh_mode, SDL_Rect *rect, bool clear_dirty_
 
 void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode, bool updaterect )
 {
-    //printf("flush %d: %d %d %d %d\n", refresh_mode, rect.x, rect.y, rect.w, rect.h );
-
-    if (surround_rects) {
+    if (async_movie) {
         // playing a movie, need to avoid overpainting it
         SDL_Rect tmp_rects[4];
         for (int i=0; i<4; ++i) {
             if (intersectRects(tmp_rects[i], rect, surround_rects[i])) {
                 refreshSurface( accumulation_surface, &tmp_rects[i], refresh_mode );
-                SDL_BlitSurface( accumulation_surface, &tmp_rects[i], screen_surface, &tmp_rects[i] );
+
+                SDL_Rect real_dst_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, tmp_rects[i]);
+                SDL_BlitSurface(accumulation_surface, &tmp_rects[i], temp_screen_surface, &tmp_rects[i]);
+                SDL_SoftStretchLinear(temp_screen_surface, &tmp_rects[i], screen_surface, &real_dst_rect);
+                tmp_rects[i] = real_dst_rect;
             }
         }
-        if (updaterect) SDL_UpdateRects( screen_surface, 4, tmp_rects );
-    } else { 
-        refreshSurface( accumulation_surface, &rect, refresh_mode );
-        SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
-        if (updaterect) SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
+
+        if (updaterect) SDL_UpdateWindowSurfaceRects(m_window->GetWindow(), tmp_rects, 4);
+    }
+    else {
+        refreshSurface(accumulation_surface, &rect, refresh_mode);
+
+        SDL_Rect real_dst_rect = Window::ScaleRectToPixels(accumulation_surface, screen_surface, rect);
+        SDL_BlitSurface(accumulation_surface, &rect, temp_screen_surface, &rect);
+        SDL_SoftStretchLinear(temp_screen_surface, &rect, screen_surface, &real_dst_rect);
+        if (updaterect) SDL_UpdateWindowSurfaceRects(m_window->GetWindow(), &real_dst_rect, 1);;
     }
 }
 
@@ -1979,7 +2168,7 @@ void ONScripterLabel::executeLabel()
         //check for quit event before running each command, for safety
         //(this won't prevent all window lockups, but should give some
         // greater chance of the user being able to quit when one happens)
-        if ( SDL_PumpEvents(), SDL_PeepEvents( NULL, 1, SDL_PEEKEVENT, SDL_QUITMASK) )
+        if ( SDL_PumpEvents(), SDL_PeepEvents( NULL, 1, SDL_PEEKEVENT, SDL_QUIT, SDL_QUIT) )
             endCommand();
 
         int ret = ScriptParser::parseLine();
@@ -2599,12 +2788,22 @@ void ONScripterLabel::quit(bool no_error)
 {
     saveAll(no_error);
 
-    if (async_movie) stopMovie(async_movie);
-    async_movie = NULL;
+    if (async_movie)
+    {
+#ifdef USE_AVIFILE
+        async_movie->stopMovie();
+#endif
+        async_movie = NULL;
+    }
 
     if ( cdrom_info ){
         SDL_CDStop( cdrom_info );
-        SDL_CDClose( cdrom_info );
+
+        // FIXME: This crashes when playing music, but we're about to close
+        //        due to an invalid handle when calling mciSendCommand, since
+        //        we're closing anyway, we can ignore it for now and let the 
+        //        OS handle it.
+        //SDL_CDClose(cdrom_info);
     }
     if ( seqmusic_info ){
         Mix_HaltMusic();

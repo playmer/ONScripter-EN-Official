@@ -177,8 +177,8 @@ int NSSetIntValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no  = luaL_checkint( state, 1 );
-    int val = luaL_checkint( state, 2 );
+    int no  = luaL_checkinteger( state, 1 );
+    int val = luaL_checkinteger( state, 2 );
     
     lh->sh->setNumVariable( no, val );
     
@@ -190,7 +190,7 @@ int NSSetStrValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     const char *str = luaL_checkstring( state, 2 );
     
     if (lh->sh->getVariableData(no).str)
@@ -210,7 +210,7 @@ int NSGetIntValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     
     lua_pushnumber( state, lh->sh->getVariableData(no).num );
     
@@ -222,7 +222,7 @@ int NSGetStrValue(lua_State *state)
     lua_getglobal( state, ONS_LUA_HANDLER_PTR );
     LUAHandler *lh = (LUAHandler*)lua_topointer( state, -1 );
 
-    int no = luaL_checkint( state, 1 );
+    int no = luaL_checkinteger( state, 1 );
     
     lua_pushstring( state, lh->sh->getVariableData(no).str );
     
@@ -350,11 +350,13 @@ void LUAHandler::init(ONScripterLabel *onsl, ScriptHandler *sh)
     this->onsl = onsl;
     this->sh = sh;
     
-    state = lua_open();
+    state = luaL_newstate();
     luaL_openlibs(state);
 
-    lua_pushvalue(state, LUA_GLOBALSINDEX);
-    luaL_register(state, NULL, lua_lut);
+
+    luaL_newlib(state, lua_lut);
+    //lua_pushvalue(state, lua_rawgeti(state, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS));
+    //luaL_setfuncs(state, lua_lut, 0);
     
     lua_pushlightuserdata(state, this);
     lua_setglobal(state, ONS_LUA_HANDLER_PTR);

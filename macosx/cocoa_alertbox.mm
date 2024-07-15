@@ -25,7 +25,6 @@
 
 #include "cocoa_alertbox.h"
 #include "cocoa_modal_alert.h"
-#include "SDLMain.h"
 #include "ONSCocoaUIController.h"
 #include <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>
@@ -64,8 +63,7 @@ namespace ONSCocoa {
     scriptErrorBoxResult scriptErrorBox(const char *title, const char *msg, bool allowIgnore, encoding_type str_encoding) {
         NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
         NSStringEncoding enc = enctypeToNSStringEncoding(str_encoding);
-        SDLMain *onsMain = [NSApp delegate];
-        scriptErrorBoxResult res = [[onsMain getUIController] showScriptError:[NSString stringWithCString:title encoding:enc] message:[NSString stringWithCString:msg encoding:enc] allowIgnore:allowIgnore];
+        scriptErrorBoxResult res = [[[NSApp delegate] getUIController] showScriptError:[NSString stringWithCString:title encoding:enc] message:[NSString stringWithCString:msg encoding:enc] allowIgnore:allowIgnore];
         [pool drain];
         return res;
     }

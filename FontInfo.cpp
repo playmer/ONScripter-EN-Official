@@ -32,19 +32,12 @@
 #include <stdio.h>
 #include <SDL_ttf.h>
 
+#include <string>
+#include <map>
+
 #define FI_TEST
 
-static struct FontContainer{
-    FontContainer *next;
-    int size;
-    TTF_Font *font;
-
-    FontContainer(){
-        size = 0;
-        next = NULL;
-        font = NULL;
-    };
-} root_font_container;
+std::map<std::pair<std::string, int>, TTF_Font*> root_font_container;
 
 Fontinfo::Fontinfo()
 {
@@ -73,32 +66,24 @@ void Fontinfo::reset()
     is_newline_accepted = false;
 }
 
-void *Fontinfo::openFont( char *font_file, int ratio1, int ratio2 )
+void *Fontinfo::openFont( const char *font_file, int ratio1, int ratio2 )
 {
+    m_font_file = font_file;
     int font_size;
     if ( font_size_xy[0] < font_size_xy[1] )
         font_size = font_size_xy[0];
     else
         font_size = font_size_xy[1];
 
-    FontContainer *fc = &root_font_container;
-    while( fc->next ){
-        if ( fc->next->size == font_size ) break;
-        fc = fc->next;
-    }
-    if ( !fc->next ){
-        fc->next = new FontContainer();
-        fc->next->size = font_size;
-        FILE *fp = fopen( font_file, "r" );
-        if ( fp == NULL ) return NULL;
-        fclose( fp );
-        //printf("Opening font.\tSize (full-width): %d\tEffective size: %d\n", font_size, font_size * ratio1 / ratio2);
-        fc->next->font = TTF_OpenFont( font_file, font_size * ratio1 / ratio2 );
+    std::pair<std::string, int> index = { font_file, font_size };
+    auto it = root_font_container.find(index);
+    if (it == root_font_container.end()) {
+        // TODO, we didn't used to print out on error if we couldn't open the font, but we should.
+        it = root_font_container.emplace(index, TTF_OpenFont(font_file, font_size * ratio1 / ratio2)).first;
     }
 
-    ttf_font = (void*)fc->next->font;
-
-    return fc->next->font;
+    ttf_font = it->second;
+    return ttf_font;
 }
 
 void Fontinfo::setTateyokoMode( int tateyoko_mode )

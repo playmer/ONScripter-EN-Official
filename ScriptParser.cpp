@@ -101,6 +101,7 @@ static struct FuncLUT{
     {"rmenu",    &ScriptParser::rmenuCommand},
     {"rgosub",   &ScriptParser::rgosubCommand},
     {"return",   &ScriptParser::returnCommand},
+    {"resetmenu",   &ScriptParser::resetmenuCommand},
     {"pretextgosub", &ScriptParser::pretextgosubCommand},
     {"pagetag", &ScriptParser::pagetagCommand},
     {"numalias", &ScriptParser::numaliasCommand},
@@ -141,11 +142,13 @@ static struct FuncLUT{
     {"len",      &ScriptParser::lenCommand},
     {"labellog",      &ScriptParser::labellogCommand},
     {"labelexist",      &ScriptParser::labelexistCommand},
+    {"killmenu",   &ScriptParser::killmenuCommand},
     {"kidokuskip", &ScriptParser::kidokuskipCommand},
     {"kidokumode", &ScriptParser::kidokumodeCommand},
     {"itoa2", &ScriptParser::itoaCommand},
     {"itoa", &ScriptParser::itoaCommand},
     {"intlimit", &ScriptParser::intlimitCommand},
+    {"insertmenu",   &ScriptParser::insertmenuCommand},
     {"inc",      &ScriptParser::incCommand},
     {"if",       &ScriptParser::ifCommand},
     {"humanz",       &ScriptParser::humanzCommand},
@@ -165,6 +168,7 @@ static struct FuncLUT{
     {"dsound",   &ScriptParser::dsoundCommand},
     {"div",   &ScriptParser::divCommand},
     {"dim",   &ScriptParser::dimCommand},
+    {"deletemenu",   &ScriptParser::deletemenuCommand},
     {"defvoicevol",   &ScriptParser::defvoicevolCommand},
     {"defsub",   &ScriptParser::defsubCommand},
     {"defsevol",   &ScriptParser::defsevolCommand},
@@ -555,6 +559,7 @@ int ScriptParser::open_screen()
     return 0;
 }
 
+
 #ifdef MACOSX
 void ScriptParser::checkBundled()
 {
@@ -565,6 +570,7 @@ void ScriptParser::checkBundled()
     is_bundled = true; // always bundled on OS X
 }
 #endif
+
 
 unsigned char ScriptParser::convHexToDec( char ch )
 {
@@ -1237,9 +1243,9 @@ void ScriptParser::setDefaultMenuLabels()
         setStr( &save_item_name, "Slot " );
     }
     else {
-        setStr( &save_menu_name, "ÅÉÉZÅ[ÉuÅÑ" );
-        setStr( &load_menu_name, "ÅÉÉçÅ[ÉhÅÑ" );
-        setStr( &save_item_name, "ÇµÇ®ÇË" );
+        setStr( &save_menu_name, "Ôºú„Çª„Éº„ÉñÔºû" );
+        setStr( &load_menu_name, "Ôºú„É≠„Éº„ÉâÔºû" );
+        setStr( &save_item_name, "„Åó„Åä„Çä" );
     }
 }
 

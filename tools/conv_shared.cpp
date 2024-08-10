@@ -237,7 +237,7 @@ size_t rescaleJPEGWrite( unsigned int width, unsigned int height, int byte_per_p
     }
 
     jpeg_finish_compress(&cinfo2);
-    size_t datacount = dest->left - dest->pub.free_in_buffer;
+    size_t datacount = dest->left - dest->pub.free_in_buffer
 
     jpeg_destroy_compress(&cinfo2);
 

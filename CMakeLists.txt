@@ -24,7 +24,7 @@ if(ONS_USE_EXT_LIBS)
     PkgConfig_Find_Module(SDL_image)
     PkgConfig_Find_Module(SDL_mixer)
     PkgConfig_Find_Module(SDL_ttf)
-    PkgConfig_Find_Module(freetype2) # freetype2?
+    PkgConfig_Find_Module(freetype2)
     PkgConfig_Find_Module(ogg)
     PkgConfig_Find_Module(zlib)
     PkgConfig_Find_Module(vorbis)
@@ -34,11 +34,6 @@ if(ONS_USE_EXT_LIBS)
     PkgConfig_Find_Module(harfbuzz)
     PkgConfig_Find_Module(bzip2)
 endif()
-
-# Windows stuff
-#-ldinput
-#-lwinmm
-#-ldxguid
 
 set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico )
 set(ADDITIONAL_EMBED_DEPENDENCIES "")
@@ -171,42 +166,3 @@ elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
         /W4
     )
 endif()
-
-
-#if(WIN32 OR MINGW)
-#    target_sources(onscripter_en
-#    PRIVATE
-#        onscripter.rc
-#        Win32Window.cpp
-#        Win32Window.h
-#    )
-#
-#    target_link_options(onscripter_en 
-#    PRIVATE
-#        $<IF:$<CONFIG:DEBUG>,/SUBSYSTEM:CONSOLE,/SUBSYSTEM:WINDOWS>
-#    )
-#endif()
-#
-#if(APPLE)
-#    if (IOS)
-#    else() # Technically, WatchOS, TvOS, and iPadOS might fall into this to...
-#        target_compile_definitions(onscripter_en PUBLIC MACOSX)
-#        target_include_directories(onscripter_en PUBLIC macosx)
-#    endif()
-#
-#
-#    target_sources(onscripter_en
-#    PRIVATE
-#        macosx/cocoa_alertbox.h
-#        macosx/cocoa_alertbox.mm
-#        macosx/cocoa_alertbox_result.h
-#        macosx/cocoa_bundle.h
-#        macosx/cocoa_bundle.mm
-#        macosx/cocoa_encoding.h
-#        macosx/cocoa_encoding.mm
-#        macosx/cocoa_modal_alert.h
-#        macosx/cocoa_modal_alert.mm
-#        macosx/cocoa_url.h
-#        macosx/cocoa_url.mm
-#    )
-#endif()

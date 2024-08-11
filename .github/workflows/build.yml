@@ -153,10 +153,10 @@ jobs:
       run: |
         curl -OL https://github.com/pspdev/pspdev/releases/latest/download/pspdev-ubuntu-latest-x86_64.tar.gz
         tar -xvf pspdev-ubuntu-latest-x86_64.tar.gz
-        export PSPDEV="$PWD/pspdev"
-        export PATH="$PATH:$PSPDEV/bin"
     - name: Build
       run: |
+        export PSPDEV="$PWD/pspdev"
+        export PATH="$PATH:$PSPDEV/bin"
         psp-cmake -B build .
         (cd build/ && make)
 

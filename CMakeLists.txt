@@ -1,56 +1,93 @@
 cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
 project(onscripter_en LANGUAGES C CXX)
 
-option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" OFF)
+option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
 
-#find_package(SDL REQUIRED)
-include(FindPkgConfig)
+function(ons_create_ext_target libname libfilename)
+    add_library(${libname} STATIC IMPORTED GLOBAL)
+    set_target_properties(
+        ${libname}
+        PROPERTIES
+            IMPORTED_LOCATION 
+                ${libfilename}
+    )
+endfunction()
 
-pkg_check_modules(SDL IMPORTED_TARGET sdl)
-pkg_check_modules(SDL_image IMPORTED_TARGET sdl_image)
-pkg_check_modules(SDL_mixer IMPORTED_TARGET sdl_mixer)
-pkg_check_modules(SDL_ttf IMPORTED_TARGET sdl_ttf)
-pkg_check_modules(smpeg IMPORTED_TARGET smpeg)
-pkg_check_modules(freetype2 IMPORTED_TARGET freetype2) # freetype2?
-pkg_check_modules(mad IMPORTED_TARGET mad)
-pkg_check_modules(ogg IMPORTED_TARGET ogg)
-pkg_check_modules(zlib IMPORTED_TARGET zlib)
-pkg_check_modules(vorbis IMPORTED_TARGET vorbis)
-pkg_check_modules(vorbisfile IMPORTED_TARGET vorbisfile)
-pkg_check_modules(libpng IMPORTED_TARGET libpng)
-pkg_check_modules(libjpeg IMPORTED_TARGET libjpeg)
-pkg_check_modules(harfbuzz IMPORTED_TARGET harfbuzz)
-pkg_check_modules(bzip2 IMPORTED_TARGET bzip2)
+#if (PLATFORM_PSP)
+#
+#endif()
 
-#-lbrotlidec
-#-lbrotlicommon
-#-ltiff
-#-lwebp
-#-lgraphite2
-#-ljbig
-#-lsharpyuv
-#-lzstd
-#-ldeflate
-#-lLerc
-#-llzma
-#-liconv
-#-lrpcrt4
-#-Wl
+if(ONS_USE_EXT_LIBS)
+    include(cmake/PkgConfigWrapper.cmake)
+
+    PkgConfig_Find_Module(sdl SDL)
+    PkgConfig_Find_Module(SDL_image)
+    PkgConfig_Find_Module(SDL_mixer)
+    PkgConfig_Find_Module(SDL_ttf)
+    PkgConfig_Find_Module(freetype2) # freetype2?
+    PkgConfig_Find_Module(ogg)
+    PkgConfig_Find_Module(zlib)
+    PkgConfig_Find_Module(vorbis)
+    PkgConfig_Find_Module(vorbisfile)
+    PkgConfig_Find_Module(libpng)
+    PkgConfig_Find_Module(libjpeg)
+    PkgConfig_Find_Module(harfbuzz)
+    PkgConfig_Find_Module(bzip2)
+endif()
 
 # Windows stuff
 #-ldinput
 #-lwinmm
 #-ldxguid
 
+set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico )
+set(ADDITIONAL_EMBED_DEPENDENCIES "")
+
+add_custom_command(
+    OUTPUT resources.cpp
+    COMMAND ${EMBED_COMMAND}
+    DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+
+add_executable(onscripter_en)
+
+target_include_directories(onscripter_en 
+PRIVATE 
+    .
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_link_libraries(onscripter_en
+PUBLIC
+    PkgConfigWrapper::SDL
+    PkgConfigWrapper::SDL_image
+    PkgConfigWrapper::SDL_mixer
+    PkgConfigWrapper::SDL_ttf
+    PkgConfigWrapper::freetype2
+    PkgConfigWrapper::ogg
+    PkgConfigWrapper::zlib
+    PkgConfigWrapper::vorbis
+    PkgConfigWrapper::vorbisfile
+    PkgConfigWrapper::libpng
+    PkgConfigWrapper::libjpeg
+    PkgConfigWrapper::harfbuzz
+    PkgConfigWrapper::bzip2
+    
+    mad
+    smpeg
+)
+
 target_sources(onscripter_en
 PRIVATE
     AnimationInfo.cpp
     AnimationInfo.h
-    AVIWrapper.cpp
-    AVIWrapper.h
+#    AVIWrapper.cpp
+#    AVIWrapper.h
     BaseReader.h
-    BasicWindow.cpp
-    BasicWindow.h
     CMakeLists.txt
     DirectReader.cpp
     DirectReader.h
@@ -109,9 +146,7 @@ PRIVATE
     ScriptParser_command.cpp
     sjis2utf16.cpp
     version.h
-    Window.cpp
-    Window.h
-    winres.h
+    #winres.h
 )
 
 set(ONS_COMPILER_FLAG_STYLE "GNU")
@@ -138,40 +173,40 @@ elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
 endif()
 
 
-if(WIN32 OR MINGW)
-    target_sources(onscripter_en
-    PRIVATE
-        onscripter.rc
-        Win32Window.cpp
-        Win32Window.h
-    )
-
-    target_link_options(onscripter_en 
-    PRIVATE
-        $<IF:$<CONFIG:DEBUG>,/SUBSYSTEM:CONSOLE,/SUBSYSTEM:WINDOWS>
-    )
-endif()
-
-if(APPLE)
-    if (IOS)
-    else() # Technically, WatchOS, TvOS, and iPadOS might fall into this to...
-        target_compile_definitions(onscripter_en PUBLIC MACOSX)
-        target_include_directories(onscripter_en PUBLIC macosx)
-    endif()
-
-
-    target_sources(onscripter_en
-    PRIVATE
-        macosx/cocoa_alertbox.h
-        macosx/cocoa_alertbox.mm
-        macosx/cocoa_alertbox_result.h
-        macosx/cocoa_bundle.h
-        macosx/cocoa_bundle.mm
-        macosx/cocoa_encoding.h
-        macosx/cocoa_encoding.mm
-        macosx/cocoa_modal_alert.h
-        macosx/cocoa_modal_alert.mm
-        macosx/cocoa_url.h
-        macosx/cocoa_url.mm
-    )
+#if(WIN32 OR MINGW)
+#    target_sources(onscripter_en
+#    PRIVATE
+#        onscripter.rc
+#        Win32Window.cpp
+#        Win32Window.h
+#    )
+#
+#    target_link_options(onscripter_en 
+#    PRIVATE
+#        $<IF:$<CONFIG:DEBUG>,/SUBSYSTEM:CONSOLE,/SUBSYSTEM:WINDOWS>
+#    )
+#endif()
+#
+#if(APPLE)
+#    if (IOS)
+#    else() # Technically, WatchOS, TvOS, and iPadOS might fall into this to...
+#        target_compile_definitions(onscripter_en PUBLIC MACOSX)
+#        target_include_directories(onscripter_en PUBLIC macosx)
+#    endif()
+#
+#
+#    target_sources(onscripter_en
+#    PRIVATE
+#        macosx/cocoa_alertbox.h
+#        macosx/cocoa_alertbox.mm
+#        macosx/cocoa_alertbox_result.h
+#        macosx/cocoa_bundle.h
+#        macosx/cocoa_bundle.mm
+#        macosx/cocoa_encoding.h
+#        macosx/cocoa_encoding.mm
+#        macosx/cocoa_modal_alert.h
+#        macosx/cocoa_modal_alert.mm
+#        macosx/cocoa_url.h
+#        macosx/cocoa_url.mm
+#    )
 #endif()

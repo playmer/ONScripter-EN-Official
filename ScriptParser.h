@@ -46,7 +46,7 @@
 #include <math.h>
 #include <time.h>
 
-#include <SDL_mixer.h>
+#include <SDL/SDL_mixer.h>
 #include "DirPaths.h"
 #include "ScriptHandler.h"
 #include "NsaReader.h"
@@ -78,8 +78,8 @@
 #define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
 
 // Mion: kinsoku
-#define DEFAULT_START_KINSOKU "vxjnpABCDEHIRSTUX["
-#define DEFAULT_END_KINSOKU   "uwimo"
+#define DEFAULT_START_KINSOKU "ï¿½vï¿½xï¿½jï¿½nï¿½pï¿½Aï¿½Bï¿½Cï¿½Dï¿½Eï¿½Hï¿½Iï¿½Rï¿½Sï¿½Tï¿½Uï¿½Xï¿½["
+#define DEFAULT_END_KINSOKU   "ï¿½uï¿½wï¿½iï¿½mï¿½o"
 
 typedef unsigned char uchar3[3];
 

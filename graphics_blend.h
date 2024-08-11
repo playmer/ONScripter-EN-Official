@@ -26,7 +26,7 @@
 #ifndef __GRAPHICS_BLEND_H__
 #define __GRAPHICS_BLEND_H__
 
-#include <SDL.h>
+#include <SDL/SDL.h>
 #include "graphics_common.h"
 
 // Incorporates code originally from AnimationInfo.cpp & ONScripterLabel_image.cpp,

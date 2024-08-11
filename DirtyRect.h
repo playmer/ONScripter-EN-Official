@@ -24,7 +24,7 @@
 #ifndef __DIRTY_RECT__
 #define __DIRTY_RECT__
 
-#include <SDL.h>
+#include <SDL/SDL.h>
 
 struct DirtyRect
 {

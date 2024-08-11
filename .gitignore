@@ -11,3 +11,4 @@ tools/*dec
 tools/*make
 *.exe
 onscripter.rc
+build/

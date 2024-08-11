@@ -57,7 +57,7 @@ jobs:
           tools/nscmake \
           tools/sarmake
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: Linux x86-64 Build
         path: ${{ github.workspace }}/onscripter-en.Linux.x86-64.tar.gz
@@ -126,7 +126,7 @@ jobs:
           tools/nscmake.exe \
           tools/sarmake.exe
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: Windows ${{matrix.arch}} Build
         path: ${{ github.workspace }}/onscripter-en.Windows.${{matrix.arch}}.zip
@@ -165,7 +165,7 @@ jobs:
           COPYING \
           CHANGES
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: PSP Build
         path: ${{ github.workspace }}/onscripter-en.PSP.zip

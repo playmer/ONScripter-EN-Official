@@ -159,6 +159,11 @@ jobs:
         export PATH="$PATH:$PSPDEV/bin"
         psp-cmake -B build .
         (cd build/ && make)
+        zip onscripter-en.PSP.zip \
+          onscripter_en \
+          README.md \
+          COPYING \
+          CHANGES
 
     - uses: actions/upload-artifact@v3
       with:

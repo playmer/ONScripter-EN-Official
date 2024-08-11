@@ -157,10 +157,13 @@ jobs:
       run: |
         export PSPDEV="$PWD/pspdev"
         export PATH="$PATH:$PSPDEV/bin"
-        psp-cmake -B build .
+        psp-cmake -DBUILD_PRX=1 -DENC_PRX=1 -B build .
         (cd build/ && make)
         zip onscripter-en.PSP.zip \
           build/onscripter_en \
+          build/EBOOT.PBP \
+          build/onscripter_en.prx \
+          build/PARAM.SFO \
           README.md \
           COPYING \
           CHANGES

@@ -166,3 +166,14 @@ elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
         /W4
     )
 endif()
+
+if(PSP)
+    create_pbp_file(
+        TARGET onscripter_en
+        ICON_PATH NULL
+        BACKGROUND_PATH NULL
+        PREVIEW_PATH NULL
+        TITLE onscripter_en
+        VERSION 01.00
+    )
+endif()

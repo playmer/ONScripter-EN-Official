@@ -234,7 +234,6 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         -fdiagnostics-color=always
         -static
         -fpermissive
-        -mmmx 
     )
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
     target_compile_definitions(onscripter_en
@@ -262,7 +261,7 @@ elseif(WIN32)
     target_compile_options(onscripter_en
     PRIVATE
         -fpermissive
-        -mmmx 
+        -mmmx
     )
 
     target_compile_definitions(onscripter_en

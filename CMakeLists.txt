@@ -13,9 +13,86 @@ function(ons_create_ext_target libname libfilename)
     )
 endfunction()
 
+function(run_library_config library_name include_directories)
+    set(${library_name}_lib_cmd ${library_name}-config)
+    set(lib_args --libs --cflags)
+
+    find_program(${library_name}_lib_command ${${library_name}_lib_cmd})
+
+    execute_process(
+        COMMAND bash ${${library_name}_lib_command} ${lib_args}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        RESULT_VARIABLE config_result
+        OUTPUT_VARIABLE config_stdout_results
+        ERROR_VARIABLE config_stderr_results
+    )
+
+    message(STATUS "execute_process command: ${${library_name}_lib_command}")
+    message(STATUS "\targs: ${lib_args}")
+    message(STATUS "\tresults: ${config_stdout_results}")
+    message(STATUS "\terr: ${config_stderr_results}")
+    message(STATUS "\tcode: ${config_result}")
+
+    string(REPLACE " " ";" flags ${config_stdout_results})
+    foreach(flag ${flags})
+        string(FIND "${flag}" "-I" out)
+        if(NOT "${out}" EQUAL 0)
+            continue()
+        endif()
+
+        string(SUBSTRING ${flag} 2 -1 include_directory)
+
+        if (EXISTS ${include_directory})
+            set(processed_include_directory ${include_directory})
+        else()
+            cmake_path(CONVERT ${${library_name}_lib_command} TO_CMAKE_PATH_LIST path_list)
+            string(REPLACE "/" ";" path_list ${path_list})
+            message(STATUS "\tPathList: ${path_list}")
+            
+            foreach(component ${path_list})
+                message(STATUS "\tcomparing: ${include_directory}, ${component}")
+                string(FIND "${include_directory}" "/${component}" out)
+                if("${out}" EQUAL 0)
+                    set(processed_include_directory ${processed_include_directory}${include_directory})
+                    break()
+                endif()
+
+                if (component MATCHES ":$")
+                    set(component ${component}/)
+                endif()
+                
+                cmake_path(APPEND processed_include_directory ${component})
+                message(STATUS "\tAdded: ${processed_include_directory}")
+            endforeach()
+        endif()
+
+        list(APPEND include_directories_list ${processed_include_directory})
+    endforeach()
+
+    message(STATUS "\tinclude_directories [${include_directories}]: ${include_directories_list}")
+    set(${include_directories} ${include_directories_list} PARENT_SCOPE)
+endfunction()
+
 #if (PLATFORM_PSP)
 #
 #endif()
+
+
+set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico )
+set(ADDITIONAL_EMBED_DEPENDENCIES "")
+
+add_custom_command(
+    OUTPUT resources.cpp
+    COMMAND ${EMBED_COMMAND}
+    DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+
+add_executable(onscripter_en)
+
 
 if(ONS_USE_EXT_LIBS)
     include(cmake/PkgConfigWrapper.cmake)
@@ -33,28 +110,18 @@ if(ONS_USE_EXT_LIBS)
     PkgConfig_Find_Module(libjpeg)
     PkgConfig_Find_Module(harfbuzz)
     PkgConfig_Find_Module(bzip2)
+
+    run_library_config(sdl sdl_include_directories)
+    run_library_config(smpeg smpeg_include_directories)
 endif()
 
-set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico )
-set(ADDITIONAL_EMBED_DEPENDENCIES "")
 
-add_custom_command(
-    OUTPUT resources.cpp
-    COMMAND ${EMBED_COMMAND}
-    DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
-    VERBATIM
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-
-add_executable(onscripter_en)
 
 target_include_directories(onscripter_en 
 PRIVATE 
     .
     ${CMAKE_CURRENT_BINARY_DIR}
-    C:/msys64/mingw64/include/smpeg
+    ${smpeg_include_directories}
 )
 
 target_compile_definitions(onscripter_en 

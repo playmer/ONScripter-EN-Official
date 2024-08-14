@@ -54,6 +54,12 @@ target_include_directories(onscripter_en
 PRIVATE 
     .
     ${CMAKE_CURRENT_BINARY_DIR}
+    C:/msys64/mingw64/include/smpeg
+)
+
+target_compile_definitions(onscripter_en 
+PRIVATE 
+    _GNU_SOURCE=1
 )
 
 target_link_libraries(onscripter_en
@@ -154,7 +160,10 @@ endif()
 
 
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-
+    target_compile_options(onscripter_en
+    PRIVATE
+        -fdiagnostics-color=always
+    )
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
     target_compile_definitions(onscripter_en
         PRIVATE

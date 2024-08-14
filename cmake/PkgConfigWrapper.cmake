@@ -53,8 +53,16 @@ function(PkgConfig_Find_Module module_name)
     endforeach()
 
     foreach(include_dir ${${module_name}_TO_FIND_INCLUDE_DIRS})
-        if (EXISTS ${include_dir})
-            set_property(TARGET PkgConfigWrapper::${target_name} APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${include_dir})
+        if(IS_ABSOLUTE ${include_dir})
+            set(processed_include_dir ${include_dir})
+        else()
+            get_filename_component(processed_include_dir "${include_dir}" REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
+            message(STATUS "Absolute Include Dir: ${processed_include_dir}")
+        endif()
+        
+        if (EXISTS ${processed_include_dir})
+            message(STATUS "Added Include Dir: ${processed_include_dir}")
+            set_property(TARGET PkgConfigWrapper::${target_name} APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${processed_include_dir})
         endif()
     endforeach()
     

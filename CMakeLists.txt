@@ -19,6 +19,10 @@ function(run_library_config library_name include_directories)
 
     find_program(${library_name}_lib_command ${${library_name}_lib_cmd})
 
+    if (${${library_name}_lib_command} MATCHES "-NOTFOUND")
+        return()
+    endif()
+
     execute_process(
         COMMAND bash ${${library_name}_lib_command} ${lib_args}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -114,8 +118,6 @@ if(ONS_USE_EXT_LIBS)
     run_library_config(sdl sdl_include_directories)
     run_library_config(smpeg smpeg_include_directories)
 endif()
-
-
 
 target_include_directories(onscripter_en 
 PRIVATE 
@@ -230,12 +232,16 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(onscripter_en
     PRIVATE
         -fdiagnostics-color=always
+        -static
+        -fpermissive
+        -mmmx 
     )
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
     target_compile_definitions(onscripter_en
         PRIVATE
         _CRT_SECURE_NO_WARNINGS
     )
+
 
     target_compile_options(onscripter_en 
     PRIVATE
@@ -251,5 +257,19 @@ if(PSP)
         PREVIEW_PATH NULL
         TITLE onscripter_en
         VERSION 01.00
+    )
+elseif(WIN32)
+    target_compile_options(onscripter_en
+    PRIVATE
+        -fpermissive
+        -mmmx 
+    )
+
+    target_compile_definitions(onscripter_en
+    PRIVATE
+        WIN32
+        USE_MESSAGEBOX
+        USE_OGG_VORBIS
+        USE_X86_GFX
     )
 endif()

@@ -1,87 +1,26 @@
 cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
 project(onscripter_en LANGUAGES C CXX)
 
+# Determine what architecture we're targeting.
+include(cmake/TargetArch.cmake)
+target_architecture(ONS_TARGET_ARCH)
+message(STATUS "Target Architecture: ${ONS_TARGET_ARCH}")
+
+# Options we can pass into CMake, platform will determine some defaults.
+if (PLATFORM_PSP)
+    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" OFF)
+else()
+    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" ON)
+endif()
+
 option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
+option(ONS_COMPILE_TOOLS "Choose whether to use our own libraries or to use system packages" ${ONS_ONLY_PLATFORM})
 
-function(ons_create_ext_target libname libfilename)
-    add_library(${libname} STATIC IMPORTED GLOBAL)
-    set_target_properties(
-        ${libname}
-        PROPERTIES
-            IMPORTED_LOCATION 
-                ${libfilename}
-    )
-endfunction()
-
-function(run_library_config library_name include_directories)
-    set(${library_name}_lib_cmd ${library_name}-config)
-    set(lib_args --libs --cflags)
-
-    find_program(${library_name}_lib_command ${${library_name}_lib_cmd})
-
-    if (${${library_name}_lib_command} MATCHES "-NOTFOUND")
-        return()
-    endif()
-
-    execute_process(
-        COMMAND bash ${${library_name}_lib_command} ${lib_args}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        RESULT_VARIABLE config_result
-        OUTPUT_VARIABLE config_stdout_results
-        ERROR_VARIABLE config_stderr_results
-    )
-
-    message(STATUS "execute_process command: ${${library_name}_lib_command}")
-    message(STATUS "\targs: ${lib_args}")
-    message(STATUS "\tresults: ${config_stdout_results}")
-    message(STATUS "\terr: ${config_stderr_results}")
-    message(STATUS "\tcode: ${config_result}")
-
-    string(REPLACE " " ";" flags ${config_stdout_results})
-    foreach(flag ${flags})
-        string(FIND "${flag}" "-I" out)
-        if(NOT "${out}" EQUAL 0)
-            continue()
-        endif()
-
-        string(SUBSTRING ${flag} 2 -1 include_directory)
-
-        if (EXISTS ${include_directory})
-            set(processed_include_directory ${include_directory})
-        else()
-            cmake_path(CONVERT ${${library_name}_lib_command} TO_CMAKE_PATH_LIST path_list)
-            string(REPLACE "/" ";" path_list ${path_list})
-            message(STATUS "\tPathList: ${path_list}")
-            
-            foreach(component ${path_list})
-                message(STATUS "\tcomparing: ${include_directory}, ${component}")
-                string(FIND "${include_directory}" "/${component}" out)
-                if("${out}" EQUAL 0)
-                    set(processed_include_directory ${processed_include_directory}${include_directory})
-                    break()
-                endif()
-
-                if (component MATCHES ":$")
-                    set(component ${component}/)
-                endif()
-                
-                cmake_path(APPEND processed_include_directory ${component})
-                message(STATUS "\tAdded: ${processed_include_directory}")
-            endforeach()
-        endif()
-
-        list(APPEND include_directories_list ${processed_include_directory})
-    endforeach()
-
-    message(STATUS "\tinclude_directories [${include_directories}]: ${include_directories_list}")
-    set(${include_directories} ${include_directories_list} PARENT_SCOPE)
-endfunction()
-
-#if (PLATFORM_PSP)
-#
-#endif()
-
-
+# A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.
+# (Essentially when cross compiling, we'd need to mix compilation target architectures. Embed.cpp would need to be compiled
+# for the host platform, while ONScripter (and maybe the tools) would need to target some completely different arch.
+# this is something for which CMake isn't designed. There's some hacks around this, but it's easier to just write a CMake 
+# script to implement the functionality, even if it's quite a bit slower.)
 set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico )
 set(ADDITIONAL_EMBED_DEPENDENCIES "")
 
@@ -94,12 +33,9 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-
-add_executable(onscripter_en)
-
-
+# Dependencies
 if(ONS_USE_EXT_LIBS)
-    include(cmake/PkgConfigWrapper.cmake)
+    include(cmake/DependencyFinder.cmake)
 
     PkgConfig_Find_Module(sdl SDL)
     PkgConfig_Find_Module(SDL_image)
@@ -115,9 +51,14 @@ if(ONS_USE_EXT_LIBS)
     PkgConfig_Find_Module(harfbuzz)
     PkgConfig_Find_Module(bzip2)
 
-    run_library_config(sdl sdl_include_directories)
     run_library_config(smpeg smpeg_include_directories)
 endif()
+
+# Tools
+add_subdirectory(tools)
+
+# ONScripter-EN
+add_executable(onscripter_en)
 
 target_include_directories(onscripter_en 
 PRIVATE 
@@ -131,24 +72,9 @@ PRIVATE
     _GNU_SOURCE=1
 )
 
-target_link_libraries(onscripter_en
-PUBLIC
-    PkgConfigWrapper::SDL
-    PkgConfigWrapper::SDL_image
-    PkgConfigWrapper::SDL_mixer
-    PkgConfigWrapper::SDL_ttf
-    PkgConfigWrapper::freetype2
-    PkgConfigWrapper::ogg
-    PkgConfigWrapper::zlib
-    PkgConfigWrapper::vorbis
-    PkgConfigWrapper::vorbisfile
-    PkgConfigWrapper::libpng
-    PkgConfigWrapper::libjpeg
-    PkgConfigWrapper::harfbuzz
-    PkgConfigWrapper::bzip2
-    
-    mad
-    smpeg
+target_compile_features(onscripter_en 
+PUBLIC 
+    cxx_std_98
 )
 
 target_sources(onscripter_en
@@ -216,9 +142,9 @@ PRIVATE
     ScriptParser_command.cpp
     sjis2utf16.cpp
     version.h
-    #winres.h
 )
 
+# Determine flag style
 set(ONS_COMPILER_FLAG_STYLE "GNU")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
@@ -227,12 +153,11 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(ONS_COMPILER_FLAG_STYLE "MSVC")
 endif()
 
-
+# Default Compiler Options
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(onscripter_en
     PRIVATE
         -fdiagnostics-color=always
-        -static
         -fpermissive
     )
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
@@ -241,13 +166,60 @@ elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
         _CRT_SECURE_NO_WARNINGS
     )
 
-
     target_compile_options(onscripter_en 
     PRIVATE
         /W4
     )
 endif()
 
+target_link_options(onscripter_en
+PUBLIC
+    -static
+)
+
+# Dependencies
+target_link_libraries(onscripter_en
+PUBLIC
+    PkgConfigWrapper::SDL
+    PkgConfigWrapper::SDL_image
+    PkgConfigWrapper::SDL_mixer
+    PkgConfigWrapper::SDL_ttf
+    PkgConfigWrapper::freetype2
+    PkgConfigWrapper::ogg
+    PkgConfigWrapper::zlib
+    PkgConfigWrapper::vorbis
+    PkgConfigWrapper::vorbisfile
+    PkgConfigWrapper::libpng
+    PkgConfigWrapper::libjpeg
+    PkgConfigWrapper::harfbuzz
+    PkgConfigWrapper::bzip2
+    
+    mad
+    smpeg
+)
+
+
+# Architecture Specific Options
+if (${ONS_TARGET_ARCH} STREQUAL "x86_64" OR ${ONS_TARGET_ARCH} STREQUAL "i386")
+    target_compile_definitions(onscripter_en
+    PRIVATE
+        USE_X86_GFX
+    )
+
+    if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+        set_source_files_properties(
+            graphics_sse2.cpp
+            COMPILE_OPTIONS -msse2
+        )
+
+        set_source_files_properties(
+            graphics_mmx.cpp
+            COMPILE_OPTIONS -mmmx
+        )
+    endif()
+endif()
+
+# Platform Specific Options
 if(PSP)
     create_pbp_file(
         TARGET onscripter_en
@@ -258,17 +230,33 @@ if(PSP)
         VERSION 01.00
     )
 elseif(WIN32)
-    target_compile_options(onscripter_en
+    target_sources(onscripter_en
     PRIVATE
-        -fpermissive
-        -mmmx
+        winres.h
     )
+
+    if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+        target_compile_options(onscripter_en
+        PRIVATE
+            -fpermissive
+            -mwindows
+        )
+    endif()
 
     target_compile_definitions(onscripter_en
     PRIVATE
         WIN32
         USE_MESSAGEBOX
         USE_OGG_VORBIS
-        USE_X86_GFX
+    )
+
+    target_link_libraries(onscripter_en
+    PRIVATE
+        iconv 
+        m 
+        user32 
+        gdi32 
+        winmm 
+        dxguid
     )
 endif()

@@ -12,3 +12,4 @@ tools/*make
 *.exe
 onscripter.rc
 build/
+.vscode/

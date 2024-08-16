@@ -68,15 +68,15 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            cc: gcc
             sys: mingw64
             env: x86_64
             arch: x86-64
-          - os: windows-latest
             cc: gcc
+          - os: windows-latest
             sys: mingw32
             env: i686
             arch: i686
+            cc: gcc
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -125,6 +125,76 @@ jobs:
           tools/nscdec.exe \
           tools/nscmake.exe \
           tools/sarmake.exe
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Windows ${{matrix.arch}} Build
+        path: ${{ github.workspace }}/onscripter-en.Windows.${{matrix.arch}}.zip
+        
+  windows-cmake:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            sys: mingw64
+            env: x86_64
+            arch: x86-64
+            cc: gcc
+          - os: windows-latest
+            sys: mingw32
+            env: i686
+            arch: i686
+            cc: gcc
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{matrix.sys}}
+        update: true
+        install: 
+          mingw-w64-${{matrix.env}}-SDL
+          mingw-w64-${{matrix.env}}-SDL_ttf
+          mingw-w64-${{matrix.env}}-SDL_mixer
+          mingw-w64-${{matrix.env}}-SDL_image
+          mingw-w64-${{matrix.env}}-bzip2
+          mingw-w64-${{matrix.env}}-libogg
+          mingw-w64-${{matrix.env}}-libvorbis
+          mingw-w64-${{matrix.env}}-freetype
+          mingw-w64-${{matrix.env}}-smpeg
+          mingw-w64-${{matrix.env}}-iconv
+          mingw-w64-${{matrix.env}}-zlib
+          mingw-w64-${{matrix.env}}-toolchain
+          mingw-w64-${{matrix.env}}-cmake
+          ninja
+          make
+          zip
+
+    - shell: msys2 {0}
+      name: Build
+      run: |
+        cmake -B build .
+        (cd build/ && ninja)
+        zip onscripter-en.Windows.${{matrix.arch}}.zip \
+          build/onscripter-en.exe \
+          README.md \
+          COPYING \
+          CHANGES \
+          build/tools/ns2conv.exe \
+          build/tools/nsaconv.exe \
+          build/tools/sardec.exe \
+          build/tools/batchconv.exe \
+          build/tools/nbzdec.exe \
+          build/tools/ns2make.exe \
+          build/tools/nsamake.exe \
+          build/tools/sarconv.exe \
+          build/tools/ns2dec.exe \
+          build/tools/nsadec.exe \
+          build/tools/nscdec.exe \
+          build/tools/nscmake.exe \
+          build/tools/sarmake.exe
 
     - uses: actions/upload-artifact@v4
       with:

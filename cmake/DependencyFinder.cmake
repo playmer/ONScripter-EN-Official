@@ -5,6 +5,8 @@ find_package(PkgConfig)
 # For libraries that can only be found directly querying pkgconfig.
 function(PkgConfig_Find_Module module_name)
     pkg_check_modules(${module_name}_TO_FIND REQUIRED ${module_name})
+    
+    message(STATUS "PkgConfig: ${module_name}")
 
     if (${ARGC} EQUAL "1")
         set(target_name ${module_name})
@@ -24,14 +26,15 @@ function(PkgConfig_Find_Module module_name)
     # STATIC should be variable here, should detect it somehow.
     add_library(PkgConfigWrapper::${target_name} INTERFACE IMPORTED)
     
-
     set(${module_name}_TO_FIND_LIBRARY_DIRS_DEBUG ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib)
     set(${module_name}_TO_FIND_LIBRARY_DIRS_RELEASE ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib)
 
-    foreach(library ${${module_name}_TO_FIND_LIBRARIES})
+    foreach(library ${${module_name}_TO_FIND_STATIC_LIBRARIES})
         if (TARGET PkgConfigWrapperSubLib::${library})
             continue()
         endif()
+
+        message(STATUS "\t${library}")
 
         # Get the release library
         unset(${module_name}_TO_FIND_${library}_RELEASE_LIBRARY_FOUND)

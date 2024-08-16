@@ -33,6 +33,7 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+#############################################
 # Dependencies
 if(ONS_USE_EXT_LIBS)
     include(cmake/DependencyFinder.cmake)
@@ -48,15 +49,50 @@ if(ONS_USE_EXT_LIBS)
     PkgConfig_Find_Module(vorbisfile)
     PkgConfig_Find_Module(libpng)
     PkgConfig_Find_Module(libjpeg)
-    PkgConfig_Find_Module(harfbuzz)
     PkgConfig_Find_Module(bzip2)
+    PkgConfig_Find_Module(libtiff-4)
+    PkgConfig_Find_Module(libwebp)
+
+    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff-4)
+    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
+    
+    target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
 
     run_library_config(smpeg smpeg_include_directories)
 endif()
 
+#############################################
 # Tools
 add_subdirectory(tools)
 
+#############################################
+# Configure version.h
+
+set(I \"ons-en.ico\")
+
+string(TIMESTAMP Y %Y)
+string(TIMESTAMP M %m)
+string(TIMESTAMP D %d)
+string(TIMESTAMP 0M %m)
+string(TIMESTAMP 0D %d)
+
+# trim off the leading 0 if the month/day has one.
+string(REGEX REPLACE "^0" "" M ${M})
+string(REGEX REPLACE "^0" "" D ${D})
+
+configure_file(onscripter.rc.in onscripter.rc
+    @ONLY
+)
+
+configure_file(winres.h.in winres.h
+    @ONLY
+)
+
+configure_file(version.h.in version.h
+    @ONLY
+)
+
+#############################################
 # ONScripter-EN
 add_executable(onscripter_en)
 
@@ -177,25 +213,25 @@ PUBLIC
     -static
 )
 
+
 # Dependencies
 target_link_libraries(onscripter_en
 PUBLIC
     PkgConfigWrapper::SDL
-    PkgConfigWrapper::SDL_image
-    PkgConfigWrapper::SDL_mixer
     PkgConfigWrapper::SDL_ttf
     PkgConfigWrapper::freetype2
-    PkgConfigWrapper::ogg
+    PkgConfigWrapper::SDL_image
+    PkgConfigWrapper::libjpeg
+    PkgConfigWrapper::libpng
     PkgConfigWrapper::zlib
+    PkgConfigWrapper::SDL_mixer
+    PkgConfigWrapper::ogg
     PkgConfigWrapper::vorbis
     PkgConfigWrapper::vorbisfile
-    PkgConfigWrapper::libpng
-    PkgConfigWrapper::libjpeg
-    PkgConfigWrapper::harfbuzz
-    PkgConfigWrapper::bzip2
     
-    mad
     smpeg
+    mad
+
 )
 
 
@@ -232,6 +268,7 @@ if(PSP)
 elseif(WIN32)
     target_sources(onscripter_en
     PRIVATE
+        onscripter.rc
         winres.h
     )
 
@@ -252,11 +289,12 @@ elseif(WIN32)
 
     target_link_libraries(onscripter_en
     PRIVATE
-        iconv 
-        m 
-        user32 
-        gdi32 
-        winmm 
+        iconv
+        m
+        user32
+        gdi32
+        winmm
         dxguid
+        rpcrt4
     )
 endif()

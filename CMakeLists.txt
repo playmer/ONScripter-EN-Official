@@ -63,7 +63,9 @@ endif()
 
 #############################################
 # Tools
-add_subdirectory(tools)
+if(ONS_COMPILE_TOOLS)
+    add_subdirectory(tools)
+endif()
 
 #############################################
 # Configure version.h

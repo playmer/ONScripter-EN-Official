@@ -23,12 +23,12 @@ add_executable(batchconv PRIVATE batchconv.cpp)
 # nbzdec
 add_executable(nbzdec)
 
-target_include_directories(nscdec PRIVATE ../)
+target_include_directories(nbzdec PRIVATE ../)
 
-target_compile_features(nscdec PUBLIC cxx_std_98)
-target_sources(nscdec 
+target_compile_features(nbzdec PUBLIC cxx_std_98)
+target_sources(nbzdec 
 PRIVATE 
-nbzdec.cpp
+    nbzdec.cpp
 )
 
 target_compile_definitions(nscdec PUBLIC -DTOOLS_BUILD -DSAR)

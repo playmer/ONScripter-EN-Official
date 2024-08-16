@@ -14,7 +14,8 @@ else()
 endif()
 
 option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
-option(ONS_COMPILE_TOOLS "Choose whether to use our own libraries or to use system packages" ${ONS_ONLY_PLATFORM})
+option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
+option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_ONLY_PLATFORM})
 
 # A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.
 # (Essentially when cross compiling, we'd need to mix compilation target architectures. Embed.cpp would need to be compiled
@@ -59,7 +60,10 @@ if(ONS_USE_EXT_LIBS)
     target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
 
     run_library_config(smpeg smpeg_include_directories)
+else()
 endif()
+
+#add_subdirectory(extlib)
 
 #############################################
 # Tools
@@ -198,6 +202,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         -fdiagnostics-color=always
         -fpermissive
     )
+    
+    target_link_options(onscripter-en
+    PUBLIC
+        -static
+        -s
+    )
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
     target_compile_definitions(onscripter-en
         PRIVATE
@@ -209,12 +219,6 @@ elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
         /W4
     )
 endif()
-
-target_link_options(onscripter-en
-PUBLIC
-    -static
-)
-
 
 # Dependencies
 target_link_libraries(onscripter-en
@@ -233,7 +237,6 @@ PUBLIC
     
     smpeg
     mad
-
 )
 
 

@@ -4,7 +4,11 @@ find_package(PkgConfig)
 
 # For libraries that can only be found directly querying pkgconfig.
 function(PkgConfig_Find_Module module_name)
-    pkg_check_modules(${module_name}_TO_FIND REQUIRED ${module_name})
+    pkg_check_modules(${module_name}_TO_FIND ${module_name})
+
+    if (${${module_name}_TO_FIND} MATCHES "-NOTFOUND")
+        return()
+    endif()
     
     message(STATUS "PkgConfig: ${module_name}")
 

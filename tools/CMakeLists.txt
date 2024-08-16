@@ -1,3 +1,4 @@
+##########
 # libgnurx
 add_library(gnurx STATIC)
 
@@ -13,6 +14,24 @@ PUBLIC
     libgnurx/
 )
 
+
+##########
+# batchconv
+add_executable(batchconv PRIVATE batchconv.cpp)
+
+##########
+# nbzdec
+add_executable(nbzdec)
+
+target_include_directories(nscdec PRIVATE ../)
+
+target_compile_features(nscdec PUBLIC cxx_std_98)
+target_sources(nscdec 
+PRIVATE 
+nbzdec.cpp
+)
+
+target_compile_definitions(nscdec PUBLIC -DTOOLS_BUILD -DSAR)
 
 ##########
 # nscdec

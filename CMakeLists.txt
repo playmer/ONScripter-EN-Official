@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
-project(onscripter_en LANGUAGES C CXX)
+project(onscripter-en LANGUAGES C CXX)
 
 # Determine what architecture we're targeting.
 include(cmake/TargetArch.cmake)
@@ -28,7 +28,7 @@ add_custom_command(
     OUTPUT resources.cpp
     COMMAND ${EMBED_COMMAND}
     DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
-    COMMENT "This command generates resources.cpp to embed files into onscripter_en, such as the icon."
+    COMMENT "This command generates resources.cpp to embed files into onscripter-en, such as the icon."
     VERBATIM
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -94,26 +94,26 @@ configure_file(version.h.in version.h
 
 #############################################
 # ONScripter-EN
-add_executable(onscripter_en)
+add_executable(onscripter-en)
 
-target_include_directories(onscripter_en 
+target_include_directories(onscripter-en 
 PRIVATE 
     .
     ${CMAKE_CURRENT_BINARY_DIR}
     ${smpeg_include_directories}
 )
 
-target_compile_definitions(onscripter_en 
+target_compile_definitions(onscripter-en 
 PRIVATE 
     _GNU_SOURCE=1
 )
 
-target_compile_features(onscripter_en 
+target_compile_features(onscripter-en 
 PUBLIC 
     cxx_std_98
 )
 
-target_sources(onscripter_en
+target_sources(onscripter-en
 PRIVATE
     AnimationInfo.cpp
     AnimationInfo.h
@@ -191,31 +191,31 @@ endif()
 
 # Default Compiler Options
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-    target_compile_options(onscripter_en
+    target_compile_options(onscripter-en
     PRIVATE
         -fdiagnostics-color=always
         -fpermissive
     )
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
-    target_compile_definitions(onscripter_en
+    target_compile_definitions(onscripter-en
         PRIVATE
         _CRT_SECURE_NO_WARNINGS
     )
 
-    target_compile_options(onscripter_en 
+    target_compile_options(onscripter-en 
     PRIVATE
         /W4
     )
 endif()
 
-target_link_options(onscripter_en
+target_link_options(onscripter-en
 PUBLIC
     -static
 )
 
 
 # Dependencies
-target_link_libraries(onscripter_en
+target_link_libraries(onscripter-en
 PUBLIC
     PkgConfigWrapper::SDL
     PkgConfigWrapper::SDL_ttf
@@ -237,7 +237,7 @@ PUBLIC
 
 # Architecture Specific Options
 if (${ONS_TARGET_ARCH} STREQUAL "x86_64" OR ${ONS_TARGET_ARCH} STREQUAL "i386")
-    target_compile_definitions(onscripter_en
+    target_compile_definitions(onscripter-en
     PRIVATE
         USE_X86_GFX
     )
@@ -258,36 +258,36 @@ endif()
 # Platform Specific Options
 if(PSP)
     create_pbp_file(
-        TARGET onscripter_en
+        TARGET onscripter-en
         ICON_PATH NULL
         BACKGROUND_PATH NULL
         PREVIEW_PATH NULL
-        TITLE onscripter_en
+        TITLE onscripter-en
         VERSION 01.00
     )
 elseif(WIN32)
-    target_sources(onscripter_en
+    target_sources(onscripter-en
     PRIVATE
         onscripter.rc
         winres.h
     )
 
     if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-        target_compile_options(onscripter_en
+        target_compile_options(onscripter-en
         PRIVATE
             -fpermissive
             -mwindows
         )
     endif()
 
-    target_compile_definitions(onscripter_en
+    target_compile_definitions(onscripter-en
     PRIVATE
         WIN32
         USE_MESSAGEBOX
         USE_OGG_VORBIS
     )
 
-    target_link_libraries(onscripter_en
+    target_link_libraries(onscripter-en
     PRIVATE
         iconv
         m

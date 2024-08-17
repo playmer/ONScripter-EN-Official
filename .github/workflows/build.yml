@@ -179,7 +179,7 @@ jobs:
       run: |
         cmake -B build .
         (cd build/ && ninja)
-        zip onscripter-en.Windows.cmake.${{matrix.env}}.${{matrix.arch}}.zip \
+        zip onscripter-en.Windows.cmake.${{matrix.sys}}.${{matrix.arch}}.zip \
           build/onscripter-en.exe \
           README.md \
           COPYING \
@@ -200,8 +200,8 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: Windows ${{matrix.arch}} CMake ${{matrix.env}} Build
-        path: ${{ github.workspace }}/onscripter-en.Windows.cmake.${{matrix.env}}.${{matrix.arch}}.zip
+        name: Windows ${{matrix.arch}} CMake ${{matrix.sys}} Build
+        path: ${{ github.workspace }}/onscripter-en.Windows.cmake.${{matrix.sys}}.${{matrix.arch}}.zip
 
   PSP:
     strategy:

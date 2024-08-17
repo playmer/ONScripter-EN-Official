@@ -6,6 +6,15 @@ include(cmake/TargetArch.cmake)
 target_architecture(ONS_TARGET_ARCH)
 message(STATUS "Target Architecture: ${ONS_TARGET_ARCH}")
 
+# Determine flag style
+set(ONS_COMPILER_FLAG_STYLE "GNU")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    set(ONS_COMPILER_FLAG_STYLE "MSVC")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(ONS_COMPILER_FLAG_STYLE "MSVC")
+endif()
+
 # Options we can pass into CMake, platform will determine some defaults.
 if (PLATFORM_PSP)
     option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" OFF)
@@ -43,16 +52,16 @@ if(ONS_USE_EXT_LIBS)
     PkgConfig_Find_Module(SDL_image)
     PkgConfig_Find_Module(SDL_mixer)
     PkgConfig_Find_Module(SDL_ttf)
-    PkgConfig_Find_Module(freetype2)
+    #PkgConfig_Find_Module(freetype2)
     PkgConfig_Find_Module(ogg)
     PkgConfig_Find_Module(zlib)
     PkgConfig_Find_Module(vorbis)
     PkgConfig_Find_Module(vorbisfile)
-    PkgConfig_Find_Module(libpng)
-    PkgConfig_Find_Module(libjpeg)
-    PkgConfig_Find_Module(bzip2)
-    PkgConfig_Find_Module(libtiff-4)
-    PkgConfig_Find_Module(libwebp)
+    #PkgConfig_Find_Module(libpng)
+    #PkgConfig_Find_Module(libjpeg)
+    #PkgConfig_Find_Module(bzip2)
+    #PkgConfig_Find_Module(libtiff-4)
+    #PkgConfig_Find_Module(libwebp)
 
     set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff-4)
     set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
@@ -63,7 +72,7 @@ if(ONS_USE_EXT_LIBS)
 else()
 endif()
 
-#add_subdirectory(extlib)
+add_subdirectory(extlib)
 
 #############################################
 # Tools
@@ -186,15 +195,6 @@ PRIVATE
     version.h
 )
 
-# Determine flag style
-set(ONS_COMPILER_FLAG_STYLE "GNU")
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-    set(ONS_COMPILER_FLAG_STYLE "MSVC")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(ONS_COMPILER_FLAG_STYLE "MSVC")
-endif()
-
 # Default Compiler Options
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(onscripter-en
@@ -224,16 +224,17 @@ endif()
 target_link_libraries(onscripter-en
 PUBLIC
     PkgConfigWrapper::SDL
-    PkgConfigWrapper::SDL_ttf
-    PkgConfigWrapper::freetype2
-    PkgConfigWrapper::SDL_image
-    PkgConfigWrapper::libjpeg
-    PkgConfigWrapper::libpng
-    PkgConfigWrapper::zlib
+    #PkgConfigWrapper::SDL_ttf
+    SDL_ttf
+    #PkgConfigWrapper::freetype2
     PkgConfigWrapper::SDL_mixer
     PkgConfigWrapper::ogg
     PkgConfigWrapper::vorbis
     PkgConfigWrapper::vorbisfile
+
+    SDL_image
+    bzip2
+    freetype
     
     smpeg
     mad

@@ -18,12 +18,13 @@ endif()
 # Options we can pass into CMake, platform will determine some defaults.
 if (PLATFORM_PSP)
     option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" OFF)
+    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." OFF)
 else()
     option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" ON)
+    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
 endif()
 
 option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
-option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_ONLY_PLATFORM})
 
 # A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.

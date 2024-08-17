@@ -18,14 +18,13 @@ endif()
 # Options we can pass into CMake, platform will determine some defaults.
 if (PLATFORM_PSP)
     option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" OFF)
-    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." OFF)
 else()
     option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" ON)
-    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
 endif()
 
-option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_ONLY_PLATFORM})
+option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
+option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
 
 # A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.
 # (Essentially when cross compiling, we'd need to mix compilation target architectures. Embed.cpp would need to be compiled
@@ -50,27 +49,25 @@ if(ONS_USE_EXT_LIBS)
     include(cmake/DependencyFinder.cmake)
 
     PkgConfig_Find_Module(sdl SDL)
-    PkgConfig_Find_Module(SDL_image)
-    PkgConfig_Find_Module(SDL_mixer)
-    PkgConfig_Find_Module(SDL_ttf)
+    #PkgConfig_Find_Module(SDL_image)
+    #PkgConfig_Find_Module(SDL_mixer)
+    #PkgConfig_Find_Module(SDL_ttf)
     #PkgConfig_Find_Module(freetype2)
-    PkgConfig_Find_Module(ogg)
-    PkgConfig_Find_Module(zlib)
-    PkgConfig_Find_Module(vorbis)
-    PkgConfig_Find_Module(vorbisfile)
+    #PkgConfig_Find_Module(ogg)
+    #PkgConfig_Find_Module(zlib)
+    #PkgConfig_Find_Module(vorbis)
+    #PkgConfig_Find_Module(vorbisfile)
     #PkgConfig_Find_Module(libpng)
     #PkgConfig_Find_Module(libjpeg)
     #PkgConfig_Find_Module(bzip2)
     #PkgConfig_Find_Module(libtiff-4)
     #PkgConfig_Find_Module(libwebp)
 
-    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff-4)
-    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
-    
-    target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
+    #set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff-4)
+    #set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
+    #target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
 
     run_library_config(smpeg smpeg_include_directories)
-else()
 endif()
 
 add_subdirectory(extlib)
@@ -226,13 +223,17 @@ target_link_libraries(onscripter-en
 PUBLIC
     PkgConfigWrapper::SDL
     #PkgConfigWrapper::SDL_ttf
-    SDL_ttf
     #PkgConfigWrapper::freetype2
-    PkgConfigWrapper::SDL_mixer
-    PkgConfigWrapper::ogg
-    PkgConfigWrapper::vorbis
-    PkgConfigWrapper::vorbisfile
+    #PkgConfigWrapper::SDL_mixer
+    #PkgConfigWrapper::ogg
+    #PkgConfigWrapper::vorbis
+    #PkgConfigWrapper::vorbisfile
 
+    ogg
+    vorbis
+
+    SDL_mixer
+    SDL_ttf
     SDL_image
     bzip2
     freetype

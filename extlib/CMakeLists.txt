@@ -27,6 +27,134 @@ PUBLIC
 )
 
 ##########
+# libogg
+if (ONS_USE_OLD_DEPS)
+    set(ogg_source_prefix src/old/libogg-1.1.3)
+else()
+    set(ogg_source_prefix src/libogg-1.3.5)
+endif()
+
+add_library(ogg STATIC "")
+
+target_sources(ogg
+PRIVATE
+    ${ogg_source_prefix}/src/bitwise.c
+    ${ogg_source_prefix}/src/framing.c
+)
+
+target_include_directories(ogg
+PUBLIC
+    ${ogg_source_prefix}/include
+)
+
+##########
+# libvorbis
+if (ONS_USE_OLD_DEPS)
+    set(vorbis_source_prefix src/old/libvorbis-1.2.0)
+else()
+    set(vorbis_source_prefix src/libvorbis-1.3.7)
+endif()
+
+add_library(vorbis STATIC "")
+
+target_link_libraries(vorbis
+PUBLIC
+    ogg
+)
+
+
+if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+    target_compile_options(vorbis 
+    PRIVATE
+        -Wno-int-conversion
+        -Wno-overflow
+        -Wno-incompatible-pointer-types
+        -Wno-implicit-function-declaration
+    )
+endif()
+
+target_sources(vorbis
+PRIVATE
+    ${vorbis_source_prefix}/lib/analysis.c
+    ${vorbis_source_prefix}/lib/backends.h
+    #${vorbis_source_prefix}/lib/barkmel.c
+    ${vorbis_source_prefix}/lib/bitrate.c
+    ${vorbis_source_prefix}/lib/bitrate.h
+    ${vorbis_source_prefix}/lib/block.c
+    ${vorbis_source_prefix}/lib/codebook.c
+    ${vorbis_source_prefix}/lib/codebook.h
+    ${vorbis_source_prefix}/lib/codec_internal.h
+    ${vorbis_source_prefix}/lib/envelope.c
+    ${vorbis_source_prefix}/lib/envelope.h
+    ${vorbis_source_prefix}/lib/floor0.c
+    ${vorbis_source_prefix}/lib/floor1.c
+    ${vorbis_source_prefix}/lib/highlevel.h
+    ${vorbis_source_prefix}/lib/info.c
+    ${vorbis_source_prefix}/lib/lookup.c
+    ${vorbis_source_prefix}/lib/lookup.h
+    ${vorbis_source_prefix}/lib/lookups.pl
+    ${vorbis_source_prefix}/lib/lookup_data.h
+    ${vorbis_source_prefix}/lib/lpc.c
+    ${vorbis_source_prefix}/lib/lpc.h
+    ${vorbis_source_prefix}/lib/lsp.c
+    ${vorbis_source_prefix}/lib/lsp.h
+    ${vorbis_source_prefix}/lib/Makefile.am
+    ${vorbis_source_prefix}/lib/Makefile.in
+    ${vorbis_source_prefix}/lib/mapping0.c
+    ${vorbis_source_prefix}/lib/masking.h
+    ${vorbis_source_prefix}/lib/mdct.c
+    ${vorbis_source_prefix}/lib/mdct.h
+    ${vorbis_source_prefix}/lib/misc.h
+    ${vorbis_source_prefix}/lib/os.h
+    ${vorbis_source_prefix}/lib/psy.c
+    ${vorbis_source_prefix}/lib/psy.h
+    #${vorbis_source_prefix}/lib/psytune.c
+    ${vorbis_source_prefix}/lib/registry.c
+    ${vorbis_source_prefix}/lib/registry.h
+    ${vorbis_source_prefix}/lib/res0.c
+    ${vorbis_source_prefix}/lib/scales.h
+    ${vorbis_source_prefix}/lib/sharedbook.c
+    ${vorbis_source_prefix}/lib/smallft.c
+    ${vorbis_source_prefix}/lib/smallft.h
+    ${vorbis_source_prefix}/lib/synthesis.c
+    #${vorbis_source_prefix}/lib/tone.c
+    ${vorbis_source_prefix}/lib/vorbisenc.c
+    ${vorbis_source_prefix}/lib/vorbisfile.c
+    ${vorbis_source_prefix}/lib/window.c
+    ${vorbis_source_prefix}/lib/window.h
+    ${vorbis_source_prefix}/vq/bookutil.c
+    ${vorbis_source_prefix}/vq/bookutil.h
+    #${vorbis_source_prefix}/vq/build.c
+    ${vorbis_source_prefix}/vq/cascade.c
+    #${vorbis_source_prefix}/vq/distribution.c
+    ${vorbis_source_prefix}/vq/genericdata.c
+    #${vorbis_source_prefix}/vq/huffbuild.c
+    #${vorbis_source_prefix}/vq/latticebuild.c
+    #${vorbis_source_prefix}/vq/latticehint.c
+    #${vorbis_source_prefix}/vq/latticepare.c
+    #${vorbis_source_prefix}/vq/latticetune.c
+    ${vorbis_source_prefix}/vq/localcodebook.h
+    ${vorbis_source_prefix}/vq/lspdata.c
+    ${vorbis_source_prefix}/vq/metrics.c
+    ${vorbis_source_prefix}/vq/residuedata.c
+    #${vorbis_source_prefix}/vq/residuesplit.c
+    #${vorbis_source_prefix}/vq/run.c
+    #${vorbis_source_prefix}/vq/train.c
+    ${vorbis_source_prefix}/vq/vqext.h
+    ${vorbis_source_prefix}/vq/vqgen.c
+    ${vorbis_source_prefix}/vq/vqgen.h
+    ${vorbis_source_prefix}/vq/vqsplit.c
+    ${vorbis_source_prefix}/vq/vqsplit.h
+)
+
+target_include_directories(vorbis
+PUBLIC
+    ${vorbis_source_prefix}/include
+    ${vorbis_source_prefix}/lib
+    ${vorbis_source_prefix}/vq
+)
+
+##########
 # libjpeg
 if (ONS_USE_OLD_DEPS)
     set(jpeg_source_prefix src/old/jpeg-6b)
@@ -46,22 +174,6 @@ endif()
 
 target_sources(jpeg
 PRIVATE
-    #${jpeg_source_prefix}/ansi2knr.1
-    #${jpeg_source_prefix}/ansi2knr.c
-    #${jpeg_source_prefix}/cderror.h
-    #${jpeg_source_prefix}/cdjpeg.c
-    #${jpeg_source_prefix}/cdjpeg.h
-    #${jpeg_source_prefix}/change.log
-    #${jpeg_source_prefix}/cjpeg.1
-    #${jpeg_source_prefix}/cjpeg.c
-    #${jpeg_source_prefix}/ckconfig.c
-    #${jpeg_source_prefix}/config.guess
-    #${jpeg_source_prefix}/config.sub
-    #${jpeg_source_prefix}/configure
-    #${jpeg_source_prefix}/djpeg.1
-    #${jpeg_source_prefix}/djpeg.c
-    #${jpeg_source_prefix}/example.c
-    #${jpeg_source_prefix}/install-sh
     ${jpeg_source_prefix}/jcapimin.c
     ${jpeg_source_prefix}/jcapistd.c
     ${jpeg_source_prefix}/jccoefct.c
@@ -74,17 +186,6 @@ PRIVATE
     ${jpeg_source_prefix}/jcmarker.c
     ${jpeg_source_prefix}/jcmaster.c
     ${jpeg_source_prefix}/jcomapi.c
-    #${jpeg_source_prefix}/jconfig.bcc
-    #${jpeg_source_prefix}/jconfig.cfg
-    #${jpeg_source_prefix}/jconfig.dj
-    #${jpeg_source_prefix}/jconfig.mac
-    #${jpeg_source_prefix}/jconfig.manx
-    #${jpeg_source_prefix}/jconfig.mc6
-    #${jpeg_source_prefix}/jconfig.sas
-    #${jpeg_source_prefix}/jconfig.st
-    #${jpeg_source_prefix}/jconfig.vc
-    #${jpeg_source_prefix}/jconfig.vms
-    #${jpeg_source_prefix}/jconfig.wat
     ${jpeg_source_prefix}/jcparam.c
     ${jpeg_source_prefix}/jcphuff.c
     ${jpeg_source_prefix}/jcprepct.c
@@ -120,9 +221,6 @@ PRIVATE
     ${jpeg_source_prefix}/jidctred.c
     ${jpeg_source_prefix}/jinclude.h
     ${jpeg_source_prefix}/jmemansi.c
-    #${jpeg_source_prefix}/jmemdos.c
-    #${jpeg_source_prefix}/jmemdosa.asm
-    #${jpeg_source_prefix}/jmemmac.c
     ${jpeg_source_prefix}/jmemmgr.c
     ${jpeg_source_prefix}/jmemname.c
     ${jpeg_source_prefix}/jmemnobs.c
@@ -136,145 +234,11 @@ PRIVATE
     ${jpeg_source_prefix}/jquant2.c
     ${jpeg_source_prefix}/jutils.c
     ${jpeg_source_prefix}/jversion.h
-    #${jpeg_source_prefix}/ltconfig
-    #${jpeg_source_prefix}/ltmain.sh
-    #${jpeg_source_prefix}/makcjpeg.st
-    #${jpeg_source_prefix}/makdjpeg.st
-    #${jpeg_source_prefix}/makeapps.ds
-    #${jpeg_source_prefix}/makelib.ds
-    #${jpeg_source_prefix}/makeproj.mac
-    #${jpeg_source_prefix}/makljpeg.st
-    #${jpeg_source_prefix}/maktjpeg.st
-    #${jpeg_source_prefix}/makvms.opt
-    #${jpeg_source_prefix}/rdcolmap.c
-    #${jpeg_source_prefix}/rdbmp.c
-    #${jpeg_source_prefix}/rdgif.c
-    #${jpeg_source_prefix}/rdjpgcom.1
-    #${jpeg_source_prefix}/rdjpgcom.c
-    #${jpeg_source_prefix}/rdppm.c
-    #${jpeg_source_prefix}/rdrle.c
-    #${jpeg_source_prefix}/rdswitch.c
-    #${jpeg_source_prefix}/rdtarga.c
-    #${jpeg_source_prefix}/README
-    #${jpeg_source_prefix}/transupp.c
-    #${jpeg_source_prefix}/transupp.h
-    #${jpeg_source_prefix}/wrbmp.c
-    #${jpeg_source_prefix}/wrgif.c
-    #${jpeg_source_prefix}/wrjpgcom.1
-    #${jpeg_source_prefix}/wrjpgcom.c
-    #${jpeg_source_prefix}/wrppm.c
-    #${jpeg_source_prefix}/wrrle.c
-    #${jpeg_source_prefix}/wrtarga.c
-
 )
 
 target_include_directories(jpeg
 PUBLIC
     ${jpeg_source_prefix}/
-)
-
-##########
-# libpng
-if (ONS_USE_OLD_DEPS)
-    set(libpng_source_prefix src/old/libpng-1.2.24)
-else()
-    set(libpng_source_prefix src/libpng-1.6.9)
-endif()
-
-add_library(libpng STATIC "")
-
-target_link_libraries(libpng
-PUBLIC
-    PkgConfigWrapper::zlib
-)
-
-target_sources(libpng
-PUBLIC
-    ${libpng_source_prefix}/png.c
-    ${libpng_source_prefix}/png.h
-    ${libpng_source_prefix}/pngconf.h
-    ${libpng_source_prefix}/pngerror.c
-    ${libpng_source_prefix}/pnggccrd.c
-    ${libpng_source_prefix}/pngget.c
-    ${libpng_source_prefix}/pngmem.c
-    ${libpng_source_prefix}/pngpread.c
-    ${libpng_source_prefix}/pngread.c
-    ${libpng_source_prefix}/pngrio.c
-    ${libpng_source_prefix}/pngrtran.c
-    ${libpng_source_prefix}/pngrutil.c
-    ${libpng_source_prefix}/pngset.c
-    ${libpng_source_prefix}/pngtrans.c
-    ${libpng_source_prefix}/pngvcrd.c
-    ${libpng_source_prefix}/pngwio.c
-    ${libpng_source_prefix}/pngwrite.c
-    ${libpng_source_prefix}/pngwtran.c
-    ${libpng_source_prefix}/pngwutil.c
-)
-
-target_include_directories(libpng
-PUBLIC
-    ${libpng_source_prefix}/
-)
-
-##########
-# sdl_image
-if (ONS_USE_OLD_DEPS)
-    set(sdl_image_source_prefix src/old/sdl_image-1.2.6)
-else()
-    set(sdl_image_source_prefix src/sdl_image-1.2.12)
-endif()
-
-add_library(SDL_image STATIC "")
-
-target_compile_definitions(SDL_image 
-PUBLIC 
-    LOAD_JPG
-    LOAD_PNG
-    LOAD_BMP
-    LOAD_GIF
-    LOAD_LBM
-    LOAD_PCX
-    LOAD_PNM
-    LOAD_TGA
-)
-
-if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-    target_compile_options(SDL_image 
-    PRIVATE
-        -Wno-incompatible-pointer-types
-    )
-endif()
-
-target_link_libraries(SDL_image
-PUBLIC
-    PkgConfigWrapper::SDL
-    jpeg
-    libpng
-)
-
-target_sources(SDL_image
-PRIVATE
-    ${sdl_image_source_prefix}/
-    ${sdl_image_source_prefix}/IMG.c
-    ${sdl_image_source_prefix}/IMG_bmp.c
-    ${sdl_image_source_prefix}/IMG_gif.c
-    ${sdl_image_source_prefix}/IMG_jpg.c
-    ${sdl_image_source_prefix}/IMG_lbm.c
-    ${sdl_image_source_prefix}/IMG_pcx.c
-    ${sdl_image_source_prefix}/IMG_png.c
-    ${sdl_image_source_prefix}/IMG_pnm.c
-    ${sdl_image_source_prefix}/IMG_tga.c
-    ${sdl_image_source_prefix}/IMG_tif.c
-    ${sdl_image_source_prefix}/IMG_xcf.c
-    ${sdl_image_source_prefix}/IMG_xpm.c
-    ${sdl_image_source_prefix}/IMG_xv.c
-    ${sdl_image_source_prefix}/IMG_xxx.c
-    ${sdl_image_source_prefix}/SDL_image.h
-)
-
-target_include_directories(SDL_image
-PUBLIC
-    ${sdl_image_source_prefix}/
 )
 
 ##########
@@ -459,44 +423,230 @@ PUBLIC
     ${freetype_source_prefix}/include
 )
 
+
+##########
+# SDL_mixer
+if (ONS_USE_OLD_DEPS)
+    set(sdl_mixer_source_prefix src/old/SDL_mixer-1.2.8)
+else()
+    set(sdl_mixer_source_prefix src/SDL_mixer-1.2.12)
+endif()
+
+add_library(SDL_mixer STATIC)
+
+target_link_libraries(SDL_mixer
+PUBLIC
+    freetype
+    PkgConfigWrapper::SDL
+)
+
+if(WIN32)
+    target_sources(SDL_mixer
+    PRIVATE
+        ${sdl_mixer_source_prefix}/native_midi/native_midi_common.c
+        ${sdl_mixer_source_prefix}/native_midi/native_midi_win32.c
+    )
+elseif(APPLE)
+    target_sources(SDL_mixer
+    PRIVATE
+        ${sdl_mixer_source_prefix}/native_midi/native_midi_common.c
+        ${sdl_mixer_source_prefix}/native_midi/native_midi_mac.c
+    )
+endif()
+
+target_sources(SDL_mixer
+PRIVATE
+    ${sdl_mixer_source_prefix}/dynamic_mp3.c
+    ${sdl_mixer_source_prefix}/dynamic_mp3.h
+    ${sdl_mixer_source_prefix}/dynamic_ogg.c
+    ${sdl_mixer_source_prefix}/dynamic_ogg.h
+    ${sdl_mixer_source_prefix}/effects_internal.c
+    ${sdl_mixer_source_prefix}/effects_internal.h
+    ${sdl_mixer_source_prefix}/effect_position.c
+    ${sdl_mixer_source_prefix}/effect_stereoreverse.c
+    ${sdl_mixer_source_prefix}/load_aiff.c
+    ${sdl_mixer_source_prefix}/load_aiff.h
+    ${sdl_mixer_source_prefix}/load_ogg.c
+    ${sdl_mixer_source_prefix}/load_ogg.h
+    ${sdl_mixer_source_prefix}/load_voc.c
+    ${sdl_mixer_source_prefix}/load_voc.h
+    ${sdl_mixer_source_prefix}/Makefile.in
+    ${sdl_mixer_source_prefix}/mixer.c
+    ${sdl_mixer_source_prefix}/music.c
+    ${sdl_mixer_source_prefix}/music_cmd.c
+    ${sdl_mixer_source_prefix}/music_cmd.h
+    ${sdl_mixer_source_prefix}/music_ogg.c
+    ${sdl_mixer_source_prefix}/music_ogg.h
+    ${sdl_mixer_source_prefix}/SDL_mixer.h
+    #${sdl_mixer_source_prefix}/SDL_mixer.qpg.in
+    #${sdl_mixer_source_prefix}/SDL_mixer.spec
+    #${sdl_mixer_source_prefix}/SDL_mixer.spec.in
+    ${sdl_mixer_source_prefix}/wavestream.c
+    ${sdl_mixer_source_prefix}/wavestream.h
+)
+
+
+##########
+# SDL_ttf-2.0.11
+if (ONS_USE_OLD_DEPS)
+    set(sdl_ttf_source_prefix src/old/SDL_ttf-2.0.8)
+else()
+    set(sdl_ttf_source_prefix src/SDL_ttf-2.0.11)
+endif()
+
+add_library(SDL_ttf STATIC)
+
+target_link_libraries(SDL_ttf
+PUBLIC
+    freetype
+    PkgConfigWrapper::SDL
+)
+
+target_sources(SDL_ttf
+PRIVATE
+    ${sdl_ttf_source_prefix}/SDL_ttf.c
+    ${sdl_ttf_source_prefix}/SDL_ttf.h
+)
+
 ##########
 # zlib-1.2.3
-if (ONS_USE_OLD_DEPS)
-    set(zlib_source_prefix src/zlib-1.2.13)
-else()
-    set(zlib_source_prefix src/zlib-1.2.3)
-endif()
+set(zlib_source_prefix src/zlib-1.2.3)
 
 add_library(zlib STATIC)
 
 target_sources(zlib
 PRIVATE
-    src/zlib-1.2.3/adler32.c
-    src/zlib-1.2.3/compress.c
-    src/zlib-1.2.3/crc32.c
-    src/zlib-1.2.3/crc32.h
-    src/zlib-1.2.3/deflate.c
-    src/zlib-1.2.3/deflate.h
-    src/zlib-1.2.3/gzio.c
-    src/zlib-1.2.3/infback.c
-    src/zlib-1.2.3/inffast.c
-    src/zlib-1.2.3/inffast.h
-    src/zlib-1.2.3/inffixed.h
-    src/zlib-1.2.3/inflate.c
-    src/zlib-1.2.3/inflate.h
-    src/zlib-1.2.3/inftrees.c
-    src/zlib-1.2.3/inftrees.h
-    src/zlib-1.2.3/trees.c
-    src/zlib-1.2.3/trees.h
-    src/zlib-1.2.3/uncompr.c
-    src/zlib-1.2.3/zconf.h
-    src/zlib-1.2.3/zconf.in.h
-    src/zlib-1.2.3/zlib.h
-    src/zlib-1.2.3/zutil.c
-    src/zlib-1.2.3/zutil.h
+    ${zlib_source_prefix}/adler32.c
+    ${zlib_source_prefix}/compress.c
+    ${zlib_source_prefix}/crc32.c
+    ${zlib_source_prefix}/crc32.h
+    ${zlib_source_prefix}/deflate.c
+    ${zlib_source_prefix}/deflate.h
+    ${zlib_source_prefix}/gzio.c
+    ${zlib_source_prefix}/infback.c
+    ${zlib_source_prefix}/inffast.c
+    ${zlib_source_prefix}/inffast.h
+    ${zlib_source_prefix}/inffixed.h
+    ${zlib_source_prefix}/inflate.c
+    ${zlib_source_prefix}/inflate.h
+    ${zlib_source_prefix}/inftrees.c
+    ${zlib_source_prefix}/inftrees.h
+    ${zlib_source_prefix}/trees.c
+    ${zlib_source_prefix}/trees.h
+    ${zlib_source_prefix}/uncompr.c
+    ${zlib_source_prefix}/zconf.h
+    ${zlib_source_prefix}/zconf.in.h
+    ${zlib_source_prefix}/zlib.h
+    ${zlib_source_prefix}/zutil.c
+    ${zlib_source_prefix}/zutil.h
 )
 
 target_include_directories(zlib
 PUBLIC
-    src/zlib-1.2.3/
+    ${zlib_source_prefix}/zlib-1.2.3/
+)
+
+##########
+# libpng
+if (ONS_USE_OLD_DEPS)
+    set(libpng_source_prefix src/old/libpng-1.2.24)
+else()
+    set(libpng_source_prefix src/libpng-1.6.9)
+endif()
+
+add_library(libpng STATIC "")
+
+target_link_libraries(libpng
+PUBLIC
+    zlib
+)
+
+target_sources(libpng
+PUBLIC
+    ${libpng_source_prefix}/png.c
+    ${libpng_source_prefix}/png.h
+    ${libpng_source_prefix}/pngconf.h
+    ${libpng_source_prefix}/pngerror.c
+    ${libpng_source_prefix}/pnggccrd.c
+    ${libpng_source_prefix}/pngget.c
+    ${libpng_source_prefix}/pngmem.c
+    ${libpng_source_prefix}/pngpread.c
+    ${libpng_source_prefix}/pngread.c
+    ${libpng_source_prefix}/pngrio.c
+    ${libpng_source_prefix}/pngrtran.c
+    ${libpng_source_prefix}/pngrutil.c
+    ${libpng_source_prefix}/pngset.c
+    ${libpng_source_prefix}/pngtrans.c
+    ${libpng_source_prefix}/pngvcrd.c
+    ${libpng_source_prefix}/pngwio.c
+    ${libpng_source_prefix}/pngwrite.c
+    ${libpng_source_prefix}/pngwtran.c
+    ${libpng_source_prefix}/pngwutil.c
+)
+
+target_include_directories(libpng
+PUBLIC
+    ${libpng_source_prefix}/
+)
+
+
+##########
+# sdl_image
+if (ONS_USE_OLD_DEPS)
+    set(sdl_image_source_prefix src/old/sdl_image-1.2.6)
+else()
+    set(sdl_image_source_prefix src/sdl_image-1.2.12)
+endif()
+
+add_library(SDL_image STATIC "")
+
+target_compile_definitions(SDL_image 
+PUBLIC 
+    LOAD_JPG
+    LOAD_PNG
+    LOAD_BMP
+    LOAD_GIF
+    LOAD_LBM
+    LOAD_PCX
+    LOAD_PNM
+    LOAD_TGA
+)
+
+if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+    target_compile_options(SDL_image 
+    PRIVATE
+        -Wno-incompatible-pointer-types
+    )
+endif()
+
+target_link_libraries(SDL_image
+PUBLIC
+    PkgConfigWrapper::SDL
+    jpeg
+    libpng
+)
+
+target_sources(SDL_image
+PRIVATE
+    ${sdl_image_source_prefix}/
+    ${sdl_image_source_prefix}/IMG.c
+    ${sdl_image_source_prefix}/IMG_bmp.c
+    ${sdl_image_source_prefix}/IMG_gif.c
+    ${sdl_image_source_prefix}/IMG_jpg.c
+    ${sdl_image_source_prefix}/IMG_lbm.c
+    ${sdl_image_source_prefix}/IMG_pcx.c
+    ${sdl_image_source_prefix}/IMG_png.c
+    ${sdl_image_source_prefix}/IMG_pnm.c
+    ${sdl_image_source_prefix}/IMG_tga.c
+    ${sdl_image_source_prefix}/IMG_tif.c
+    ${sdl_image_source_prefix}/IMG_xcf.c
+    ${sdl_image_source_prefix}/IMG_xpm.c
+    ${sdl_image_source_prefix}/IMG_xv.c
+    ${sdl_image_source_prefix}/IMG_xxx.c
+    ${sdl_image_source_prefix}/SDL_image.h
+)
+
+target_include_directories(SDL_image
+PUBLIC
+    ${sdl_image_source_prefix}/
 )

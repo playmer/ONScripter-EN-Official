@@ -65,6 +65,7 @@ if(ONS_USE_EXT_LIBS)
         PkgConfig_Find_Module(bzip2)
         PkgConfig_Find_Module(libtiff-4)
         PkgConfig_Find_Module(libwebp)
+        PkgConfig_Find_Module(harfbuzz)
 
         set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff-4)
         set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
@@ -207,11 +208,13 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         -fpermissive
     )
     
-    target_link_options(onscripter-en
-    PUBLIC
-        -static
-        -s
-    )
+    if (NOT PSP)
+        target_link_options(onscripter-en
+        PUBLIC
+            -static
+            -s
+        )
+    endif()
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
     target_compile_definitions(onscripter-en
         PRIVATE
@@ -244,20 +247,24 @@ if (ONS_USE_OLD_DEPS)
         mad
     )
 else()
-
     target_link_libraries(onscripter-en
     PUBLIC
         PkgConfigWrapper::SDL
-        PkgConfigWrapper::SDL_ttf
-        PkgConfigWrapper::SDL_mixer
         PkgConfigWrapper::SDL_image
+        PkgConfigWrapper::SDL_mixer
+        PkgConfigWrapper::SDL_ttf
+        PkgConfigWrapper::freetype2
         PkgConfigWrapper::ogg
+        PkgConfigWrapper::zlib
         PkgConfigWrapper::vorbis
         PkgConfigWrapper::vorbisfile
+        PkgConfigWrapper::libpng
+        PkgConfigWrapper::libjpeg
+        PkgConfigWrapper::harfbuzz
         PkgConfigWrapper::bzip2
-        
-        smpeg
+
         mad
+        smpeg
     )
 endif()
 
@@ -316,6 +323,11 @@ elseif(WIN32)
         target_compile_options(onscripter-en
         PRIVATE
             -fpermissive
+        )
+
+        target_link_options(onscripter-en
+        PRIVATE
+            -mwindows
         )
 
         target_link_options(onscripter-en

@@ -628,7 +628,6 @@ PUBLIC
 
 target_sources(SDL_image
 PRIVATE
-    ${sdl_image_source_prefix}/
     ${sdl_image_source_prefix}/IMG.c
     ${sdl_image_source_prefix}/IMG_bmp.c
     ${sdl_image_source_prefix}/IMG_gif.c

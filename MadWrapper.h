@@ -26,8 +26,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_mixer.h>
+#include <SDL.h>
+#include <SDL_mixer.h>
 
 typedef struct _MAD_WRAPPER MAD_WRAPPER;
 

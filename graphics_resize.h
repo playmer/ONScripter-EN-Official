@@ -25,7 +25,7 @@
 #ifndef __GRAPHICS_RESIZE_H__
 #define __GRAPHICS_RESIZE_H__
 
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include "graphics_common.h"
 
 namespace ons_gfx {

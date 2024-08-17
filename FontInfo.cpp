@@ -30,7 +30,7 @@
 #include "FontInfo.h"
 #include "Encoding.h"
 #include <stdio.h>
-#include <SDL/SDL_ttf.h>
+#include <SDL_ttf.h>
 
 #define FI_TEST
 

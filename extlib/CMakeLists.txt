@@ -593,9 +593,9 @@ PUBLIC
 ##########
 # sdl_image
 if (ONS_USE_OLD_DEPS)
-    set(sdl_image_source_prefix src/old/sdl_image-1.2.6)
+    set(sdl_image_source_prefix src/old/SDL_image-1.2.6)
 else()
-    set(sdl_image_source_prefix src/sdl_image-1.2.12)
+    set(sdl_image_source_prefix src/SDL_image-1.2.12)
 endif()
 
 add_library(SDL_image STATIC "")

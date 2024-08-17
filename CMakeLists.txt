@@ -316,6 +316,10 @@ elseif(WIN32)
         target_compile_options(onscripter-en
         PRIVATE
             -fpermissive
+        )
+
+        target_link_options(onscripter-en
+        PRIVATE
             -mwindows
         )
     endif()

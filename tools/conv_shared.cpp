@@ -36,9 +36,7 @@
 #include "conv_shared.h"
 
 //Mion: for png image file support
-namespace libpng {
 #include <png.h>
-}
 
 #include <bzlib.h>
 #include "resize_image.h"
@@ -58,9 +56,9 @@ size_t restored_length = 0;
 
 //Mion: for png image file support
 typedef struct {
-    libpng::png_infop info_ptr;
+    png_infop info_ptr;
     int number_of_passes;
-    libpng::png_bytep * row_pointers;
+    png_bytep * row_pointers;
 
     unsigned char *buf;
     size_t left;
@@ -112,10 +110,9 @@ void rescaleImage( unsigned char *original_buffer, int width, int height, int by
 
 
 //Mion: functions for png image file support
-void my_read_data(libpng::png_structp png_ptr, libpng::png_bytep data,
-                  libpng::png_size_t length)
+void my_read_data(png_structp png_ptr, png_bytep data,
+                  png_size_t length)
 {
-    using namespace libpng;
     if ( !(length > 0) || (png_get_io_ptr(png_ptr) == NULL))
         return;
 
@@ -127,10 +124,9 @@ void my_read_data(libpng::png_structp png_ptr, libpng::png_bytep data,
         *data++ = *(src_mgr->buf++);
 }
 
-void my_write_data(libpng::png_structp png_ptr, libpng::png_bytep data,
-                   libpng::png_size_t length)
+void my_write_data(png_structp png_ptr, png_bytep data,
+                   png_size_t length)
 {
-    using namespace libpng;
     if ( !(length > 0) || (png_get_io_ptr(png_ptr) == NULL))
         return;
 
@@ -147,14 +143,13 @@ void my_write_data(libpng::png_structp png_ptr, libpng::png_bytep data,
         *(dst_mgr->buf++) = *data++;
 }
 
-void my_flush_data(libpng::png_structp png_ptr)
+void my_flush_data(png_structp png_ptr)
 {
 }
 
 size_t rescalePNGWrite( unsigned int width, unsigned int height, int byte_per_pixel, unsigned char **rescaled_buffer,
-                        libpng::png_structp png_ptr, libpng::png_infop info_ptr, bool palette_flag, int num_of_cells )
+                        png_structp png_ptr, png_infop info_ptr, bool palette_flag, int num_of_cells )
 {
-    using namespace libpng;
     png_structp png_dst_ptr;
     my_png_mgr png_dst_mgr;
     int rowbytes;
@@ -275,7 +270,6 @@ size_t rescalePNGWrite( unsigned int width, unsigned int height, int byte_per_pi
 size_t rescalePNG( unsigned char *original_buffer, size_t length,
                     unsigned char **rescaled_buffer, int num_of_cells=1 )
 {
-    using namespace libpng;
     unsigned int width, height;
     bool palette_flag = false;
     png_byte color_type, bit_depth;

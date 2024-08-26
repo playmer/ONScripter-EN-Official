@@ -211,8 +211,8 @@ $(TDIR)ns2dec$(OBJSUFFIX): $(READER_HEADER) SarReader.h NsaReader.h
 $(TDIR)ns2conv$(OBJSUFFIX): $(READER_HEADER) SarReader.h NsaReader.h
 $(TDIR)ns2make$(OBJSUFFIX): $(READER_HEADER) SarReader.h NsaReader.h
 $(TDIR)nbzdec$(OBJSUFFIX): $(READER_HEADER) SarReader.h
-$(TDIR)conv_shared$(OBJSUFFIX): conv_shared.h resize_image.h
-$(TDIR)conv_shared_jpeg$(OBJSUFFIX): conv_shared.h
+$(TDIR)conv_shared$(OBJSUFFIX): $(TDIR)conv_shared.h resize_image.h
+$(TDIR)conv_shared_jpeg$(OBJSUFFIX): $(TDIR)conv_shared.h resize_image.h
 $(TDIR)SarReader$(OBJSUFFIX):    $(READER_HEADER) SarReader.h 
 $(TDIR)NsaReader$(OBJSUFFIX):    $(READER_HEADER) SarReader.h NsaReader.h 
 $(TDIR)DirectReader$(OBJSUFFIX): $(READER_HEADER) DirectReader.h

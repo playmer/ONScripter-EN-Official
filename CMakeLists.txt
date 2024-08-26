@@ -24,6 +24,7 @@ else()
     option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
 endif()
 
+option(ONS_COMPILE_TESTS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
 option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
 
@@ -83,6 +84,12 @@ endif()
 # Tools
 if(ONS_COMPILE_TOOLS)
     add_subdirectory(tools)
+endif()
+
+#############################################
+# Tests
+if(ONS_COMPILE_TESTS)
+    add_subdirectory(test)
 endif()
 
 #############################################
@@ -328,16 +335,11 @@ elseif(WIN32)
         target_compile_options(onscripter-en
         PRIVATE
             -fpermissive
-        )
-
-        target_link_options(onscripter-en
-        PRIVATE
             -mwindows
         )
 
         target_link_options(onscripter-en
         PRIVATE
-            -mwindows
         )
     endif()
 

@@ -35,7 +35,7 @@ jobs:
         cd extlib/src/libogg-1.3.5
         autoreconf -fi
         autoupdate
-    - name: build
+    - name: Build and Test
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
         make -j $NCPUS VERBOSE=true
@@ -110,7 +110,7 @@ jobs:
           zip
 
     - shell: msys2 {0}
-      name: Build
+      name: Build and Test
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
         make -f ./msys2/Makefile.Windows.MSYS2.${{matrix.arch}}.insani -j $NCPUS VERBOSE=true
@@ -183,10 +183,11 @@ jobs:
           zip
 
     - shell: msys2 {0}
-      name: Build
+      name: Build and Test
       run: |
         cmake -B build .
         (cd build/ && ninja)
+        (cd build/test && ctest)
         zip onscripter-en.Windows.cmake.${{matrix.sys}}.${{matrix.arch}}.zip \
           build/onscripter-en.exe \
           README.md \

@@ -329,6 +329,7 @@ elseif(WIN32)
     PRIVATE
         onscripter.rc
         winres.h
+        SDL_win32_main.c
     )
 
     if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")

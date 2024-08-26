@@ -116,7 +116,7 @@ jobs:
         make -f ./msys2/Makefile.Windows.MSYS2.${{matrix.arch}}.insani -j $NCPUS VERBOSE=true
         make -f ./msys2/Makefile.Windows.MSYS2.${{matrix.arch}}.insani -j $NCPUS VERBOSE=true tools
         make -f ./msys2/Makefile.Windows.MSYS2.${{matrix.arch}}.insani check
-        zip onscripter-en.Windows.${{matrix.arch}}.zip \
+        zip onscripter-en.Windows.${{matrix.sys}}.${{matrix.arch}}.zip \
           onscripter-en.exe \
           README.md \
           COPYING \
@@ -138,7 +138,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: Windows ${{matrix.arch}} Build
-        path: ${{ github.workspace }}/onscripter-en.Windows.${{matrix.env}}.${{matrix.arch}}.zip
+        path: ${{ github.workspace }}/onscripter-en.Windows.${{matrix.sys}}.${{matrix.arch}}.zip
         
   windows-cmake:
     strategy:

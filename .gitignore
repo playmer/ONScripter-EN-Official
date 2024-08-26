@@ -13,3 +13,7 @@ tools/*make
 onscripter.rc
 test/googletest
 test/test_*
+
+build*/
+.vscode/
+.vs/

@@ -3,20 +3,31 @@
 find_package(PkgConfig)
 
 # For libraries that can only be found directly querying pkgconfig.
-function(PkgConfig_Find_Module module_name)
-    pkg_check_modules(${module_name}_TO_FIND ${module_name})
+function(PkgConfig_Find_Module target_name)
+    message(STATUS "\tPkgConfig_Find_Module start")
 
-    if (${${module_name}_TO_FIND} MATCHES "-NOTFOUND")
+    list(PREPEND ARGN ${target_name})
+    message(STATUS "\tPkgConfig_Find_Module args ${ARGN}")
+    foreach(arg IN LISTS ARGN)
+        message(STATUS "\tPkgConfig_Find_Module attempt ${arg}")
+        pkg_check_modules(${arg}_TO_FIND ${arg})
+        message(STATUS "\tPkgConfig_Find_Module query: ${${arg}_TO_FIND}")
+        
+        if (${${arg}_TO_FIND_FOUND})
+            message(STATUS "\tPkgConfig_Find_Module ${${arg}_TO_FIND} found")
+            set(module_name ${arg})
+            break()
+        else()
+            message(STATUS "\tPkgConfig_Find_Module ${${arg}_TO_FIND} not found")
+        endif()
+    endforeach()
+
+    if(NOT DEFINED module_name)
+        set(PkgConfigWrapper_${target_name}_NOTFOUND 1 PARENT_SCOPE)
         return()
     endif()
-    
-    message(STATUS "PkgConfig: ${module_name}")
 
-    if (${ARGC} EQUAL "1")
-        set(target_name ${module_name})
-    elseif(${ARGC} EQUAL "2")
-        set(target_name ${ARGV1})
-    endif()
+    message(STATUS "PkgConfig_Find_Module: ${module_name}")
 
     list(LENGTH ${module_name}_TO_FIND_LIBRARY_DIRS include_dir_length)
 
@@ -62,6 +73,8 @@ function(PkgConfig_Find_Module module_name)
         endif()
     endforeach()
 
+    message(STATUS "\n${target_name} include dirs: ${${module_name}_TO_FIND_INCLUDE_DIRS}")
+
     foreach(include_dir ${${module_name}_TO_FIND_INCLUDE_DIRS})
         if(IS_ABSOLUTE ${include_dir})
             set(processed_include_dir ${include_dir})
@@ -86,7 +99,7 @@ endfunction()
 # For libraries that have config scripts (smpeg-config, sdl-config, and so on, this will run them for us.)
 function(run_library_config library_name include_directories)
     set(${library_name}_lib_cmd ${library_name}-config)
-    set(lib_args --libs --cflags)
+    set(lib_args --cflags --libs)
 
     find_program(${library_name}_lib_command ${${library_name}_lib_cmd})
 
@@ -108,7 +121,9 @@ function(run_library_config library_name include_directories)
     #message(STATUS "\terr: ${config_stderr_results}")
     #message(STATUS "\tcode: ${config_result}")
 
-    string(REPLACE " " ";" flags ${config_stdout_results})
+    string(REPLACE "\r\n" " " flags ${config_stdout_results})
+    string(REPLACE "\n" " " flags ${flags})
+    string(REPLACE " " ";" flags ${flags})
     foreach(flag ${flags})
         string(FIND "${flag}" "-I" out)
         if(NOT "${out}" EQUAL 0)

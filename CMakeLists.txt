@@ -47,11 +47,17 @@ add_custom_command(
 
 #############################################
 # Dependencies
+message(STATUS "Extlibs start")
 if(ONS_USE_EXT_LIBS)
     include(cmake/DependencyFinder.cmake)
 
-    PkgConfig_Find_Module(sdl SDL)
-    PkgConfig_Find_Module(libjpeg)
+    PkgConfig_Find_Module(SDL sdl)
+    PkgConfig_Find_Module(libjpeg libjpeg62 libjpeg9)
+
+    if (PkgConfigWrapper_libjpeg_NOTFOUND)
+        add_library(PkgConfigWrapper::libjpeg INTERFACE IMPORTED)
+        set_property(TARGET PkgConfigWrapper::libjpeg APPEND PROPERTY INTERFACE_LINK_LIBRARIES libjpeg.a)
+    endif()
 
     if (NOT ONS_USE_OLD_DEPS)
         PkgConfig_Find_Module(SDL_image)
@@ -74,6 +80,7 @@ if(ONS_USE_EXT_LIBS)
     endif()
 
     run_library_config(smpeg smpeg_include_directories)
+    message(STATUS "smpeg include dirs: ${smpeg_include_directories}")
 endif()
 
 if (ONS_USE_OLD_DEPS)

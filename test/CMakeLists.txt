@@ -1,6 +1,11 @@
 option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
 
+target_compile_options(gtest 
+PRIVATE 
+    -Wno-maybe-uninitialized
+)
+
 include(CTest)
 include(GoogleTest)
 enable_testing()

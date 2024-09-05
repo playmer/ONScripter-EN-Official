@@ -1,4 +1,59 @@
 ##########
+# SDL
+#if (ONS_USE_OLD_DEPS)
+#    set(sdl_source_prefix src/old/sdl-1.2.13)
+#else()
+#    set(sdl_source_prefix src/sdl-1.2.15)
+#endif()
+#
+#add_library(sdl STATIC "")
+#
+#file(GLOB SDL_SOURCE
+#    ${SDL}/src/*.c
+#    ${SDL}/src/audio/*.c
+#    ${SDL}/src/audio/disk/*.c
+#    ${SDL}/src/audio/dummy/*.c
+#    ${SDL}/src/cdrom/*.c
+#    ${SDL}/src/cdrom/dummy/*.c
+#    ${SDL}/src/cpuinfo/*.c
+#    ${SDL}/src/events/*.c
+#    ${SDL}/src/file/*.c
+#    ${SDL}/src/joystick/*.c
+#    ${SDL}/src/stdlib/*.c
+#    ${SDL}/src/thread/*.c
+#    ${SDL}/src/thread/generic/*.c
+#    ${SDL}/src/timer/*.c
+#    ${SDL}/src/video/*.c
+#    ${SDL}/src/video/dummy/*.c
+#)
+#
+#file(
+#    GLOB SDL_MACOS_SOURCES
+#    ${SDL}/src/audio/macosx/*.c
+#    ${SDL}/src/cdrom/macosx/*.c
+#    ${SDL}/src/joystick/darwin/*.c
+#    ${SDL}/src/loadso/dlopen/*.c
+#    ${SDL}/src/loadso/macosx/*.c
+#    # ${SDL}/src/thread/pthread/*.c
+#    ${SDL}/src/timer/unix/*.c
+#    ${SDL}/src/video/quartz/*.m
+#)
+#
+#if( UNIX AND APPLE )
+#	set( LIBSDL_SOURCES ${LIBSDL_SOURCES} ${SDL_MACOS_SOURCES} )
+#	set( LIBSDLMAIN_SOURCES ${SDL}/src/main/macosx/SDLMain.m )
+#
+#	## copy over a pre-created macOS config
+#	set( CFLAGS "-Wall -Wextra -O2 -g -fomit-frame-pointer -fPIC" )
+#	set( CXXFLAGS "${CFLAGS} -fno-exceptions -fno-rtti" )
+#
+#	file( STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/SDL_config.h.macOS SDL_CONFIG_HEADER )
+#	message( AUTHOR_WARNING "+ Building for macOS.")
+#else()
+#	message( FATAL_ERROR "Unknown operating system-- aborting." )
+#endif()
+
+##########
 # bzip2
 if (ONS_USE_OLD_DEPS)
     set(bzip2_source_prefix src/old/bzip2-1.0.4)
@@ -68,9 +123,22 @@ PRIVATE
     ${ogg_source_prefix}/src/framing.c
 )
 
+if (UNIX)
+    set(SIZE16 "short")
+    set(USIZE16 "unsigned short")
+    set(SIZE32 "int")
+    set(USIZE32 "unsigned int")
+    set(SIZE64 "long long")
+
+    configure_file(${ogg_source_prefix}/include/ogg/config_types.h.in ogg/config_types.h
+        @ONLY
+    )
+endif()
+
 target_include_directories(ogg
 PUBLIC
     ${ogg_source_prefix}/include
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 ##########
@@ -546,6 +614,8 @@ endif()
 target_include_directories(SDL_mixer
 PRIVATE
     ${sdl_mixer_source_prefix}/native_midi/
+PUBLIC
+    ${sdl_mixer_source_prefix}/
 )
 
 target_sources(SDL_mixer
@@ -613,6 +683,11 @@ target_sources(SDL_ttf
 PRIVATE
     ${sdl_ttf_source_prefix}/SDL_ttf.c
     ${sdl_ttf_source_prefix}/SDL_ttf.h
+)
+
+target_include_directories(SDL_ttf
+PUBLIC
+    ${sdl_ttf_source_prefix}/
 )
 
 ##########

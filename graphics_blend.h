@@ -266,9 +266,9 @@
 namespace ons_gfx {
 
 #ifndef BPP16 // currently none of the fast CPU routines support 16bpp
-    void imageFilterBlend(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap, int alpha, int length);
-    void imageFilterEffectBlend(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 mask2, int length);
-    void imageFilterEffectMaskBlend(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *mask_buffer, Uint32 overflow_mask, Uint32 mask_value, int length);
+    extern void (*imageFilterBlend)(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap, int alpha, int length);
+    extern void (*imageFilterEffectBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 mask2, int length);
+    extern void (*imageFilterEffectMaskBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *mask_buffer, Uint32 overflow_mask, Uint32 mask_value, int length);
 #endif //!BPP16
 
 }

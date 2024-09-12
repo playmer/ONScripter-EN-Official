@@ -41,12 +41,97 @@
 
 namespace ons_gfx {
 
+void imageFilterMean_Basic(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
+{
+    int n = length + 1;
+    BASIC_MEAN();
+}
+
+void imageFilterAddTo_Basic(unsigned char *dst, unsigned char *src, int length)
+{
+    int n = length + 1;
+    BASIC_ADDTO();
+}
+
+void imageFilterSubFrom_Basic(unsigned char *dst, unsigned char *src, int length)
+{
+    int n = length + 1;
+    BASIC_SUBFROM();
+}
+
+void imageFilterBlend_Basic(Uint32 *dst_buffer, Uint32 *src_buffer,
+                                     Uint8 *alphap, int alpha, int length)
+{
+    int n = length + 1;
+    BASIC_BLEND();
+}
+
+
+void imageFilterEffectBlend_Basic(Uint32 *dst_buffer, Uint32 *src1_buffer,
+                                           Uint32 *src2_buffer, Uint32 mask2, int length)
+{
+    int n = length + 1;
+    while(--n > 0) {
+        BLEND_EFFECT_PIXEL();
+        ++dst_buffer, ++src1_buffer, ++src2_buffer;
+    }
+}
+
+void imageFilterEffectMaskBlend_Basic(Uint32 *dst_buffer, Uint32 *src1_buffer,
+                                               Uint32 *src2_buffer, Uint32 *mask_buffer,
+                                               Uint32 overflow_mask, Uint32 mask_value,
+                                               int length)
+{
+    int n = length + 1;
+    while(--n > 0) {
+        BLEND_EFFECT_MASK_PIXEL();
+        ++dst_buffer, ++src1_buffer, ++src2_buffer, ++mask_buffer;
+    }
+}
+
+
 //Mion: for special graphics routine handling
 static unsigned int cpufuncs;
+
+
+#ifndef BPP16 // currently none of the fast CPU routines support 16bpp
+
+void (*imageFilterMean)(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length) = imageFilterMean_Basic;
+void (*imageFilterAddTo)(unsigned char *dst, unsigned char *src, int length) = imageFilterAddTo_Basic;
+void (*imageFilterSubFrom)(unsigned char *dst, unsigned char *src, int length) = imageFilterSubFrom_Basic;
+void (*imageFilterBlend)(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap, int alpha, int length) = imageFilterBlend_Basic;
+void (*imageFilterEffectBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 mask2, int length) = imageFilterEffectBlend_Basic;
+void (*imageFilterEffectMaskBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *mask_buffer, Uint32 overflow_mask, Uint32 mask_value, int length) = imageFilterEffectMaskBlend_Basic;
+
+#endif //!BPP16
 
 void setCpufuncs(unsigned int func)
 {
     cpufuncs = func;
+
+#ifndef BPP16 // currently none of the fast CPU routines support 16bpp
+    #if defined(USE_PPC_GFX)
+        if(cpufuncs & CPUF_PPC_ALTIVEC) {
+            imageFilterMean = imageFilterMean_Altivec;
+            imageFilterAddTo = imageFilterAddTo_Altivec;
+            imageFilterSubFrom = imageFilterSubFrom_Altivec;
+        }
+    #elif defined(USE_X86_GFX)
+        if (cpufuncs & CPUF_X86_MMX) {
+            imageFilterMean = imageFilterMean_MMX;
+            imageFilterAddTo = imageFilterAddTo_MMX;
+            imageFilterSubFrom = imageFilterSubFrom_MMX;
+        }
+        if (cpufuncs & CPUF_X86_SSE2) {
+            imageFilterMean = imageFilterMean_SSE2;
+            imageFilterAddTo = imageFilterAddTo_SSE2;
+            imageFilterSubFrom = imageFilterSubFrom_SSE2;
+            imageFilterBlend = imageFilterBlend_SSE2;
+            imageFilterEffectBlend = imageFilterEffectBlend_SSE2;
+            imageFilterEffectMaskBlend = imageFilterEffectMaskBlend_SSE2;
+        }
+    #endif
+#endif //!BPP16
 }
 
 unsigned int getCpufuncs()
@@ -54,194 +139,6 @@ unsigned int getCpufuncs()
     return cpufuncs;
 }
 
-#ifndef BPP16 // currently none of the fast CPU routines support 16bpp
-void imageFilterMean(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
-{
-#if defined(USE_PPC_GFX)
-    if(cpufuncs & CPUF_PPC_ALTIVEC) {
-        imageFilterMean_Altivec(src1, src2, dst, length);
-    } else {
-        int n = length + 1;
-        BASIC_MEAN();
-    }
-#elif defined(USE_X86_GFX)
-
-#ifndef MACOSX
-    if (cpufuncs & CPUF_X86_SSE2) {
-#endif // !MACOSX
-
-        imageFilterMean_SSE2(src1, src2, dst, length);
-
-#ifndef MACOSX
-    } else if (cpufuncs & CPUF_X86_MMX) {
-
-        imageFilterMean_MMX(src1, src2, dst, length);
-
-    } else {
-        int n = length + 1;
-        BASIC_MEAN();
-    }
-#endif // !MACOSX
-
-#else // no special gfx handling
-    int n = length + 1;
-    BASIC_MEAN();
-#endif
-}
-
-void imageFilterAddTo(unsigned char *dst, unsigned char *src, int length)
-{
-#if defined(USE_PPC_GFX)
-    if(cpufuncs & CPUF_PPC_ALTIVEC) {
-        imageFilterAddTo_Altivec(dst, src, length);
-    } else {
-        int n = length + 1;
-        BASIC_ADDTO();
-    }
-#elif defined(USE_X86_GFX)
-
-#ifndef MACOSX
-    if (cpufuncs & CPUF_X86_SSE2) {
-#endif // !MACOSX
-
-        imageFilterAddTo_SSE2(dst, src, length);
-
-#ifndef MACOSX
-    } else if (cpufuncs & CPUF_X86_MMX) {
-
-        imageFilterAddTo_MMX(dst, src, length);
-
-    } else {
-        int n = length + 1;
-        BASIC_ADDTO();
-    }
-#endif // !MACOSX
-
-#else // no special gfx handling
-    int n = length + 1;
-    BASIC_ADDTO();
-#endif
-}
-
-void imageFilterSubFrom(unsigned char *dst, unsigned char *src, int length)
-{
-#if defined(USE_PPC_GFX)
-    if(cpufuncs & CPUF_PPC_ALTIVEC) {
-        imageFilterSubFrom_Altivec(dst, src, length);
-    } else {
-        int n = length + 1;
-        BASIC_SUBFROM();
-    }
-#elif defined(USE_X86_GFX)
-
-#ifndef MACOSX
-    if (cpufuncs & CPUF_X86_SSE2) {
-#endif // !MACOSX
-
-        imageFilterSubFrom_SSE2(dst, src, length);
-
-#ifndef MACOSX
-    } else if (cpufuncs & CPUF_X86_MMX) {
-
-        imageFilterSubFrom_MMX(dst, src, length);
-
-    } else {
-        int n = length + 1;
-        BASIC_SUBFROM();
-    }
-#endif // !MACOSX
-
-#else // no special gfx handling
-    int n = length + 1;
-    BASIC_SUBFROM();
-#endif
-}
-
-void imageFilterBlend(Uint32 *dst_buffer, Uint32 *src_buffer,
-                                     Uint8 *alphap, int alpha, int length)
-{
-#if defined(USE_X86_GFX)
-#ifndef MACOSX
-    if (cpufuncs & CPUF_X86_SSE2) {
-#endif // !MACOSX
-
-        imageFilterBlend_SSE2(dst_buffer, src_buffer, alphap, alpha, length);
-
-#ifndef MACOSX
-    } else {
-        int n = length + 1;
-        BASIC_BLEND();
-    }
-#endif // !MACOSX
-
-#else // no special gfx handling
-    int n = length + 1;
-    BASIC_BLEND();
-#endif
-}
-
-void imageFilterEffectBlend(Uint32 *dst_buffer, Uint32 *src1_buffer,
-                                           Uint32 *src2_buffer, Uint32 mask2, int length)
-{
-#if defined(USE_X86_GFX)
-#ifndef MACOSX
-    if (cpufuncs & CPUF_X86_SSE2) {
-#endif // !MACOSX
-
-        imageFilterEffectBlend_SSE2(dst_buffer, src1_buffer, src2_buffer, mask2, length);
-
-#ifndef MACOSX
-    } else {
-        int n = length + 1;
-        while(--n > 0) {
-            BLEND_EFFECT_PIXEL();
-            ++dst_buffer, ++src1_buffer, ++src2_buffer;
-        }
-    }
-#endif // !MACOSX
-
-#else // no special gfx handling
-    int n = length + 1;
-    while(--n > 0) {
-        BLEND_EFFECT_PIXEL();
-        ++dst_buffer, ++src1_buffer, ++src2_buffer;
-    }
-#endif
-}
-
-void imageFilterEffectMaskBlend(Uint32 *dst_buffer, Uint32 *src1_buffer,
-                                               Uint32 *src2_buffer, Uint32 *mask_buffer,
-                                               Uint32 overflow_mask, Uint32 mask_value,
-                                               int length)
-{
-#if defined(USE_X86_GFX)
-#ifndef MACOSX
-    if (cpufuncs & CPUF_X86_SSE2) {
-#endif // !MACOSX
-
-        imageFilterEffectMaskBlend_SSE2(dst_buffer, src1_buffer, src2_buffer,
-                                        mask_buffer, overflow_mask, mask_value, length);
-
-#ifndef MACOSX
-    } else {
-        int n = length + 1;
-        while(--n > 0) {
-            BLEND_EFFECT_MASK_PIXEL();
-            ++dst_buffer, ++src1_buffer, ++src2_buffer, ++mask_buffer;
-        }
-    }
-#endif // !MACOSX
-
-#else // no special gfx handling
-    int n = length + 1;
-    while(--n > 0) {
-        BLEND_EFFECT_MASK_PIXEL();
-        ++dst_buffer, ++src1_buffer, ++src2_buffer, ++mask_buffer;
-    }
-#endif
-}
-
-#endif //!BPP16
 
 
 static unsigned char *resize_buffer = NULL;

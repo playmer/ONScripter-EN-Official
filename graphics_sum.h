@@ -68,9 +68,9 @@
 namespace ons_gfx {
 
 #ifndef BPP16 // currently none of the fast CPU routines support 16bpp
-    extern void (*imageFilterMean)(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
-    extern void (*imageFilterAddTo)(unsigned char *dst, unsigned char *src, int length)
-    extern void (*imageFilterSubFrom)(unsigned char *dst, unsigned char *src, int length)
+    extern void (*imageFilterMean)(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
+    extern void (*imageFilterAddTo)(unsigned char *dst, unsigned char *src, int length);
+    extern void (*imageFilterSubFrom)(unsigned char *dst, unsigned char *src, int length);
 #endif //!BPP16
 
 }

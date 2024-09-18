@@ -43,6 +43,10 @@ typedef HRESULT (WINAPI *GETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
 #define STDOUT_FILE	TEXT("stdout.txt")
 #define STDERR_FILE	TEXT("stderr.txt")
 
+#ifndef NDEBUG
+	#define NO_STDIO_REDIRECT
+#endif
+
 #ifndef NO_STDIO_REDIRECT
 # ifdef _WIN32_WCE
   static wchar_t outputPath[MAX_PATH];

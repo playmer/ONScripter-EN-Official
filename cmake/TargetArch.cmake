@@ -27,28 +27,56 @@
 # "There are many more known variants/revisions that we do not handle/detect."
 
 set(archdetect_c_code "
-#if defined(__arm__) || defined(__TARGET_ARCH_ARM)
-    #if defined(__ARM_ARCH_7__) \\
-        || defined(__ARM_ARCH_7A__) \\
-        || defined(__ARM_ARCH_7R__) \\
-        || defined(__ARM_ARCH_7M__) \\
+#if defined(__arm__) || defined(__ARM_ARCH) || defined(__TARGET_ARCH_ARM) || defined(_M_ARM) || defined(_M_ARM64) || defined(_M_ARM64EC)
+    #if defined(__ARM_ARCH)
+        #if __ARM_ARCH == 9 \
+            || __ARM_ARCH == 900 \
+            || __ARM_ARCH == 901 \
+            || __ARM_ARCH == 902 \
+            || __ARM_ARCH == 903 \
+            || __ARM_ARCH == 904 \
+            || __ARM_ARCH == 905 \
+            || __ARM_ARCH == 906 \
+            || __ARM_ARCH == 907 \
+            || __ARM_ARCH == 908
+            #error cmake_ARCH armv9
+        #elif __ARM_ARCH == 8 \
+            || __ARM_ARCH == 800 \
+            || __ARM_ARCH == 801 \
+            || __ARM_ARCH == 802 \
+            || __ARM_ARCH == 803 \
+            || __ARM_ARCH == 804 \
+            || __ARM_ARCH == 805 \
+            || __ARM_ARCH == 806 \
+            || __ARM_ARCH == 807 \
+            || __ARM_ARCH == 808
+            #error cmake_ARCH armv8
+        #else
+          #error cmake_ARCH arm
+        #endif
+    #elif defined(__ARM_ARCH_7__) \
+        || defined(__ARM_ARCH_7A__) \
+        || defined(__ARM_ARCH_7R__) \
+        || defined(__ARM_ARCH_7M__) \
         || (defined(__TARGET_ARCH_ARM) && __TARGET_ARCH_ARM-0 >= 7)
         #error cmake_ARCH armv7
-    #elif defined(__ARM_ARCH_6__) \\
-        || defined(__ARM_ARCH_6J__) \\
-        || defined(__ARM_ARCH_6T2__) \\
-        || defined(__ARM_ARCH_6Z__) \\
-        || defined(__ARM_ARCH_6K__) \\
-        || defined(__ARM_ARCH_6ZK__) \\
-        || defined(__ARM_ARCH_6M__) \\
+    #elif defined(__ARM_ARCH_6__) \
+        || defined(__ARM_ARCH_6J__) \
+        || defined(__ARM_ARCH_6T2__) \
+        || defined(__ARM_ARCH_6Z__) \
+        || defined(__ARM_ARCH_6K__) \
+        || defined(__ARM_ARCH_6ZK__) \
+        || defined(__ARM_ARCH_6M__) \
         || (defined(__TARGET_ARCH_ARM) && __TARGET_ARCH_ARM-0 >= 6)
         #error cmake_ARCH armv6
-    #elif defined(__ARM_ARCH_5TEJ__) \\
+    #elif defined(__ARM_ARCH_5TEJ__) \
         || (defined(__TARGET_ARCH_ARM) && __TARGET_ARCH_ARM-0 >= 5)
         #error cmake_ARCH armv5
     #else
         #error cmake_ARCH arm
     #endif
+#elif defined(_MIPS_ARCH) || defined(_MIPS_ISA) || defined(_mips)
+    #error cmake_ARCH mips
 #elif defined(__i386) || defined(__i386__) || defined(_M_IX86)
     #error cmake_ARCH i386
 #elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(_M_X64)
@@ -63,9 +91,9 @@ set(archdetect_c_code "
     #else
         #error cmake_ARCH ppc
     #endif
+#else 
+  #error cmake_ARCH unknown
 #endif
-
-#error cmake_ARCH unknown
 ")
 
 function(target_architecture output_var)
@@ -130,12 +158,12 @@ function(target_architecture output_var)
             compile_result_unused
             "${CMAKE_BINARY_DIR}"
             "${CMAKE_BINARY_DIR}/arch.c"
-            COMPILE_OUTPUT_VARIABLE ARCH
+            COMPILE_OUTPUT_VARIABLE COMPILER_OUTPUT
             CMAKE_FLAGS CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
         )
 
         # Parse the architecture name from the compiler output
-        string(REGEX MATCH "cmake_ARCH ([a-zA-Z0-9_]+)" ARCH "${ARCH}")
+        string(REGEX MATCH "cmake_ARCH ([a-zA-Z0-9_]+)" ARCH "${COMPILER_OUTPUT}")
 
         # Get rid of the value marker leaving just the architecture name
         string(REPLACE "cmake_ARCH " "" ARCH "${ARCH}")
@@ -146,6 +174,9 @@ function(target_architecture output_var)
         if (NOT ARCH)
             set(ARCH unknown)
         endif()
+
+        # Uncomment to figure out what's going wrong.
+        #set(ARCH "${COMPILER_OUTPUT}")
     endif()
 
     set(${output_var} "${ARCH}" PARENT_SCOPE)

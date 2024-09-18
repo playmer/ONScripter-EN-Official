@@ -15,14 +15,24 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(ONS_COMPILER_FLAG_STYLE "MSVC")
 endif()
 
-# Options we can pass into CMake, platform will determine some defaults.
-if (PLATFORM_PSP)
-    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" OFF)
-    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." OFF)
-else()
-    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools" ON)
-    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
+if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU" AND (CMAKE_GENERATOR STREQUAL Ninja OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config"))
+    # This should be used very sparingly
+    add_compile_options(-fdiagnostics-color=always)
 endif()
+
+# Options we can pass into CMake, platform will determine some defaults.
+#if (PLATFORM_PSP)
+#    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
+#    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." OFF)
+#else()
+    if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL ${CMAKE_SYSTEM_NAME})
+        option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" ON)
+    else()
+        option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
+    endif()
+
+    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
+#endif()
 
 option(ONS_COMPILE_TESTS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
@@ -52,11 +62,9 @@ if(ONS_USE_EXT_LIBS)
     include(cmake/DependencyFinder.cmake)
 
     PkgConfig_Find_Module(SDL sdl)
-    PkgConfig_Find_Module(libjpeg libjpeg62 libjpeg9)
-
-    if (PkgConfigWrapper_libjpeg_NOTFOUND)
-        add_library(PkgConfigWrapper::libjpeg INTERFACE IMPORTED)
-        set_property(TARGET PkgConfigWrapper::libjpeg APPEND PROPERTY INTERFACE_LINK_LIBRARIES libjpeg.a)
+    
+    if(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
+        target_link_libraries(PkgConfigWrapper::SDL INTERFACE opengx)
     endif()
 
     if (NOT ONS_USE_OLD_DEPS)
@@ -70,17 +78,33 @@ if(ONS_USE_EXT_LIBS)
         PkgConfig_Find_Module(vorbisfile)
         PkgConfig_Find_Module(libpng)
         PkgConfig_Find_Module(bzip2)
-        PkgConfig_Find_Module(libtiff-4)
+        PkgConfig_Find_Module(libtiff libtiff-4)
         PkgConfig_Find_Module(libwebp)
         PkgConfig_Find_Module(harfbuzz)
 
-        set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff-4)
-        set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
-        target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
-    endif()
+        PkgConfig_Find_Module(libjpeg libjpeg62 libjpeg9)
+        
+        if (PkgConfigWrapper_libjpeg_NOTFOUND)
+            add_library(PkgConfigWrapper::libjpeg INTERFACE IMPORTED)
+            set_property(TARGET PkgConfigWrapper::libjpeg APPEND PROPERTY INTERFACE_LINK_LIBRARIES libjpeg.a)
+        endif()
 
-    run_library_config(smpeg smpeg_include_directories)
-    message(STATUS "smpeg include dirs: ${smpeg_include_directories}")
+        if (TARGET PkgConfigWrapper::libtiff)
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff)
+        else()
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libtiff-4)
+        endif()
+        
+        if (TARGET PkgConfigWrapper::libwebp)
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
+        else()
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libwebp)
+        endif()
+        target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
+        
+        run_library_config(smpeg smpeg_include_directories)
+        message(STATUS "smpeg include dirs: ${smpeg_include_directories}")
+    endif()
 endif()
 
 if (ONS_USE_OLD_DEPS)
@@ -247,8 +271,6 @@ elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
 endif()
 
 # Dependencies
-
-
 if (ONS_USE_OLD_DEPS)
     target_link_libraries(onscripter-en
     PUBLIC
@@ -287,26 +309,147 @@ else()
     )
 endif()
 
+# Handle Architecture and SIMD Detection and availibility.
+set(ONS_X86 0)
+set(ONS_X8664 0)
+set(ONS_X86_MMX_AVAILIBLE 0)
+set(ONS_X86_SSE_AVAILIBLE 0)
+set(ONS_X86_SSE2_AVAILIBLE 0)
+set(ONS_X86_SSE3_AVAILIBLE 0)
+set(ONS_X86_SSSE3_AVAILIBLE 0)
+set(ONS_X86_SSE4_1_AVAILIBLE 0)
+set(ONS_X86_SSE4_2_AVAILIBLE 0)
+set(ONS_X86_AVX_AVAILIBLE 0)
+set(ONS_X86_AVX2_AVAILIBLE 0)
+set(ONS_PPC 0)
+set(ONS_PPC_ALTIVEC_AVAILIBLE 0)
+set(ONS_ARM 0)
+set(ONS_ARM_NEON_AVAILIBLE 0)
+set(ONS_ARM_SVE_AVAILIBLE 0)
+set(ONS_ARM_SVE2_AVAILIBLE 0)
+set(ONS_MIPS 0)
 
-# Architecture Specific Options
-if (${ONS_TARGET_ARCH} STREQUAL "x86_64" OR ${ONS_TARGET_ARCH} STREQUAL "i386")
-    target_compile_definitions(onscripter-en
-    PRIVATE
-        USE_X86_GFX
-    )
+if (${ONS_TARGET_ARCH} STREQUAL "x86_64")    
+    set(ONS_X8664 1)
+    
+    if (NOT MSVC)
+        set(ONS_X86_MMX_AVAILIBLE 1)
+    endif()
+    
+    set(ONS_X86_SSE_AVAILIBLE 1)
+    set(ONS_X86_SSE2_AVAILIBLE 1)
+    set(ONS_X86_SSE3_AVAILIBLE 1)
+    set(ONS_X86_SSSE3_AVAILIBLE 1)
+    set(ONS_X86_SSE4_1_AVAILIBLE 1)
+    set(ONS_X86_SSE4_2_AVAILIBLE 1)
+    set(ONS_X86_AVX_AVAILIBLE 1)
+    set(ONS_X86_AVX2_AVAILIBLE 1)
 
     if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         set_source_files_properties(
             graphics_sse2.cpp
             COMPILE_OPTIONS -msse2
         )
-
+        
         set_source_files_properties(
             graphics_mmx.cpp
             COMPILE_OPTIONS -mmmx
         )
     endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "i386")
+    set(ONS_X86 1)
+    
+    set(ONS_X86_MMX_AVAILIBLE 1)
+    set(ONS_X86_SSE_AVAILIBLE 1)
+    
+    if (NOT NXDK)
+        set(ONS_X86_SSE2_AVAILIBLE 1)
+    endif()
+
+    if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+        set_source_files_properties(
+            graphics_sse2.cpp
+            COMPILE_OPTIONS -msse2
+        )
+        
+        set_source_files_properties(
+            graphics_mmx.cpp
+            COMPILE_OPTIONS -mmmx
+        )
+    endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "ppc" OR ${ONS_TARGET_ARCH} STREQUAL "ppc")
+    set(ONS_PPC 1)
+
+    if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii
+        AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL NintendoGameCube
+        AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL CafeOS)
+
+        set(ONS_PPC_ALTIVEC_AVAILIBLE 1)
+        
+        set_source_files_properties(
+            graphics_altivec.cpp
+            COMPILE_OPTIONS -maltivec
+        )
+    endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "armv9" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv8" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv7" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv6" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv5" OR
+       ${ONS_TARGET_ARCH} STREQUAL "arm")
+       
+    set(ONS_ARM 1)
+
+    set(ONS_ARM_NEON_AVAILIBLE 1)
+    if (NOT MSVC)
+        set(ONS_ARM_SVE_AVAILIBLE 1)
+        set(ONS_ARM_SVE2_AVAILIBLE 1)
+    endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "mips")
+    set(ONS_MIPS 1)
 endif()
+
+
+target_compile_definitions(onscripter-en
+PRIVATE
+    ONS_X86=${ONS_X86}
+    ONS_X8664=${ONS_X8664}
+    ONS_X86_MMX_AVAILIBLE=${ONS_X86_MMX_AVAILIBLE}
+    ONS_X86_SSE_AVAILIBLE=${ONS_X86_SSE_AVAILIBLE}
+    ONS_X86_SSE2_AVAILIBLE=${ONS_X86_SSE2_AVAILIBLE}
+    ONS_X86_SSE3_AVAILIBLE=${ONS_X86_SSE3_AVAILIBLE}
+    ONS_X86_SSSE3_AVAILIBLE=${ONS_X86_SSSE3_AVAILIBLE}
+    ONS_X86_SSE4_1_AVAILIBLE=${ONS_X86_SSE4_1_AVAILIBLE}
+    ONS_X86_SSE4_2_AVAILIBLE=${ONS_X86_SSE4_2_AVAILIBLE}
+    ONS_X86_AVX_AVAILIBLE=${ONS_X86_AVX_AVAILIBLE}
+    ONS_X86_AVX2_AVAILIBLE=${ONS_X86_AVX2_AVAILIBLE}
+    ONS_PPC=${ONS_PPC}
+    ONS_PPC_ALTIVEC_AVAILIBLE=${ONS_PPC_ALTIVEC_AVAILIBLE}
+    ONS_ARM=${ONS_ARM}
+    ONS_ARM_NEON_AVAILIBLE=${ONS_ARM_NEON_AVAILIBLE}
+    ONS_ARM_SVE_AVAILIBLE=${ONS_ARM_SVE_AVAILIBLE}
+    ONS_ARM_SVE2_AVAILIBLE=${ONS_ARM_SVE2_AVAILIBLE}
+    ONS_MIPS=${ONS_MIPS}
+)
+
+message(STATUS "ONS_X86=${ONS_X86}")
+message(STATUS "ONS_X8664=${ONS_X8664}")
+message(STATUS "ONS_X86_MMX_AVAILIBLE=${ONS_X86_MMX_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE_AVAILIBLE=${ONS_X86_SSE_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE2_AVAILIBLE=${ONS_X86_SSE2_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE3_AVAILIBLE=${ONS_X86_SSE3_AVAILIBLE}")
+message(STATUS "ONS_X86_SSSE3_AVAILIBLE=${ONS_X86_SSSE3_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE4_1_AVAILIBLE=${ONS_X86_SSE4_1_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE4_2_AVAILIBLE=${ONS_X86_SSE4_2_AVAILIBLE}")
+message(STATUS "ONS_X86_AVX_AVAILIBLE=${ONS_X86_AVX_AVAILIBLE}")
+message(STATUS "ONS_X86_AVX2_AVAILIBLE=${ONS_X86_AVX2_AVAILIBLE}")
+message(STATUS "ONS_PPC=${ONS_PPC}")
+message(STATUS "ONS_PPC_ALTIVEC_AVAILIBLE=${ONS_PPC_ALTIVEC_AVAILIBLE}")
+message(STATUS "ONS_ARM=${ONS_ARM}")
+message(STATUS "ONS_ARM_NEON_AVAILIBLE=${ONS_ARM_NEON_AVAILIBLE}")
+message(STATUS "ONS_ARM_SVE_AVAILIBLE=${ONS_ARM_SVE_AVAILIBLE}")
+message(STATUS "ONS_ARM_SVE2_AVAILIBLE=${ONS_ARM_SVE2_AVAILIBLE}")
+message(STATUS "ONS_MIPS=${ONS_MIPS}")
 
 # Platform Specific Options
 if(PSP)

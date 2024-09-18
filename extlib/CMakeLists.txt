@@ -66,7 +66,6 @@ add_library(bzip2 STATIC "")
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(bzip2
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -107,7 +106,6 @@ add_library(ogg STATIC "")
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(ogg
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -123,7 +121,9 @@ PRIVATE
     ${ogg_source_prefix}/src/framing.c
 )
 
-if (UNIX)
+if (UNIX
+    OR ${ONS_TARGET_ARCH} STREQUAL "ppc" 
+    OR ${ONS_TARGET_ARCH} STREQUAL "ppc")
     set(SIZE16 "short")
     set(USIZE16 "unsigned short")
     set(SIZE32 "int")
@@ -154,7 +154,6 @@ add_library(vorbis STATIC "")
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(vorbis
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -266,105 +265,129 @@ PUBLIC
 #if (ONS_USE_OLD_DEPS)
 #    set(jpeg_source_prefix src/old/jpeg-6b)
 #else()
-#    set(jpeg_source_prefix src/jpeg-6b)
+#    set(jpeg_source_prefix src/jpeg-9f)
 #endif()
-#
-#add_library(jpeg STATIC "")
-#
-#target_compile_definitions(jpeg
-#PRIVATE
-#    JPEG_CJPEG_DJPEG
-#)
-#
-#if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-#    target_compile_options(jpeg
-#    PRIVATE
-#        -fdiagnostics-color=always
-#        $<$<CONFIG:DEBUG>:-g>
-#    )
-#
-#    target_link_options(jpeg
-#    PUBLIC
-#        $<$<CONFIG:RELEASE>:-s>
-#    )
-#endif()
-#
-#if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-#    target_compile_options(jpeg 
-#    PRIVATE
-#        -Wno-implicit-function-declaration
-#        -Wno-builtin-declaration-mismatch
-#    )
-#endif()
-#
-#target_sources(jpeg
-#PRIVATE
-#    ${jpeg_source_prefix}/jcapimin.c
-#    ${jpeg_source_prefix}/jcapistd.c
-#    ${jpeg_source_prefix}/jccoefct.c
-#    ${jpeg_source_prefix}/jccolor.c
-#    ${jpeg_source_prefix}/jcdctmgr.c
-#    ${jpeg_source_prefix}/jchuff.c
-#    ${jpeg_source_prefix}/jchuff.h
-#    ${jpeg_source_prefix}/jcinit.c
-#    ${jpeg_source_prefix}/jcmainct.c
-#    ${jpeg_source_prefix}/jcmarker.c
-#    ${jpeg_source_prefix}/jcmaster.c
-#    ${jpeg_source_prefix}/jcomapi.c
-#    ${jpeg_source_prefix}/jcparam.c
-#    ${jpeg_source_prefix}/jcphuff.c
-#    ${jpeg_source_prefix}/jcprepct.c
-#    ${jpeg_source_prefix}/jcsample.c
-#    ${jpeg_source_prefix}/jctrans.c
-#    ${jpeg_source_prefix}/jdapimin.c
-#    ${jpeg_source_prefix}/jdapistd.c
-#    ${jpeg_source_prefix}/jdatadst.c
-#    ${jpeg_source_prefix}/jdatasrc.c
-#    ${jpeg_source_prefix}/jdcoefct.c
-#    ${jpeg_source_prefix}/jdcolor.c
-#    ${jpeg_source_prefix}/jdct.h
-#    ${jpeg_source_prefix}/jddctmgr.c
-#    ${jpeg_source_prefix}/jdhuff.c
-#    ${jpeg_source_prefix}/jdhuff.h
-#    ${jpeg_source_prefix}/jdinput.c
-#    ${jpeg_source_prefix}/jdmainct.c
-#    ${jpeg_source_prefix}/jdmarker.c
-#    ${jpeg_source_prefix}/jdmaster.c
-#    ${jpeg_source_prefix}/jdmerge.c
-#    ${jpeg_source_prefix}/jdphuff.c
-#    ${jpeg_source_prefix}/jdpostct.c
-#    ${jpeg_source_prefix}/jdsample.c
-#    ${jpeg_source_prefix}/jdtrans.c
-#    ${jpeg_source_prefix}/jerror.c
-#    ${jpeg_source_prefix}/jerror.h
-#    ${jpeg_source_prefix}/jfdctflt.c
-#    ${jpeg_source_prefix}/jfdctfst.c
-#    ${jpeg_source_prefix}/jfdctint.c
-#    ${jpeg_source_prefix}/jidctflt.c
-#    ${jpeg_source_prefix}/jidctfst.c
-#    ${jpeg_source_prefix}/jidctint.c
-#    ${jpeg_source_prefix}/jidctred.c
-#    ${jpeg_source_prefix}/jinclude.h
-#    ${jpeg_source_prefix}/jmemansi.c
-#    ${jpeg_source_prefix}/jmemmgr.c
-#    ${jpeg_source_prefix}/jmemname.c
-#    ${jpeg_source_prefix}/jmemnobs.c
-#    ${jpeg_source_prefix}/jmemsys.h
-#    ${jpeg_source_prefix}/jmorecfg.h
-#    ${jpeg_source_prefix}/jpegint.h
-#    ${jpeg_source_prefix}/jpeglib.h
-#    ${jpeg_source_prefix}/jpegtran.1
-#    ${jpeg_source_prefix}/jpegtran.c
-#    ${jpeg_source_prefix}/jquant1.c
-#    ${jpeg_source_prefix}/jquant2.c
-#    ${jpeg_source_prefix}/jutils.c
-#    ${jpeg_source_prefix}/jversion.h
-#)
-#
-#target_include_directories(jpeg
-#PUBLIC
-#    ${jpeg_source_prefix}/
-#)
+
+set(jpeg_source_prefix src/jpeg-9f)
+
+add_library(jpeg STATIC "")
+
+if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+    target_compile_options(jpeg
+    PRIVATE
+        $<$<CONFIG:DEBUG>:-g>
+    )
+
+    target_link_options(jpeg
+    PUBLIC
+        $<$<CONFIG:RELEASE>:-s>
+    )
+endif()
+
+if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+    target_compile_options(jpeg 
+    PRIVATE
+        -Wno-implicit-function-declaration
+        -Wno-builtin-declaration-mismatch
+    )
+endif()
+
+target_sources(jpeg
+PRIVATE
+    ${jpeg_source_prefix}/jaricom.c
+    ${jpeg_source_prefix}/jcapimin.c
+    ${jpeg_source_prefix}/jcapistd.c
+    ${jpeg_source_prefix}/jcarith.c
+    ${jpeg_source_prefix}/jccoefct.c
+    ${jpeg_source_prefix}/jccolor.c
+    ${jpeg_source_prefix}/jcdctmgr.c
+    ${jpeg_source_prefix}/jchuff.c
+    ${jpeg_source_prefix}/jcinit.c
+    ${jpeg_source_prefix}/jcmainct.c
+    ${jpeg_source_prefix}/jcmarker.c
+    ${jpeg_source_prefix}/jcmaster.c
+    ${jpeg_source_prefix}/jcomapi.c
+    ${jpeg_source_prefix}/jcparam.c
+    ${jpeg_source_prefix}/jcprepct.c
+    ${jpeg_source_prefix}/jcsample.c
+    ${jpeg_source_prefix}/jctrans.c
+    ${jpeg_source_prefix}/jdapimin.c
+    ${jpeg_source_prefix}/jdapistd.c
+    ${jpeg_source_prefix}/jdarith.c
+    ${jpeg_source_prefix}/jdatadst.c
+    ${jpeg_source_prefix}/jdatasrc.c
+    ${jpeg_source_prefix}/jdcoefct.c
+    ${jpeg_source_prefix}/jdcolor.c
+    ${jpeg_source_prefix}/jddctmgr.c
+    ${jpeg_source_prefix}/jdhuff.c
+    ${jpeg_source_prefix}/jdinput.c
+    ${jpeg_source_prefix}/jdmainct.c
+    ${jpeg_source_prefix}/jdmarker.c
+    ${jpeg_source_prefix}/jdmaster.c
+    ${jpeg_source_prefix}/jdmerge.c
+    ${jpeg_source_prefix}/jdpostct.c
+    ${jpeg_source_prefix}/jdsample.c
+    ${jpeg_source_prefix}/jdtrans.c
+    ${jpeg_source_prefix}/jerror.c
+    ${jpeg_source_prefix}/jfdctflt.c
+    ${jpeg_source_prefix}/jfdctfst.c
+    ${jpeg_source_prefix}/jfdctint.c
+    ${jpeg_source_prefix}/jidctflt.c
+    ${jpeg_source_prefix}/jidctfst.c
+    ${jpeg_source_prefix}/jidctint.c
+    ${jpeg_source_prefix}/jquant1.c
+    ${jpeg_source_prefix}/jquant2.c
+    ${jpeg_source_prefix}/jutils.c
+    ${jpeg_source_prefix}/jmemmgr.c
+    ${jpeg_source_prefix}/jmemnobs.c
+)
+
+include(CheckIncludeFile)
+include(CheckSymbolExists)
+include(CheckCSourceCompiles)
+
+check_include_file(stddef.h HAVE_STDDEF_H)
+check_include_file(stdlib.h HAVE_STDLIB_H)
+check_include_file(string.h HAVE_STRING_H)
+check_symbol_exists(size_t stddef.h stdlib.h stdio.h HAVE_ANSI_SIZE_T)
+check_symbol_exists(setmode io.h USE_SETMODE)
+check_c_source_compiles(
+"
+void f()
+{
+    char x[ (char)0xff ]; /* x[-1] if signed */
+}
+"
+CHAR_IS_UNSIGNED)
+
+check_c_source_compiles(
+"
+void f()
+{
+    char x[ ((signed char)0xff) >> 1 ]; /* x[-1] if signed */
+}
+"
+RIGHT_SHIFT_IS_UNSIGNED)
+
+if(NOT HAVE_STRING_H)
+    set(NEED_BSD_STRINGS TRUE)
+else()
+    set(NEED_BSD_STRINGS FALSE)
+endif()
+
+if(NOT HAVE_ANSI_SIZE_T)
+    set(NEED_SYS_TYPES_H TRUE)
+else()
+    set(NEED_SYS_TYPES_H FALSE)
+endif()
+
+configure_file(${jpeg_source_prefix}/jconfig.txt jconfig.h)
+
+target_include_directories(jpeg
+PUBLIC
+    ${jpeg_source_prefix}/
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 ##########
 # freetype
@@ -379,7 +402,6 @@ add_library(freetype STATIC "")
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(freetype
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -564,18 +586,19 @@ PUBLIC
 
 ##########
 # SDL_mixer
-if (ONS_USE_OLD_DEPS)
-    set(sdl_mixer_source_prefix src/old/SDL_mixer-1.2.8)
-else()
-    set(sdl_mixer_source_prefix src/SDL_mixer-1.2.12)
-endif()
+#if (ONS_USE_OLD_DEPS)
+#    set(sdl_mixer_source_prefix src/old/SDL_mixer-1.2.8)
+#else()
+#    set(sdl_mixer_source_prefix src/SDL_mixer-1.2.12)
+#endif()
+
+set(sdl_mixer_source_prefix src/SDL_mixer-1.2.12)
 
 add_library(SDL_mixer STATIC)
 
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_mixer
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -591,19 +614,25 @@ PUBLIC
     PkgConfigWrapper::SDL
 )
 
-target_compile_definitions(SDL_mixer
-PUBLIC
-    USE_NATIVE_MIDI
-    MID_MUSIC
-)
-
 if(WIN32)
+    target_compile_definitions(SDL_mixer
+    PUBLIC
+        USE_NATIVE_MIDI
+        MID_MUSIC
+    )
+
     target_sources(SDL_mixer
     PRIVATE
         ${sdl_mixer_source_prefix}/native_midi/native_midi_common.c
         ${sdl_mixer_source_prefix}/native_midi/native_midi_win32.c
     )
 elseif(APPLE)
+    target_compile_definitions(SDL_mixer
+    PUBLIC
+        USE_NATIVE_MIDI
+        MID_MUSIC
+    )
+
     target_sources(SDL_mixer
     PRIVATE
         ${sdl_mixer_source_prefix}/native_midi/native_midi_common.c
@@ -663,7 +692,6 @@ add_library(SDL_ttf STATIC)
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_ttf
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -699,7 +727,6 @@ add_library(zlib STATIC)
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(zlib
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -738,7 +765,7 @@ PRIVATE
 
 target_include_directories(zlib
 PUBLIC
-    ${zlib_source_prefix}/zlib-1.2.3/
+    ${zlib_source_prefix}/
 )
 
 ##########
@@ -754,7 +781,6 @@ add_library(libpng STATIC "")
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(libpng
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -811,7 +837,6 @@ add_library(SDL_image STATIC "")
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_image
     PRIVATE
-        -fdiagnostics-color=always
         $<$<CONFIG:DEBUG>:-g>
     )
 
@@ -843,8 +868,8 @@ endif()
 target_link_libraries(SDL_image
 PUBLIC
     PkgConfigWrapper::SDL
-    PkgConfigWrapper::libjpeg
-    #jpeg
+    #PkgConfigWrapper::libjpeg
+    jpeg
     libpng
 )
 
@@ -870,4 +895,96 @@ PRIVATE
 target_include_directories(SDL_image
 PUBLIC
     ${sdl_image_source_prefix}/
+)
+
+##########
+# smpeg
+set(smpeg_source_prefix src/smpeg)
+
+add_library(smpeg STATIC "")
+
+if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+    target_compile_options(smpeg
+    PRIVATE
+        $<$<CONFIG:DEBUG>:-g>
+        -Wno-narrowing
+    )
+    
+    target_link_options(smpeg
+    PUBLIC
+        $<$<CONFIG:RELEASE>:-s>
+    )
+endif()
+
+target_compile_definitions(smpeg
+PRIVATE
+    NOCONTROLS
+)
+
+target_compile_features(smpeg
+PUBLIC 
+    cxx_std_98
+)
+
+target_sources(smpeg
+PRIVATE
+    ${smpeg_source_prefix}/MPEG.cpp
+    ${smpeg_source_prefix}/MPEG.h
+    ${smpeg_source_prefix}/MPEGaction.h
+    ${smpeg_source_prefix}/MPEGaudio.h
+    ${smpeg_source_prefix}/MPEGerror.h
+    ${smpeg_source_prefix}/MPEGfilter.c
+    ${smpeg_source_prefix}/MPEGfilter.h
+    ${smpeg_source_prefix}/MPEGlist.cpp
+    ${smpeg_source_prefix}/MPEGlist.h
+    ${smpeg_source_prefix}/MPEGring.cpp
+    ${smpeg_source_prefix}/MPEGring.h
+    ${smpeg_source_prefix}/MPEGstream.cpp
+    ${smpeg_source_prefix}/MPEGstream.h
+    ${smpeg_source_prefix}/MPEGsystem.cpp
+    ${smpeg_source_prefix}/MPEGsystem.h
+    ${smpeg_source_prefix}/MPEGvideo.h
+    ${smpeg_source_prefix}/smpeg.cpp
+    ${smpeg_source_prefix}/smpeg.h
+    ${smpeg_source_prefix}/audio/bitwindow.cpp
+    ${smpeg_source_prefix}/audio/COPYING.LIB
+    ${smpeg_source_prefix}/audio/filter.cpp
+    ${smpeg_source_prefix}/audio/filter_2.cpp
+    ${smpeg_source_prefix}/audio/hufftable.cpp
+    ${smpeg_source_prefix}/audio/MPEGaudio.cpp
+    ${smpeg_source_prefix}/audio/mpeglayer1.cpp
+    ${smpeg_source_prefix}/audio/mpeglayer2.cpp
+    ${smpeg_source_prefix}/audio/mpeglayer3.cpp
+    ${smpeg_source_prefix}/audio/mpegtable.cpp
+    ${smpeg_source_prefix}/audio/mpegtoraw.cpp
+    ${smpeg_source_prefix}/video/decoders.cpp
+    ${smpeg_source_prefix}/video/decoders.h
+    ${smpeg_source_prefix}/video/dither.h
+    ${smpeg_source_prefix}/video/floatdct.cpp
+    ${smpeg_source_prefix}/video/gdith.cpp
+    ${smpeg_source_prefix}/video/jrevdct.cpp
+    #${smpeg_source_prefix}/video/mmxflags_asm.S
+    #${smpeg_source_prefix}/video/mmxidct_asm.S
+    ${smpeg_source_prefix}/video/motionvec.cpp
+    ${smpeg_source_prefix}/video/MPEGvideo.cpp
+    ${smpeg_source_prefix}/video/parseblock.cpp
+    ${smpeg_source_prefix}/video/proto.h
+    ${smpeg_source_prefix}/video/readfile.cpp
+    ${smpeg_source_prefix}/video/util.cpp
+    ${smpeg_source_prefix}/video/util.h
+    ${smpeg_source_prefix}/video/vhar128.cpp
+    ${smpeg_source_prefix}/video/vhar128.h
+    ${smpeg_source_prefix}/video/video.cpp
+    ${smpeg_source_prefix}/video/video.h
+)
+
+target_link_libraries(smpeg
+PUBLIC
+    PkgConfigWrapper::SDL
+)
+
+#smpeg-config.in
+target_include_directories(smpeg
+PUBLIC
+    ${smpeg_source_prefix}/
 )

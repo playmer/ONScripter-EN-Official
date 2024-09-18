@@ -47,7 +47,7 @@ target_link_libraries(batchconv
 PRIVATE
     gnurx
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -91,7 +91,7 @@ target_link_libraries(nbzdec
 PRIVATE
     gnurx
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -129,7 +129,7 @@ target_link_libraries(nscdec
 PRIVATE
     gnurx
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -196,7 +196,7 @@ PRIVATE
 target_link_libraries(sarconv
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
     gnurx
@@ -234,7 +234,7 @@ PRIVATE
 target_link_libraries(sardec
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -273,7 +273,7 @@ PRIVATE
 target_link_libraries(sarmake
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -318,7 +318,7 @@ PRIVATE
 target_link_libraries(ns2conv
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
     gnurx
@@ -356,7 +356,7 @@ PRIVATE
 target_link_libraries(ns2dec
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -397,7 +397,7 @@ PRIVATE
 target_link_libraries(ns2make
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -441,7 +441,7 @@ PRIVATE
 target_link_libraries(nsaconv
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
     gnurx
@@ -479,7 +479,7 @@ PRIVATE
 target_link_libraries(nsadec
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )
@@ -520,7 +520,7 @@ PRIVATE
 target_link_libraries(nsamake
 PRIVATE
     bzip2
-    PkgConfigWrapper::libjpeg
+    jpeg
     libpng
     zlib
 )

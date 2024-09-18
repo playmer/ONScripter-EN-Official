@@ -7,6 +7,11 @@ on:
     branches: [ "master", "ci" ]
 
 jobs:
+
+####################################################################################
+## Official Jobs
+
+  ##########################################
   linux:
     strategy:
       fail-fast: false
@@ -65,6 +70,7 @@ jobs:
         name: Linux x86-64 Build
         path: ${{ github.workspace }}/onscripter-en.Linux.x86-64.tar.gz
         
+  ##########################################
   windows:
     strategy:
       fail-fast: false
@@ -139,8 +145,65 @@ jobs:
       with:
         name: Windows ${{matrix.arch}} Build
         path: ${{ github.workspace }}/onscripter-en.Windows.${{matrix.sys}}.${{matrix.arch}}.zip
+  
+####################################################################################
+## Unofficial Jobs
+
+  ##########################################
+  linux-cmake:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+          - os: ubuntu-latest
+            cc: clang
+    
+    name: linux-cmake-${{ matrix.cc }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
         
-  windows-cmake:
+      - uses: lukka/get-cmake@latest
+
+      - name: install dependencies (Linux)
+        run: |
+          sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe"
+          sudo apt-get update -y -qq
+          sudo apt-get install libasound2-dev libpulse-dev libwebp-dev libxrandr-dev tar
+
+      - name: build
+        run: |
+          cmake --preset=ninja -B build
+          cmake --build build --config Release
+          
+  ##########################################
+  mac:
+    name: macos-build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+        
+      - uses: lukka/get-cmake@latest
+
+      - name: build
+        run: |
+          cmake --preset=ninja -B build
+          cmake --build build --config Release
+
+  ##########################################
+  windows-cmake-mingw:
     strategy:
       fail-fast: false
       matrix:
@@ -190,7 +253,7 @@ jobs:
         cmake -B build .
         (cd build/ && ninja)
         (cd build/test && ctest)
-        zip onscripter-en.Windows.cmake.${{matrix.sys}}.${{matrix.arch}}.zip \
+        zip onscripter-en.Windows.cmake.${{matrix.env}}.zip \
           build/onscripter-en.exe \
           README.md \
           COPYING \
@@ -212,8 +275,40 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: Windows ${{matrix.arch}} CMake ${{matrix.sys}} Build
-        path: ${{ github.workspace }}/onscripter-en.Windows.cmake.${{matrix.sys}}.${{matrix.arch}}.zip
+        path: ${{ github.workspace }}/onscripter-en.Windows.cmake.${{matrix.env}}.zip
 
+  ##########################################
+  windows-msvc:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            arch: amd64
+          - os: windows-latest
+            arch: x86         
+          - os: windows-latest
+            arch: arm64
+          - os: windows-latest
+            arch: arm
+    
+    name: windows-cmake-msvc-${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - uses: lukka/get-cmake@latest
+
+      - name: Build
+        shell: cmd
+        run: |
+          "%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat" -arch=${{ matrix.arch }} -host_arch=amd64
+          cmake --preset=ninja -B build
+          cmake --build build --config Release
+
+  ##########################################
   PSP:
     strategy:
       fail-fast: false
@@ -224,12 +319,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+    
+    - uses: lukka/get-cmake@latest
 
     - name: install dependencies (PSP)
       run: |
         sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe"
         sudo apt-get update -y -qq
-        sudo apt-get install build-essential cmake pkgconf libreadline8 libusb-0.1 libgpgme11 libarchive-tools fakeroot curl zip
+        sudo apt-get install build-essential pkgconf libreadline8 libusb-0.1 libgpgme11 libarchive-tools fakeroot curl zip
     - name: Download and install PSPDEV SDK
       env:
         CC: ${{ matrix.cc }}
@@ -240,8 +337,9 @@ jobs:
       run: |
         export PSPDEV="$PWD/pspdev"
         export PATH="$PATH:$PSPDEV/bin"
-        psp-cmake -DBUILD_PRX=1 -DENC_PRX=1 -B build .
-        (cd build/ && make)
+        
+        cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=${PSPDEV}/psp/share/pspdev.cmake -DBUILD_PRX=1 -DENC_PRX=1  -B build
+        cmake --build build --config Release
         zip onscripter-en.PSP.zip \
           build/onscripter_en \
           build/EBOOT.PBP \
@@ -255,3 +353,78 @@ jobs:
       with:
         name: PSP Build
         path: ${{ github.workspace }}/onscripter-en.PSP.zip
+
+  ##########################################
+  Switch:
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkita64:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+      
+      - name: Build
+        run: |
+          cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake -B build
+          cmake --build build --config Release
+            
+  ##########################################
+  devkitpro-ppc:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toochain_file: WiiU
+          - toochain_file: Wii
+          - toochain_file: GameCube
+    name: ${{ matrix.toochain_file }}
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkitppc:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+      
+      - name: Build
+        run: |
+          cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/${{ matrix.toochain_file }}.cmake -B build
+          cmake --build build --config Release
+
+  ##########################################
+  Xbox:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+
+      - name: install dependencies (PSP)
+        run: |
+          sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe"
+          sudo apt-get update -y -qq
+          sudo apt-get install build-essential flex bison clang lld git llvm
+          
+      - name: Download and install NXDK SDK
+        env:
+          CC: ${{ matrix.cc }}
+        run: |
+          git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/XboxDev/nxdk.git
+          cd nxdk
+          source bin/activate
+          make NXDK_ONLY=y
+          make tools
+
+      - name: Build
+        run: |
+          source $PWD/nxdk/bin/activate
+          
+          cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=$NXDK_DIR/share/toolchain-nxdk.cmake -B build
+          cmake --build build --config Release

@@ -744,60 +744,9 @@ ONScripterLabel::ONScripterLabel()
 
     //setting this to let script_h call error message popup routines
     script_h.setOns(this);
-    
-#if defined (USE_X86_GFX) && !defined(MACOSX)
-    // determine what functions the cpu supports (Mion)
-    {
-        using namespace ons_gfx;
-        unsigned int func, eax, ebx, ecx, edx;
-        func = CPUF_NONE;
-        if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) != 0) {
-            printf("System info: Intel CPU, with functions: ");
-            if (edx & bit_MMX) {
-                func |= CPUF_X86_MMX;
-                printf("MMX ");
-            }
-            if (edx & bit_SSE) {
-                func |= CPUF_X86_SSE;
-                printf("SSE ");
-            }
-            if (edx & bit_SSE2) {
-                func |= CPUF_X86_SSE2;
-                printf("SSE2 ");
-            }
-            printf("\n");
-        }
-        setCpufuncs(func);
-    }
-#elif defined (USE_X86_GFX) && defined(MACOSX)
-    // x86 CPU on Mac OS X all support SSE2
-    ons_gfx::setCpufuncs(ons_gfx::CPUF_X86_SSE2);
-    printf("System info: Intel CPU with SSE2 functionality\n");
-#elif defined(USE_PPC_GFX) && defined(MACOSX)
-    // Determine if this PPC CPU supports AltiVec (Roto)
-    {
-        using namespace ons_gfx;
-        unsigned int func = CPUF_NONE;
-        int altivec_present = 0;
-    
-        size_t length = sizeof(altivec_present);
-        int error = sysctlbyname("hw.optional.altivec", &altivec_present, &length, NULL, 0);
-        if(error) {
-            setCpufuncs(CPUF_NONE);
-            return;
-        }
-        if(altivec_present) {
-            func |= CPUF_PPC_ALTIVEC;
-            printf("System info: PowerPC CPU, supports altivec\n");
-        } else {
-            printf("System info: PowerPC CPU, DOES NOT support altivec\n");
-        }
-        setCpufuncs(func);
-    }
-#else
-    disableCpuGfx();
-#endif
 
+    ons_gfx::initCpuFuncs();
+    
     //since we've made it this far, let's init some dynamic variables
     setStr( &registry_file, REGISTRY_FILE );
     setStr( &dll_file, DLL_FILE );
@@ -959,8 +908,7 @@ void ONScripterLabel::enableWheelDownAdvance()
 
 void ONScripterLabel::disableCpuGfx()
 {
-    using namespace ons_gfx;
-    setCpufuncs(CPUF_NONE);
+    ons_gfx::disableCpuAccelFuncs();
 }
 
 void ONScripterLabel::disableRescale()

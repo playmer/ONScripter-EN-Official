@@ -26,6 +26,8 @@
 #ifndef __GRAPHICS_SUM_H__
 #define __GRAPHICS_SUM_H__
 
+#include <stdint.h>
+
 #include "graphics_common.h"
 
 #define MEAN_PIXEL(){\
@@ -68,9 +70,9 @@
 namespace ons_gfx {
 
 #ifndef BPP16 // currently none of the fast CPU routines support 16bpp
-    void imageFilterMean(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
-    void imageFilterAddTo(unsigned char *dst, unsigned char *src, int length);
-    void imageFilterSubFrom(unsigned char *dst, unsigned char *src, int length);
+    extern void (*imageFilterMean)(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length);
+    extern void (*imageFilterAddTo)(uint8_t *dst, uint8_t *src, int length);
+    extern void (*imageFilterSubFrom)(uint8_t *dst, uint8_t *src, int length);
 #endif //!BPP16
 
 }

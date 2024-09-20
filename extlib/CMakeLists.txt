@@ -1,15 +1,21 @@
-set(ONS_GCC_FLAGS
--w
--Wno-error
--Wno-pedantic
--Wno-error=pedantic
--Wno-narrowing
--Wno-int-conversion
--Wno-overflow
--Wno-incompatible-pointer-types
--Wno-implicit-function-declaration
-)
-
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(ONS_GNU_FLAGS
+        -w
+        -Wno-error
+    )
+else()
+    set(ONS_GNU_FLAGS
+        -w
+        -Wno-error
+        -Wno-pedantic
+        -Wno-error=pedantic
+        -Wno-narrowing
+        -Wno-int-conversion
+        -Wno-overflow
+        -Wno-incompatible-pointer-types
+        -Wno-implicit-function-declaration
+    )
+endif()
 
 ##########
 # SDL
@@ -120,7 +126,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(bzip2
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -163,7 +169,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(ogg
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -216,7 +222,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(vorbis
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -329,7 +335,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(jpeg
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -451,7 +457,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(freetype
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -643,7 +649,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_mixer
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -739,7 +745,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_ttf
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -777,7 +783,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(zlib
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -834,7 +840,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(libpng
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)
@@ -893,7 +899,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_image
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
-        ${ONS_GCC_FLAGS}
+        ${ONS_GNU_FLAGS}
     )
 
     if (MINGW)

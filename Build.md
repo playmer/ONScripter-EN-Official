@@ -104,7 +104,9 @@ The ONScripter-EN executable will be within the top level repo directory, the to
 
 # CMake Instructions
 
-The instructions should all be relatively similar between platforms, but they're all a bit different.
+The instructions should all be relatively similar between platforms, but they're all a bit different. Thankfully, most of these platforms can be run all on the same Operating System. This guide was written primarily on Windows, with every non-Windows platform/toolchain being installed in a single Ubuntu WSL2 VM. The modern MacOS ports are the only ones likely not to work in such a scenario, though the guide will be updated depending on what we find as we port to them.
+
+If there's any ambiguity, you can check the our workflow in `.github.workflows/build.yml` to see exactly how we build all of these. If there's a discrepancy or you think these docs need further clarification, please report it!
 
 ## General Requirements
 
@@ -217,12 +219,12 @@ This will provide the EBOOT.PBP which is the game executable.
 
 ## Nintendo Switch
 
-You'll need a toolchain, we test against the [instructions here](https://switchbrew.org/w/index.php?title=Setting_up_Development_Environment#Unix-like_platforms), specifically for Ubuntu. 
+You'll need a toolchain, we test against the [instructions here](https://github.com/devkitPro/pacman/releases/latest), specifically for Ubuntu/Debian. 
 
 Once you have the devKitPro's pacman installed, if you haven't already you can install the Switch-dev toolchain:
 
 ```bash
-sudo dkp-pacman -S Switch-dev
+sudo dkp-pacman -S Switch-dev switch-sdl2 switch-libmad
 ```
 
 The Nintendo Switch devKitPro toolchain has it's own toolchain file for CMake, so we'll need to use that when invoking CMake.
@@ -234,12 +236,12 @@ cmake --build build_switch --config Release
 
 ## Wii U
 
-You'll need a toolchain, we test against the [instructions here](https://switchbrew.org/w/index.php?title=Setting_up_Development_Environment#Unix-like_platforms), specifically for Ubuntu. 
+You'll need a toolchain, we test against the [instructions here](https://github.com/devkitPro/pacman/releases/latest), specifically for Ubuntu/Debian. 
 
 Once you have the devKitPro's pacman installed, if you haven't already you can install the wiiu-dev toolchain:
 
 ```bash
-sudo dkp-pacman -S wiiu-dev
+sudo dkp-pacman -S wiiu-dev wiiu-sdl2 ppc-libmad 
 ```
 
 The Wii U devKitPro toolchain has it's own toolchain file for CMake, so we'll need to use that when invoking CMake.
@@ -251,15 +253,15 @@ cmake --build build_wiiu --config Release
 
 ## Wii
 
-You'll need a toolchain, we test against the [instructions here](https://switchbrew.org/w/index.php?title=Setting_up_Development_Environment#Unix-like_platforms), specifically for Ubuntu. 
+You'll need a toolchain, we test against the [instructions here](https://github.com/devkitPro/pacman/releases/latest), specifically for Ubuntu/Debian. 
 
-Once you have the devKitPro's pacman installed, if you haven't already you can install the wii-dev toolchain:
+Once you have the devKitPro's pacman installed, if you haven't already you can install the wii-dev toolchain, and you'll need a few additional packages:
 
 ```bash
-sudo dkp-pacman -S wii-dev
+sudo dkp-pacman -S wii-dev wii-opengx wii-sdl
 ```
 
-The Wii devKitPro toolchain has it's own toolchain file for CMake, so we'll need to use that when invoking CMake.
+The Wii devKitPro toolchain has it's own toolchain file for CMake, so we'll need to use that when invoking CMake
 
 ```bash
 cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Wii.cmake -B build_wii
@@ -268,12 +270,12 @@ cmake --build build_wii --config Release
 
 ## Gamecube
 
-You'll need a toolchain, we test against the [instructions here](https://switchbrew.org/w/index.php?title=Setting_up_Development_Environment#Unix-like_platforms), specifically for Ubuntu. 
+You'll need a toolchain, we test against the [instructions here](https://github.com/devkitPro/pacman/releases/latest), specifically for Ubuntu/Debian. 
 
-Once you have the devKitPro's pacman installed, if you haven't already you can install the wii-dev toolchain:
+Once you have the devKitPro's pacman installed, if you haven't already you can install the gamecube-dev toolchain, and you'll need a few additional packages:
 
 ```bash
-sudo dkp-pacman -S gamecube-dev
+sudo dkp-pacman -S gamecube-dev gamecube-opengx gamecube-sdl
 ```
 
 The GameCube devKitPro toolchain has it's own toolchain file for CMake, so we'll need to use that when invoking CMake.
@@ -285,7 +287,7 @@ cmake --build build_gamecube --config Release
 
 ## Xbox
 
-You'll need a toolchain, we test against the [instructions here](https://github.com/XboxDev/nxdk/wiki/Install-the-Prerequisites), specifically for Ubuntu. 
+You'll need a toolchain, we test against the [instructions here](https://github.com/XboxDev/nxdk/wiki/Install-the-Prerequisites), specifically for Ubuntu/Debian. 
 
 The nxdk toolchain has it's own toolchain file for CMake, so we'll need to use that when invoking CMake.
 

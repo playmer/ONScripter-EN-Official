@@ -25,13 +25,23 @@ endif()
 #    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
 #    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." OFF)
 #else()
-    if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL ${CMAKE_SYSTEM_NAME})
-        option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" ON)
-    else()
-        option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
-    endif()
+if (NINTENDO_WIIU
+    OR NINTENDO_SWITCH
+    OR NXDK)
+    option(ONS_USE_SDLCOMPAT "" ON)
+    option(ONS_USE_NATIVESDL2 "" ON)
+else()
+    option(ONS_USE_SDLCOMPAT "" OFF)
+    option(ONS_USE_NATIVESDL2 "" OFF)
+endif()
 
-    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
+if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL ${CMAKE_SYSTEM_NAME})
+    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" ON)
+else()
+    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
+endif()
+
+option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
 #endif()
 
 option(ONS_COMPILE_TESTS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
@@ -61,10 +71,22 @@ message(STATUS "Extlibs start")
 if(ONS_USE_EXT_LIBS)
     include(cmake/DependencyFinder.cmake)
 
-    PkgConfig_Find_Module(SDL sdl)
+    if (NOT ONS_USE_SDLCOMPAT)
+        PkgConfig_Find_Module(SDL sdl)
+        set(ONS_SDL_TARGET ${ONS_SDL_TARGET})
+    elseif(ONS_USE_NATIVESDL2)
+        find_package(SDL2)
+        if( NOT SDL2_FOUND )
+            pkg_search_module(SDL2 REQUIRED sdl2)
+        endif()
+        set(ONS_SDL_TARGET SDL)
+    endif()
+
+    message(STATUS "ONS_SDL_TARGET: ${ONS_SDL_TARGET}")
     
+
     if(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
-        target_link_libraries(PkgConfigWrapper::SDL INTERFACE opengx)
+        target_link_libraries(${ONS_SDL_TARGET} INTERFACE opengx)
     endif()
 
     if (NOT ONS_USE_OLD_DEPS)
@@ -274,7 +296,7 @@ endif()
 if (ONS_USE_OLD_DEPS)
     target_link_libraries(onscripter-en
     PUBLIC
-        PkgConfigWrapper::SDL
+        ${ONS_SDL_TARGET}
 
         ogg
         vorbis
@@ -290,7 +312,7 @@ if (ONS_USE_OLD_DEPS)
 else()
     target_link_libraries(onscripter-en
     PUBLIC
-        PkgConfigWrapper::SDL
+        ${ONS_SDL_TARGET}
         PkgConfigWrapper::SDL_image
         PkgConfigWrapper::SDL_mixer
         PkgConfigWrapper::SDL_ttf
@@ -380,9 +402,9 @@ elseif(${ONS_TARGET_ARCH} STREQUAL "i386")
 elseif(${ONS_TARGET_ARCH} STREQUAL "ppc" OR ${ONS_TARGET_ARCH} STREQUAL "ppc")
     set(ONS_PPC 1)
 
-    if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii
-        AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL NintendoGameCube
-        AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL CafeOS)
+    if (NOT NINTENDO_GAMECUBE
+        AND NOT NINTENDO_WII
+        AND NOT NINTENDO_WIIU)
 
         set(ONS_PPC_ALTIVEC_AVAILIBLE 1)
         
@@ -469,11 +491,41 @@ if(PSP)
         BPP16
         USE_OGG_VORBIS
         INTEGER_OGG_VORBIS
-        USE_RWOPS
     )
 
     target_link_libraries(onscripter-en PUBLIC pspkernel)
     target_compile_options(onscripter-en PUBLIC -g)
+
+elseif(NINTENDO_WIIU)
+    configure_file(${CMAKE_SOURCE_DIR}/ons-en.png ${CMAKE_BINARY_DIR}/icon.png COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/cmake/wiiu/meta.xml.in ${CMAKE_BINARY_DIR}/meta.xml)
+    wut_create_rpx(onscripter-en)
+    wut_create_wuhb(onscripter-en
+        CONTENT
+        NAME "ONScripter-EN Version 1.00"
+        SHORTNAME "ONScripter-EN"
+        AUTHOR "Galladite"
+        ICON "${CMAKE_SOURCE_DIR}/ons-en.png"
+        TVSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
+        DRCSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
+    )
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
+    configure_file(${CMAKE_SOURCE_DIR}/ons-en.png ${CMAKE_BINARY_DIR}/package/icon.png COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/cmake/wii/meta.xml.in ${CMAKE_BINARY_DIR}/package/meta.xml)
+
+    ogc_create_dol(onscripter-en)
+    add_custom_command(TARGET onscripter-en POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                        ${CMAKE_BINARY_DIR}/onscripter-en.dol
+                        ${CMAKE_BINARY_DIR}/package/boot.dol
+                    COMMENT "Copying onscripter-en executable into package")
+
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL NintendoGameCube)
+    target_compile_definitions(onscripter-en
+    PRIVATE
+        BPP16
+    )
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL CafeOS)
 elseif(WIN32)
     target_sources(onscripter-en
     PRIVATE

@@ -1,57 +1,82 @@
 ##########
 # SDL
-#if (ONS_USE_OLD_DEPS)
-#    set(sdl_source_prefix src/old/sdl-1.2.13)
-#else()
-#    set(sdl_source_prefix src/sdl-1.2.15)
-#endif()
-#
-#add_library(sdl STATIC "")
-#
-#file(GLOB SDL_SOURCE
-#    ${SDL}/src/*.c
-#    ${SDL}/src/audio/*.c
-#    ${SDL}/src/audio/disk/*.c
-#    ${SDL}/src/audio/dummy/*.c
-#    ${SDL}/src/cdrom/*.c
-#    ${SDL}/src/cdrom/dummy/*.c
-#    ${SDL}/src/cpuinfo/*.c
-#    ${SDL}/src/events/*.c
-#    ${SDL}/src/file/*.c
-#    ${SDL}/src/joystick/*.c
-#    ${SDL}/src/stdlib/*.c
-#    ${SDL}/src/thread/*.c
-#    ${SDL}/src/thread/generic/*.c
-#    ${SDL}/src/timer/*.c
-#    ${SDL}/src/video/*.c
-#    ${SDL}/src/video/dummy/*.c
-#)
-#
-#file(
-#    GLOB SDL_MACOS_SOURCES
-#    ${SDL}/src/audio/macosx/*.c
-#    ${SDL}/src/cdrom/macosx/*.c
-#    ${SDL}/src/joystick/darwin/*.c
-#    ${SDL}/src/loadso/dlopen/*.c
-#    ${SDL}/src/loadso/macosx/*.c
-#    # ${SDL}/src/thread/pthread/*.c
-#    ${SDL}/src/timer/unix/*.c
-#    ${SDL}/src/video/quartz/*.m
-#)
-#
-#if( UNIX AND APPLE )
-#	set( LIBSDL_SOURCES ${LIBSDL_SOURCES} ${SDL_MACOS_SOURCES} )
-#	set( LIBSDLMAIN_SOURCES ${SDL}/src/main/macosx/SDLMain.m )
-#
-#	## copy over a pre-created macOS config
-#	set( CFLAGS "-Wall -Wextra -O2 -g -fomit-frame-pointer -fPIC" )
-#	set( CXXFLAGS "${CFLAGS} -fno-exceptions -fno-rtti" )
-#
-#	file( STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/SDL_config.h.macOS SDL_CONFIG_HEADER )
-#	message( AUTHOR_WARNING "+ Building for macOS.")
-#else()
-#	message( FATAL_ERROR "Unknown operating system-- aborting." )
-#endif()
+
+if(ONS_USE_SDLCOMPAT AND NOT ONS_USE_NATIVESDL2)
+    #add_subdirectory(SDL2)
+elseif(ONS_USE_NATIVESDL12)
+    #if (ONS_USE_OLD_DEPS)
+    #    set(sdl_source_prefix src/old/sdl-1.2.13)
+    #else()
+    #    set(sdl_source_prefix src/sdl-1.2.15)
+    #endif()
+    #
+    #add_library(sdl STATIC "")
+    #
+    #file(GLOB SDL_SOURCE
+    #    ${SDL}/src/*.c
+    #    ${SDL}/src/audio/*.c
+    #    ${SDL}/src/audio/disk/*.c
+    #    ${SDL}/src/audio/dummy/*.c
+    #    ${SDL}/src/cdrom/*.c
+    #    ${SDL}/src/cdrom/dummy/*.c
+    #    ${SDL}/src/cpuinfo/*.c
+    #    ${SDL}/src/events/*.c
+    #    ${SDL}/src/file/*.c
+    #    ${SDL}/src/joystick/*.c
+    #    ${SDL}/src/stdlib/*.c
+    #    ${SDL}/src/thread/*.c
+    #    ${SDL}/src/thread/generic/*.c
+    #    ${SDL}/src/timer/*.c
+    #    ${SDL}/src/video/*.c
+    #    ${SDL}/src/video/dummy/*.c
+    #)
+    #
+    #file(
+    #    GLOB SDL_MACOS_SOURCES
+    #    ${SDL}/src/audio/macosx/*.c
+    #    ${SDL}/src/cdrom/macosx/*.c
+    #    ${SDL}/src/joystick/darwin/*.c
+    #    ${SDL}/src/loadso/dlopen/*.c
+    #    ${SDL}/src/loadso/macosx/*.c
+    #    # ${SDL}/src/thread/pthread/*.c
+    #    ${SDL}/src/timer/unix/*.c
+    #    ${SDL}/src/video/quartz/*.m
+    #)
+    #
+    #if( UNIX AND APPLE )
+    #	set( LIBSDL_SOURCES ${LIBSDL_SOURCES} ${SDL_MACOS_SOURCES} )
+    #	set( LIBSDLMAIN_SOURCES ${SDL}/src/main/macosx/SDLMain.m )
+    #
+    #	## copy over a pre-created macOS config
+    #	set( CFLAGS "-Wall -Wextra -O2 -g -fomit-frame-pointer -fPIC" )
+    #	set( CXXFLAGS "${CFLAGS} -fno-exceptions -fno-rtti" )
+    #
+    #	file( STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/SDL_config.h.macOS SDL_CONFIG_HEADER )
+    #	message( AUTHOR_WARNING "+ Building for macOS.")
+    #else()
+    #	message( FATAL_ERROR "Unknown operating system-- aborting." )
+    #endif()
+endif()
+
+if(ONS_USE_SDLCOMPAT)
+    option(SDL12TESTS "Enable to build SDL-1.2 test programs" OFF)
+    option(SDL12DEVEL "Enable installing SDL-1.2 development headers" OFF)
+    option(STATICDEVEL "Enable installing static link library" OFF)
+    option(SDL12_FULLY_STATIC "Make SDL12_compat capable of being statically compiled alongside SDL2" ON)
+
+    add_subdirectory(sdl12-compat)
+
+    target_include_directories(SDL
+    PUBLIC 
+        sdl12-compat/include
+        sdl12-compat/include/SDL
+    )
+
+    target_compile_definitions(SDL
+    PUBLIC 
+        __SDL12_COMPAT_FULLY_STATIC__
+    )
+endif()
 
 ##########
 # bzip2
@@ -122,6 +147,8 @@ PRIVATE
 )
 
 if (UNIX
+    OR NINTENDO_SWITCH
+    OR NXDK
     OR ${ONS_TARGET_ARCH} STREQUAL "ppc" 
     OR ${ONS_TARGET_ARCH} STREQUAL "ppc")
     set(SIZE16 "short")
@@ -611,7 +638,7 @@ endif()
 target_link_libraries(SDL_mixer
 PUBLIC
     freetype
-    PkgConfigWrapper::SDL
+    ${ONS_SDL_TARGET}
 )
 
 if(WIN32)
@@ -704,7 +731,7 @@ endif()
 target_link_libraries(SDL_ttf
 PUBLIC
     freetype
-    PkgConfigWrapper::SDL
+    ${ONS_SDL_TARGET}
 )
 
 target_sources(SDL_ttf
@@ -867,7 +894,7 @@ endif()
 
 target_link_libraries(SDL_image
 PUBLIC
-    PkgConfigWrapper::SDL
+    ${ONS_SDL_TARGET}
     #PkgConfigWrapper::libjpeg
     jpeg
     libpng
@@ -920,6 +947,13 @@ target_compile_definitions(smpeg
 PRIVATE
     NOCONTROLS
 )
+
+if (NINTENDO_SWITCH)
+    target_compile_definitions(smpeg
+    PUBLIC
+        ENDIAN_IN_SYS
+    )
+endif()
 
 target_compile_features(smpeg
 PUBLIC 
@@ -980,7 +1014,7 @@ PRIVATE
 
 target_link_libraries(smpeg
 PUBLIC
-    PkgConfigWrapper::SDL
+    ${ONS_SDL_TARGET}
 )
 
 #smpeg-config.in

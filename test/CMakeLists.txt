@@ -33,8 +33,14 @@ if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     PRIVATE
         -lgcov
         --coverage
-        -mconsole
     )
+
+    if (MINGW)
+        target_link_options(onscripter_encoding_test
+        PRIVATE
+            -mconsole
+        )
+    endif()
 endif()
 
 target_compile_features(onscripter_encoding_test

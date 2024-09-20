@@ -319,6 +319,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
     
     - uses: lukka/get-cmake@latest
 
@@ -361,6 +363,8 @@ jobs:
       image: devkitpro/devkita64:latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: lukka/get-cmake@latest
       
@@ -384,6 +388,8 @@ jobs:
       image: devkitpro/devkitppc:latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: lukka/get-cmake@latest
       
@@ -403,6 +409,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: lukka/get-cmake@latest
 

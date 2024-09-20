@@ -2,7 +2,7 @@
 # SDL
 
 if(ONS_USE_SDLCOMPAT AND NOT ONS_USE_NATIVESDL2)
-    #add_subdirectory(SDL2)
+    add_subdirectory(SDL2)
 elseif(ONS_USE_NATIVESDL12)
     #if (ONS_USE_OLD_DEPS)
     #    set(sdl_source_prefix src/old/sdl-1.2.13)
@@ -62,7 +62,9 @@ if(ONS_USE_SDLCOMPAT)
     option(SDL12TESTS "Enable to build SDL-1.2 test programs" OFF)
     option(SDL12DEVEL "Enable installing SDL-1.2 development headers" OFF)
     option(STATICDEVEL "Enable installing static link library" OFF)
-    option(SDL12_FULLY_STATIC "Make SDL12_compat capable of being statically compiled alongside SDL2" ON)
+    if(NOT MSVC)
+        option(SDL12_FULLY_STATIC "Make SDL12_compat capable of being statically compiled alongside SDL2" ON)
+    endif()
 
     add_subdirectory(sdl12-compat)
 

@@ -109,10 +109,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(bzip2
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_sources(bzip2
@@ -149,10 +151,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(ogg
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_sources(ogg
@@ -199,10 +203,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(vorbis
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_link_libraries(vorbis
@@ -320,10 +326,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(jpeg
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
@@ -447,10 +455,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(freetype
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 
@@ -644,10 +654,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(SDL_mixer
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_link_libraries(SDL_mixer
@@ -737,10 +749,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(SDL_ttf
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_link_libraries(SDL_ttf
@@ -772,10 +786,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(zlib
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_sources(zlib
@@ -826,10 +842,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(libpng
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_link_libraries(libpng
@@ -882,10 +900,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
 
-    target_link_options(SDL_image
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_compile_definitions(SDL_image 
@@ -952,10 +972,12 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         -Wno-narrowing
     )
     
-    target_link_options(smpeg
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
+    if (MINGW)
+        target_link_options(bzip2
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+        )
+    endif()
 endif()
 
 target_compile_definitions(smpeg

@@ -280,14 +280,10 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:DEBUG>:-g>
     )
     
-    target_link_options(onscripter-en
-    PUBLIC
-        $<$<CONFIG:RELEASE>:-s>
-    )
-    
     if (MINGW)
         target_link_options(onscripter-en
         PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
             -static
         )
     endif()

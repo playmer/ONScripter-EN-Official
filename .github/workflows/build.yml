@@ -284,15 +284,19 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            arch: amd64
+            arch: x64
+            target_arch: x86_64
           - os: windows-latest
-            arch: x86         
+            arch: x86       
+            target_arch: x86
           - os: windows-latest
-            arch: arm64
+            arch: amd64_arm64
+            target_arch: arm64
           - os: windows-latest
-            arch: arm
+            arch: amd64_arm
+            target_arch: arm
     
-    name: windows-cmake-msvc-${{ matrix.arch }}
+    name: windows-cmake-msvc-${{ matrix.target_arch }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -301,10 +305,13 @@ jobs:
       
       - uses: lukka/get-cmake@latest
 
+      - uses: TheMrMilchmann/setup-msvc-dev@v3
+        with:
+          arch: ${{ matrix.arch }}
+
       - name: Build
         shell: cmd
         run: |
-          "%ProgramFiles%\Microsoft Visual Studio\2022\Community\Common7\Tools\VsDevCmd.bat" -arch=${{ matrix.arch }} -host_arch=amd64
           cmake --preset=ninja -B build
           cmake --build build --config Release
 

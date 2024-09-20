@@ -270,29 +270,29 @@ PRIVATE
     ${vorbis_source_prefix}/lib/vorbisfile.c
     ${vorbis_source_prefix}/lib/window.c
     ${vorbis_source_prefix}/lib/window.h
-    ${vorbis_source_prefix}/vq/bookutil.c
-    ${vorbis_source_prefix}/vq/bookutil.h
+    #${vorbis_source_prefix}/vq/bookutil.c
+    #${vorbis_source_prefix}/vq/bookutil.h
     #${vorbis_source_prefix}/vq/build.c
-    ${vorbis_source_prefix}/vq/cascade.c
+    #${vorbis_source_prefix}/vq/cascade.c
     #${vorbis_source_prefix}/vq/distribution.c
-    ${vorbis_source_prefix}/vq/genericdata.c
+    #${vorbis_source_prefix}/vq/genericdata.c
     #${vorbis_source_prefix}/vq/huffbuild.c
     #${vorbis_source_prefix}/vq/latticebuild.c
     #${vorbis_source_prefix}/vq/latticehint.c
     #${vorbis_source_prefix}/vq/latticepare.c
     #${vorbis_source_prefix}/vq/latticetune.c
-    ${vorbis_source_prefix}/vq/localcodebook.h
-    ${vorbis_source_prefix}/vq/lspdata.c
-    ${vorbis_source_prefix}/vq/metrics.c
-    ${vorbis_source_prefix}/vq/residuedata.c
+    #${vorbis_source_prefix}/vq/localcodebook.h
+    #${vorbis_source_prefix}/vq/lspdata.c
+    #${vorbis_source_prefix}/vq/metrics.c
+    #${vorbis_source_prefix}/vq/residuedata.c
     #${vorbis_source_prefix}/vq/residuesplit.c
     #${vorbis_source_prefix}/vq/run.c
     #${vorbis_source_prefix}/vq/train.c
-    ${vorbis_source_prefix}/vq/vqext.h
-    ${vorbis_source_prefix}/vq/vqgen.c
-    ${vorbis_source_prefix}/vq/vqgen.h
-    ${vorbis_source_prefix}/vq/vqsplit.c
-    ${vorbis_source_prefix}/vq/vqsplit.h
+    #${vorbis_source_prefix}/vq/vqext.h
+    #${vorbis_source_prefix}/vq/vqgen.c
+    #${vorbis_source_prefix}/vq/vqgen.h
+    #${vorbis_source_prefix}/vq/vqsplit.c
+    #${vorbis_source_prefix}/vq/vqsplit.h
 )
 
 target_include_directories(vorbis

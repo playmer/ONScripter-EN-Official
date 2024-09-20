@@ -52,6 +52,7 @@ option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll 
 option(ONS_COMPILE_TESTS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
 option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
+option(ONS_USE_LIBMAD "Choose whether to use libmad audio decoding" OFF)
 
 # A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.
 # (Essentially when cross compiling, we'd need to mix compilation target architectures. Embed.cpp would need to be compiled
@@ -129,7 +130,10 @@ if(ONS_USE_EXT_LIBS)
         else()
             set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libwebp)
         endif()
-        target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
+
+        if (ONS_USE_LIBMAD)
+            target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
+        endif()
         
         run_library_config(smpeg smpeg_include_directories)
         message(STATUS "smpeg include dirs: ${smpeg_include_directories}")
@@ -142,13 +146,13 @@ endif()
 
 #############################################
 # Tools
-if(ONS_COMPILE_TOOLS)
+if(ONS_COMPILE_TOOLS AND NOT MSVC)
     add_subdirectory(tools)
 endif()
 
 #############################################
 # Tests
-if(ONS_COMPILE_TESTS)
+if(ONS_COMPILE_TESTS AND NOT MSVC)
     add_subdirectory(test)
 endif()
 
@@ -281,7 +285,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         $<$<CONFIG:RELEASE>:-s>
     )
     
-    if (NOT PSP)
+    if (MINGW)
         target_link_options(onscripter-en
         PUBLIC
             -static
@@ -314,7 +318,6 @@ if (ONS_USE_OLD_DEPS)
         freetype
         
         smpeg
-        mad
     )
 else()
     target_link_libraries(onscripter-en
@@ -332,9 +335,14 @@ else()
         PkgConfigWrapper::libjpeg
         PkgConfigWrapper::harfbuzz
         PkgConfigWrapper::bzip2
-
-        mad
         smpeg
+    )
+endif()
+
+if (ONS_USE_LIBMAD)
+    target_link_libraries(onscripter-en
+    PUBLIC
+        mad
     )
 endif()
 
@@ -562,8 +570,8 @@ elseif(WIN32)
 
     target_link_libraries(onscripter-en
     PRIVATE
-        iconv
-        m
+        #iconv
+        #m
         user32
         gdi32
         winmm

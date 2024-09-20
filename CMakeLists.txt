@@ -30,7 +30,9 @@ if (NINTENDO_WIIU
     OR NXDK)
     option(ONS_USE_SDLCOMPAT "" ON)
     option(ONS_USE_NATIVESDL2 "" ON)
-elseif(MINGW)
+elseif(MINGW
+       OR NINTENDO_GAMECUBE
+       OR NINTENDO_WII)
     option(ONS_USE_SDLCOMPAT "" OFF)
     option(ONS_USE_NATIVESDL2 "" OFF)
 else()

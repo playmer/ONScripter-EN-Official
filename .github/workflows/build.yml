@@ -420,7 +420,7 @@ jobs:
           sudo apt-get update -y -qq
           sudo apt-get install build-essential flex bison clang lld git llvm
           
-      - name: Download and install NXDK SDK
+      - name: Download and install NXDK SDK, then build.
         env:
           CC: ${{ matrix.cc }}
         run: |
@@ -430,9 +430,8 @@ jobs:
           make NXDK_ONLY=y
           make tools
 
-      - name: Build
-        run: |
-          source $PWD/nxdk/bin/activate
+          cd ..
           
           cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=$NXDK_DIR/share/toolchain-nxdk.cmake -B build
           cmake --build build --config Release
+          

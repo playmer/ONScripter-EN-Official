@@ -1,3 +1,16 @@
+set(ONS_GCC_FLAGS
+-w
+-Wno-error
+-Wno-pedantic
+-Wno-error=pedantic
+-Wno-narrowing
+-Wno-int-conversion
+-Wno-overflow
+-Wno-incompatible-pointer-types
+-Wno-implicit-function-declaration
+)
+
+
 ##########
 # SDL
 
@@ -107,6 +120,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(bzip2
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -149,6 +163,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(ogg
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -201,6 +216,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(vorbis
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -215,17 +231,6 @@ target_link_libraries(vorbis
 PUBLIC
     ogg
 )
-
-
-if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-    target_compile_options(vorbis 
-    PRIVATE
-        -Wno-int-conversion
-        -Wno-overflow
-        -Wno-incompatible-pointer-types
-        -Wno-implicit-function-declaration
-    )
-endif()
 
 target_sources(vorbis
 PRIVATE
@@ -324,6 +329,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(jpeg
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -332,14 +338,6 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
             $<$<CONFIG:RELEASE>:-s>
         )
     endif()
-endif()
-
-if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-    target_compile_options(jpeg 
-    PRIVATE
-        -Wno-implicit-function-declaration
-        -Wno-builtin-declaration-mismatch
-    )
 endif()
 
 target_sources(jpeg
@@ -453,6 +451,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(freetype
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -461,14 +460,6 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
             $<$<CONFIG:RELEASE>:-s>
         )
     endif()
-endif()
-
-
-if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-    target_compile_options(freetype 
-    PRIVATE
-        -Wno-implicit-function-declaration
-    )
 endif()
 
 target_compile_definitions(freetype 
@@ -652,6 +643,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_mixer
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -747,6 +739,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_ttf
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -784,6 +777,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(zlib
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -840,6 +834,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(libpng
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -898,6 +893,7 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(SDL_image
     PRIVATE
         $<$<CONFIG:DEBUG>:-g>
+        ${ONS_GCC_FLAGS}
     )
 
     if (MINGW)
@@ -919,13 +915,6 @@ PUBLIC
     LOAD_PNM
     LOAD_TGA
 )
-
-if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-    target_compile_options(SDL_image 
-    PRIVATE
-        -Wno-incompatible-pointer-types
-    )
-endif()
 
 target_link_libraries(SDL_image
 PUBLIC

@@ -32,7 +32,8 @@ if (NINTENDO_WIIU
     option(ONS_USE_NATIVESDL2 "" ON)
 elseif(MINGW
        OR NINTENDO_GAMECUBE
-       OR NINTENDO_WII)
+       OR NINTENDO_WII
+       OR PSP)
     option(ONS_USE_SDLCOMPAT "" OFF)
     option(ONS_USE_NATIVESDL2 "" OFF)
 else()
@@ -504,7 +505,25 @@ if(PSP)
         INTEGER_OGG_VORBIS
     )
 
-    target_link_libraries(onscripter-en PUBLIC pspkernel)
+    target_link_libraries(onscripter-en 
+    PUBLIC
+        pspge
+        pspvfpu
+        pspgum_vfpu
+        pspgu
+        pspctrl
+        pspdebug
+        pspvram
+        psppower
+        pspdisplay
+        pspaudiolib
+        pspaudio
+        pspnet
+        pspnet_apctl
+        pspnet_resolver
+        psprtc
+        psputility
+    )
     target_compile_options(onscripter-en PUBLIC -g)
 
 elseif(NINTENDO_WIIU)

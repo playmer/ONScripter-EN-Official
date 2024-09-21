@@ -437,8 +437,13 @@ jobs:
           export PATH="$PATH:$NXDK_DIR/bin"
 
           cd nxdk
+          
+          set -e
+          eval $(./bin/activate -s)
+
           make NXDK_ONLY=y
           make tools
+
           cd ..
           
           cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=$NXDK_DIR/share/toolchain-nxdk.cmake -B build

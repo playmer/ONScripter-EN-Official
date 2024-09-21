@@ -5,6 +5,8 @@ project(onscripter-en LANGUAGES C CXX)
 include(cmake/TargetArch.cmake)
 target_architecture(ONS_TARGET_ARCH)
 message(STATUS "Target Architecture: ${ONS_TARGET_ARCH}")
+message(STATUS "C Compiler: ${CMAKE_C_COMPILER_ID}")
+message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID}")
 
 # Determine flag style
 set(ONS_COMPILER_FLAG_STYLE "GNU")
@@ -147,13 +149,13 @@ endif()
 
 #############################################
 # Tools
-if(ONS_COMPILE_TOOLS AND NOT MSVC)
+if(ONS_COMPILE_TOOLS AND NOT MSVC AND NOT NXDK)
     add_subdirectory(tools)
 endif()
 
 #############################################
 # Tests
-if(ONS_COMPILE_TESTS AND NOT MSVC)
+if(ONS_COMPILE_TESTS AND NOT MSVC AND NOT NXDK)
     add_subdirectory(test)
 endif()
 
@@ -286,6 +288,15 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
         PUBLIC
             $<$<CONFIG:RELEASE>:-s>
             -static
+        )
+    endif()
+
+    if (NXDK)
+        message(STATUS "Is this happening?")
+        target_link_options(onscripter-en
+        PUBLIC
+            -fpermissive
+            -Wno-c++11-narrowing
         )
     endif()
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")

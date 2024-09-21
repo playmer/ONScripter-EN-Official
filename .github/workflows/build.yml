@@ -419,5 +419,6 @@ jobs:
       
       - name: Build
         run: |
+          git submodule update --init --recursive
           cmake --preset=ninja -DCMAKE_TOOLCHAIN_FILE=$NXDK_DIR/share/toolchain-nxdk.cmake -B build
           cmake --build build --config Release

@@ -42,8 +42,12 @@
 #include "ScriptHandler.h"
 #include "Encoding.h"
 #include "ONScripterLabel.h" //so this can call doErrorBox
+
+#ifndef NXDK
 #include <sys/stat.h>
 #include <sys/types.h>
+#endif
+
 #ifdef WIN32
 #include <direct.h>
 #include <windows.h>
@@ -268,6 +272,7 @@ void ScriptHandler::setKeyTable( const unsigned char *key_table )
 
 void ScriptHandler::setSavedir( const char *dir )
 {
+#ifndef NXDK
     savedir = new char[ strlen(dir) + strlen(save_path) + 2];
     sprintf( savedir, "%s%s%c", save_path, dir, DELIMITER );
     mkdir(savedir
@@ -275,6 +280,8 @@ void ScriptHandler::setSavedir( const char *dir )
           , 0755
 #endif
          );
+         
+#endif
 }
 
 // basic parser function

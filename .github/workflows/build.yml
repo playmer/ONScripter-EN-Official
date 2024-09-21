@@ -412,8 +412,6 @@ jobs:
       image: xboxdev/nxdk:latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: lukka/get-cmake@latest
       

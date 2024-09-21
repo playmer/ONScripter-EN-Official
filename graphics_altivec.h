@@ -25,14 +25,14 @@
 #ifndef __GRAPHICS_ALTIVEC_H__
 #define __GRAPHICS_ALTIVEC_H__
 
-#ifdef USE_PPC_GFX
+#if ONS_PPC_ALTIVEC_AVAILIBLE
 namespace ons_gfx {
 
-void imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
-void imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length);
-void imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int length);
+void imageFilterMean_Altivec(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length);
+void imageFilterAddTo_Altivec(uint8_t *dst, uint8_t *src, int length);
+void imageFilterSubFrom_Altivec(uint8_t *dst, uint8_t *src, int length);
 
 }
-#endif //USE_PPC_GFX
+#endif //ONS_PPC_ALTIVEC_AVAILIBLE
 
 #endif // __GRAPHICS_ALTIVEC_H__

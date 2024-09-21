@@ -24,7 +24,7 @@
 
 // Based upon routines provided by Roto
 
-#ifdef USE_PPC_GFX
+#if ONS_PPC_ALTIVEC_AVAILIBLE
 
 #include <altivec.h>
 #include <math.h>
@@ -36,7 +36,7 @@
 
 namespace ons_gfx {
 
-void imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
+void imageFilterMean_Altivec(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length)
 {
     int n = length;
 
@@ -65,7 +65,7 @@ void imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned 
 }
 
 
-void imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length)
+void imageFilterAddTo_Altivec(uint8_t *dst, uint8_t *src, int length)
 {
     int n = length;
 
@@ -91,7 +91,7 @@ void imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length
 }
 
 
-void imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int length)
+void imageFilterSubFrom_Altivec(uint8_t *dst, uint8_t *src, int length)
 {
     int n = length;
 
@@ -118,6 +118,6 @@ void imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int leng
 
 }//namespace ons_gfx
 
-#endif //USE_PPC_GFX
+#endif //ONS_PPC_ALTIVEC_AVAILIBLE
 
 

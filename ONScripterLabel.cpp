@@ -817,6 +817,8 @@ ONScripterLabel::ONScripterLabel()
     disableCpuGfx();
 #endif
 
+    ons_gfx::initCpuFuncs();
+    
     //since we've made it this far, let's init some dynamic variables
     setStr( &registry_file, REGISTRY_FILE );
     setStr( &dll_file, DLL_FILE );
@@ -978,8 +980,7 @@ void ONScripterLabel::enableWheelDownAdvance()
 
 void ONScripterLabel::disableCpuGfx()
 {
-    using namespace ons_gfx;
-    setCpufuncs(CPUF_NONE);
+    ons_gfx::disableCpuAccelFuncs();
 }
 
 void ONScripterLabel::disableRescale()
@@ -1225,7 +1226,7 @@ int ONScripterLabel::init()
 #if defined(MACOSX)
     char* macos_font_file;
     NSFileManager *fm = [NSFileManager defaultManager];
-    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸コ�? ProN W4.ttc";
+    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸コ�? ProN W4.ttc";
     if ([fm fileExistsAtPath:hiraginoPath])
     {
         macos_font_file = new char[ strlen([hiraginoPath UTF8String]) + 1 ];

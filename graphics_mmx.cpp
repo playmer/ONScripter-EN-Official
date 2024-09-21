@@ -24,9 +24,15 @@
 
 // Based upon routines provided by Roto
 
-#ifdef USE_X86_GFX
+#if ONS_X86_MMX_AVAILIBLE
 
-#include <mmintrin.h>
+#if defined(_MSC_VER) // MSVC
+    #include <intrin.h>
+    #include <emmintrin.h>
+#else
+    #include <mmintrin.h>
+#endif
+
 #include <math.h>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -36,12 +42,12 @@
 
 namespace ons_gfx {
 
-void imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
+void imageFilterMean_MMX(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 8-byte boundary in dst
-    while( (((long)dst & 0x7) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst & 0x7) > 0) && (n > 0) ) {
         MEAN_PIXEL();
         --n; ++dst; ++src1; ++src2;
     }
@@ -68,12 +74,12 @@ void imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char
 }
 
 
-void imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length)
+void imageFilterAddTo_MMX(uint8_t *dst, uint8_t *src, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 8-byte boundary in dst
-    while( (((long)dst & 0x7) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst & 0x7) > 0) && (n > 0) ) {
         ADDTO_PIXEL();
         --n; ++dst; ++src;
     }
@@ -94,12 +100,12 @@ void imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length)
 }
 
 
-void imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length)
+void imageFilterSubFrom_MMX(uint8_t *dst, uint8_t *src, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 8-byte boundary in dst
-    while( (((long)dst & 0x7) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst & 0x7) > 0) && (n > 0) ) {
         SUBFROM_PIXEL();
         --n; ++dst; ++src;
     }
@@ -121,6 +127,6 @@ void imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length)
 
 }//namespace ons_gfx
 
-#endif //USE_X86_GFX
+#endif //ONS_X86_MMX_AVAILIBLE
 
 

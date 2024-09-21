@@ -258,6 +258,8 @@ PRIVATE
     ONScripterLabel_text.cpp
     ONScripterLabel.cpp
     ONScripterLabel.h
+    ONScripterReporter.cpp
+    ONScripterReporter.h
     resize_image.cpp
     resize_image.h
     resources.cpp

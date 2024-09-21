@@ -22,7 +22,7 @@ endif()
 
 if(ONS_USE_SDLCOMPAT AND NOT ONS_USE_NATIVESDL2)
     add_subdirectory(SDL2)
-    set(SDL2_LIBRARY SDL2)
+    set(SDL2_LIBRARY SDL2-static)
     set(SDL2_INCLUDE_DIR SDL2/include)
 elseif(ONS_USE_NATIVESDL12)
     #if (ONS_USE_OLD_DEPS)
@@ -85,7 +85,8 @@ if(ONS_USE_SDLCOMPAT)
     option(STATICDEVEL "Enable installing static link library" OFF)
     if(NINTENDO_WIIU
         OR NINTENDO_SWITCH
-        OR NXDK)
+        OR NXDK
+        OR ONS_FORCE_SDLCOMPAT_FULLY_STATIC)
         option(SDL12_FULLY_STATIC "Make SDL12_compat capable of being statically compiled alongside SDL2" ON)
     endif()
 
@@ -101,15 +102,6 @@ if(ONS_USE_SDLCOMPAT)
         sdl12-compat/include
         sdl12-compat/include/SDL
     )
-    
-    if(NINTENDO_WIIU
-       OR NINTENDO_SWITCH
-       OR NXDK)
-        target_compile_definitions(SDL
-        PUBLIC 
-            __SDL12_COMPAT_FULLY_STATIC__
-        )
-    endif()
 endif()
 
 ##########

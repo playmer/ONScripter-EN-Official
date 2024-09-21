@@ -56,6 +56,7 @@ option(ONS_COMPILE_TESTS "Choose whether to compile the creation tools." ${ONS_H
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
 option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
 option(ONS_USE_LIBMAD "Choose whether to use libmad audio decoding" OFF)
+option(ONS_FORCE_SDLCOMPAT_FULLY_STATIC OFF)
 
 # A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.
 # (Essentially when cross compiling, we'd need to mix compilation target architectures. Embed.cpp would need to be compiled

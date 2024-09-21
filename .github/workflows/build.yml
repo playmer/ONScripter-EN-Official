@@ -407,13 +407,7 @@ jobs:
 
   ##########################################
   Xbox:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            cc: gcc
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -426,10 +420,8 @@ jobs:
           sudo apt-get update -y && sudo apt-get install -y flex bison clang lld llvm
           
       - name: Download and install NXDK SDK, then build.
-        env:
-          CC: ${{ matrix.cc }}
         run: |
-          git clone --recurse-submodules https://github.com/XboxDev/nxdk.git
+          git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/XboxDev/nxdk.git
           
           eval $(nxdk/bin/activate -s)
           cd nxdk

@@ -1,0 +1,599 @@
+cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
+project(onscripter-en LANGUAGES C CXX)
+
+# Determine what architecture we're targeting.
+include(cmake/TargetArch.cmake)
+target_architecture(ONS_TARGET_ARCH)
+message(STATUS "Target Architecture: ${ONS_TARGET_ARCH}")
+message(STATUS "C Compiler: ${CMAKE_C_COMPILER_ID}")
+message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID}")
+
+# Determine flag style
+set(ONS_COMPILER_FLAG_STYLE "GNU")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    set(ONS_COMPILER_FLAG_STYLE "MSVC")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(ONS_COMPILER_FLAG_STYLE "MSVC")
+endif()
+
+if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU" AND (CMAKE_GENERATOR STREQUAL Ninja OR CMAKE_GENERATOR STREQUAL "Ninja Multi-Config"))
+    # This should be used very sparingly
+    add_compile_options(-fdiagnostics-color=always)
+endif()
+
+# Options we can pass into CMake, platform will determine some defaults.
+#if (PLATFORM_PSP)
+#    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
+#    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." OFF)
+#else()
+if (NINTENDO_WIIU
+    OR NINTENDO_SWITCH
+    OR NXDK)
+    option(ONS_USE_SDLCOMPAT "" ON)
+    option(ONS_USE_NATIVESDL2 "" ON)
+elseif(MINGW
+       OR NINTENDO_GAMECUBE
+       OR NINTENDO_WII
+       OR PSP)
+    option(ONS_USE_SDLCOMPAT "" OFF)
+    option(ONS_USE_NATIVESDL2 "" OFF)
+else()
+    option(ONS_USE_SDLCOMPAT "" ON)
+    option(ONS_USE_NATIVESDL2 "" OFF)
+endif()
+
+if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL ${CMAKE_SYSTEM_NAME})
+    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" ON)
+else()
+    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
+endif()
+
+option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
+#endif()
+
+option(ONS_COMPILE_TESTS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
+option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
+option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
+option(ONS_USE_LIBMAD "Choose whether to use libmad audio decoding" OFF)
+
+# A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.
+# (Essentially when cross compiling, we'd need to mix compilation target architectures. Embed.cpp would need to be compiled
+# for the host platform, while ONScripter (and maybe the tools) would need to target some completely different arch.
+# this is something for which CMake isn't designed. There's some hacks around this, but it's easier to just write a CMake 
+# script to implement the functionality, even if it's quite a bit slower.)
+set(EMBED_COMMAND ${CMAKE_COMMAND} -P cmake/ResourceGenerator.cmake -- ${CMAKE_CURRENT_BINARY_DIR}/resources.cpp ons-en.ico )
+set(ADDITIONAL_EMBED_DEPENDENCIES "")
+
+add_custom_command(
+    OUTPUT resources.cpp
+    COMMAND ${EMBED_COMMAND}
+    DEPENDS ${ADDITIONAL_EMBED_DEPENDENCIES} ${CMAKE_CURRENT_SOURCE_DIR}/ons-en.ico
+    COMMENT "This command generates resources.cpp to embed files into onscripter-en, such as the icon."
+    VERBATIM
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+#############################################
+# Dependencies
+message(STATUS "Extlibs start")
+if(ONS_USE_EXT_LIBS)
+    include(cmake/DependencyFinder.cmake)
+
+    if (NOT ONS_USE_SDLCOMPAT)
+        PkgConfig_Find_Module(SDL sdl)
+        set(ONS_SDL_TARGET PkgConfigWrapper::SDL)
+    elseif(ONS_USE_NATIVESDL2)
+        find_package(SDL2)
+        if( NOT SDL2_FOUND )
+            pkg_search_module(SDL2 REQUIRED sdl2)
+        endif()
+        set(ONS_SDL_TARGET SDL)
+    else()
+        set(ONS_SDL_TARGET SDL)
+    endif()
+
+    message(STATUS "ONS_SDL_TARGET: ${ONS_SDL_TARGET}")
+    
+
+    if(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
+        target_link_libraries(${ONS_SDL_TARGET} INTERFACE opengx)
+    endif()
+
+    if (NOT ONS_USE_OLD_DEPS)
+        PkgConfig_Find_Module(SDL_image)
+        PkgConfig_Find_Module(SDL_mixer)
+        PkgConfig_Find_Module(SDL_ttf)
+        PkgConfig_Find_Module(freetype2)
+        PkgConfig_Find_Module(ogg)
+        PkgConfig_Find_Module(zlib)
+        PkgConfig_Find_Module(vorbis)
+        PkgConfig_Find_Module(vorbisfile)
+        PkgConfig_Find_Module(libpng)
+        PkgConfig_Find_Module(bzip2)
+        PkgConfig_Find_Module(libtiff libtiff-4)
+        PkgConfig_Find_Module(libwebp)
+        PkgConfig_Find_Module(harfbuzz)
+
+        PkgConfig_Find_Module(libjpeg libjpeg62 libjpeg9)
+        
+        if (PkgConfigWrapper_libjpeg_NOTFOUND)
+            add_library(PkgConfigWrapper::libjpeg INTERFACE IMPORTED)
+            set_property(TARGET PkgConfigWrapper::libjpeg APPEND PROPERTY INTERFACE_LINK_LIBRARIES libjpeg.a)
+        endif()
+
+        if (TARGET PkgConfigWrapper::libtiff)
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff)
+        else()
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libtiff-4)
+        endif()
+        
+        if (TARGET PkgConfigWrapper::libwebp)
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
+        else()
+            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libwebp)
+        endif()
+
+        if (ONS_USE_LIBMAD)
+            target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
+        endif()
+        
+        run_library_config(smpeg smpeg_include_directories)
+        message(STATUS "smpeg include dirs: ${smpeg_include_directories}")
+    endif()
+endif()
+
+if (ONS_USE_OLD_DEPS)
+    add_subdirectory(extlib)
+endif()
+
+#############################################
+# Tools
+if(ONS_COMPILE_TOOLS AND NOT MSVC AND NOT NXDK)
+    add_subdirectory(tools)
+endif()
+
+#############################################
+# Tests
+if(ONS_COMPILE_TESTS AND NOT MSVC AND NOT NXDK)
+    add_subdirectory(test)
+endif()
+
+#############################################
+# Configure version.h
+
+set(I \"ons-en.ico\")
+
+string(TIMESTAMP Y %Y)
+string(TIMESTAMP M %m)
+string(TIMESTAMP D %d)
+string(TIMESTAMP 0M %m)
+string(TIMESTAMP 0D %d)
+
+# trim off the leading 0 if the month/day has one.
+string(REGEX REPLACE "^0" "" M ${M})
+string(REGEX REPLACE "^0" "" D ${D})
+
+configure_file(onscripter.rc.in onscripter.rc
+    @ONLY
+)
+
+configure_file(winres.h.in winres.h
+    @ONLY
+)
+
+configure_file(version.h.in version.h
+    @ONLY
+)
+
+#############################################
+# ONScripter-EN
+add_executable(onscripter-en)
+
+target_include_directories(onscripter-en 
+PRIVATE 
+    .
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${smpeg_include_directories}
+)
+
+target_compile_definitions(onscripter-en 
+PRIVATE 
+    _GNU_SOURCE=1
+)
+
+target_compile_features(onscripter-en 
+PUBLIC 
+    cxx_std_98
+)
+
+target_sources(onscripter-en
+PRIVATE
+    AnimationInfo.cpp
+    AnimationInfo.h
+#    AVIWrapper.cpp
+#    AVIWrapper.h
+    BaseReader.h
+    CMakeLists.txt
+    DirectReader.cpp
+    DirectReader.h
+    DirPaths.cpp
+    DirPaths.h
+    DirtyRect.cpp
+    DirtyRect.h
+    Encoding.cpp
+    Encoding.h
+    FontInfo.cpp
+    FontInfo.h
+    graphics_altivec.cpp
+    graphics_altivec.h
+    graphics_blend.h
+    graphics_common.h
+    graphics_cpu.h
+    graphics_mmx.cpp
+    graphics_mmx.h
+    graphics_resize.h
+    graphics_routines.cpp
+    graphics_sse2.cpp
+    graphics_sse2.h
+    graphics_sum.h
+    Layer.cpp
+    Layer.h
+    #nscriptdecode.cpp
+    NsaReader.cpp
+    NsaReader.h
+    onscripter.cpp
+    ONScripterLabel_animation.cpp
+    ONScripterLabel_command.cpp
+    ONScripterLabel_effect_breakup.cpp
+    ONScripterLabel_effect_cascade.cpp
+    ONScripterLabel_effect_trig.cpp
+    ONScripterLabel_effect.cpp
+    ONScripterLabel_event.cpp
+    ONScripterLabel_file.cpp
+    ONScripterLabel_file2.cpp
+    ONScripterLabel_image.cpp
+    ONScripterLabel_rmenu.cpp
+    ONScripterLabel_sound.cpp
+    ONScripterLabel_text.cpp
+    ONScripterLabel.cpp
+    ONScripterLabel.h
+    resize_image.cpp
+    resize_image.h
+    resources.cpp
+    resources.h
+    SarReader.cpp
+    SarReader.h
+    ScriptHandler.cpp
+    ScriptHandler.h
+    ScriptParser_command.cpp
+    ScriptParser.cpp
+    ScriptParser.h
+    ScriptParser_command.cpp
+    sjis2utf16.cpp
+    version.h
+)
+
+# Default Compiler Options
+if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+    target_compile_options(onscripter-en
+    PRIVATE
+        -fdiagnostics-color=always
+        -fpermissive
+        $<$<CONFIG:DEBUG>:-g>
+    )
+    
+    if (MINGW)
+        target_link_options(onscripter-en
+        PUBLIC
+            $<$<CONFIG:RELEASE>:-s>
+            -static
+        )
+    endif()
+elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
+    target_compile_definitions(onscripter-en
+        PRIVATE
+        _CRT_SECURE_NO_WARNINGS
+    )
+
+    target_compile_options(onscripter-en 
+    PRIVATE
+        /W4
+    )
+endif()
+
+# Dependencies
+if (ONS_USE_OLD_DEPS)
+    target_link_libraries(onscripter-en
+    PUBLIC
+        ${ONS_SDL_TARGET}
+
+        ogg
+        vorbis
+        SDL_mixer
+        SDL_ttf
+        SDL_image
+        bzip2
+        freetype
+        
+        smpeg
+    )
+else()
+    target_link_libraries(onscripter-en
+    PUBLIC
+        ${ONS_SDL_TARGET}
+        PkgConfigWrapper::SDL_image
+        PkgConfigWrapper::SDL_mixer
+        PkgConfigWrapper::SDL_ttf
+        PkgConfigWrapper::freetype2
+        PkgConfigWrapper::ogg
+        PkgConfigWrapper::zlib
+        PkgConfigWrapper::vorbis
+        PkgConfigWrapper::vorbisfile
+        PkgConfigWrapper::libpng
+        PkgConfigWrapper::libjpeg
+        PkgConfigWrapper::harfbuzz
+        PkgConfigWrapper::bzip2
+        smpeg
+    )
+endif()
+
+if (ONS_USE_LIBMAD)
+    target_link_libraries(onscripter-en
+    PUBLIC
+        mad
+    )
+endif()
+
+# Handle Architecture and SIMD Detection and availibility.
+set(ONS_X86 0)
+set(ONS_X8664 0)
+set(ONS_X86_MMX_AVAILIBLE 0)
+set(ONS_X86_SSE_AVAILIBLE 0)
+set(ONS_X86_SSE2_AVAILIBLE 0)
+set(ONS_X86_SSE3_AVAILIBLE 0)
+set(ONS_X86_SSSE3_AVAILIBLE 0)
+set(ONS_X86_SSE4_1_AVAILIBLE 0)
+set(ONS_X86_SSE4_2_AVAILIBLE 0)
+set(ONS_X86_AVX_AVAILIBLE 0)
+set(ONS_X86_AVX2_AVAILIBLE 0)
+set(ONS_PPC 0)
+set(ONS_PPC_ALTIVEC_AVAILIBLE 0)
+set(ONS_ARM 0)
+set(ONS_ARM_NEON_AVAILIBLE 0)
+set(ONS_ARM_SVE_AVAILIBLE 0)
+set(ONS_ARM_SVE2_AVAILIBLE 0)
+set(ONS_MIPS 0)
+
+if (${ONS_TARGET_ARCH} STREQUAL "x86_64")    
+    set(ONS_X8664 1)
+    
+    if (NOT MSVC)
+        set(ONS_X86_MMX_AVAILIBLE 1)
+    endif()
+    
+    set(ONS_X86_SSE_AVAILIBLE 1)
+    set(ONS_X86_SSE2_AVAILIBLE 1)
+    set(ONS_X86_SSE3_AVAILIBLE 1)
+    set(ONS_X86_SSSE3_AVAILIBLE 1)
+    set(ONS_X86_SSE4_1_AVAILIBLE 1)
+    set(ONS_X86_SSE4_2_AVAILIBLE 1)
+    set(ONS_X86_AVX_AVAILIBLE 1)
+    set(ONS_X86_AVX2_AVAILIBLE 1)
+
+    if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+        set_source_files_properties(
+            graphics_sse2.cpp
+            COMPILE_OPTIONS -msse2
+        )
+        
+        set_source_files_properties(
+            graphics_mmx.cpp
+            COMPILE_OPTIONS -mmmx
+        )
+    endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "i386")
+    set(ONS_X86 1)
+    
+    set(ONS_X86_MMX_AVAILIBLE 1)
+    set(ONS_X86_SSE_AVAILIBLE 1)
+    
+    if (NOT NXDK)
+        set(ONS_X86_SSE2_AVAILIBLE 1)
+    endif()
+
+    if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+        set_source_files_properties(
+            graphics_sse2.cpp
+            COMPILE_OPTIONS -msse2
+        )
+        
+        set_source_files_properties(
+            graphics_mmx.cpp
+            COMPILE_OPTIONS -mmmx
+        )
+    endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "ppc" OR ${ONS_TARGET_ARCH} STREQUAL "ppc")
+    set(ONS_PPC 1)
+
+    if (NOT NINTENDO_GAMECUBE
+        AND NOT NINTENDO_WII
+        AND NOT NINTENDO_WIIU)
+
+        set(ONS_PPC_ALTIVEC_AVAILIBLE 1)
+        
+        set_source_files_properties(
+            graphics_altivec.cpp
+            COMPILE_OPTIONS -maltivec
+        )
+    endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "armv9" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv8" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv7" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv6" OR
+       ${ONS_TARGET_ARCH} STREQUAL "armv5" OR
+       ${ONS_TARGET_ARCH} STREQUAL "arm")
+       
+    set(ONS_ARM 1)
+
+    set(ONS_ARM_NEON_AVAILIBLE 1)
+    if (NOT MSVC)
+        set(ONS_ARM_SVE_AVAILIBLE 1)
+        set(ONS_ARM_SVE2_AVAILIBLE 1)
+    endif()
+elseif(${ONS_TARGET_ARCH} STREQUAL "mips")
+    set(ONS_MIPS 1)
+endif()
+
+
+target_compile_definitions(onscripter-en
+PRIVATE
+    ONS_X86=${ONS_X86}
+    ONS_X8664=${ONS_X8664}
+    ONS_X86_MMX_AVAILIBLE=${ONS_X86_MMX_AVAILIBLE}
+    ONS_X86_SSE_AVAILIBLE=${ONS_X86_SSE_AVAILIBLE}
+    ONS_X86_SSE2_AVAILIBLE=${ONS_X86_SSE2_AVAILIBLE}
+    ONS_X86_SSE3_AVAILIBLE=${ONS_X86_SSE3_AVAILIBLE}
+    ONS_X86_SSSE3_AVAILIBLE=${ONS_X86_SSSE3_AVAILIBLE}
+    ONS_X86_SSE4_1_AVAILIBLE=${ONS_X86_SSE4_1_AVAILIBLE}
+    ONS_X86_SSE4_2_AVAILIBLE=${ONS_X86_SSE4_2_AVAILIBLE}
+    ONS_X86_AVX_AVAILIBLE=${ONS_X86_AVX_AVAILIBLE}
+    ONS_X86_AVX2_AVAILIBLE=${ONS_X86_AVX2_AVAILIBLE}
+    ONS_PPC=${ONS_PPC}
+    ONS_PPC_ALTIVEC_AVAILIBLE=${ONS_PPC_ALTIVEC_AVAILIBLE}
+    ONS_ARM=${ONS_ARM}
+    ONS_ARM_NEON_AVAILIBLE=${ONS_ARM_NEON_AVAILIBLE}
+    ONS_ARM_SVE_AVAILIBLE=${ONS_ARM_SVE_AVAILIBLE}
+    ONS_ARM_SVE2_AVAILIBLE=${ONS_ARM_SVE2_AVAILIBLE}
+    ONS_MIPS=${ONS_MIPS}
+)
+
+message(STATUS "ONS_X86=${ONS_X86}")
+message(STATUS "ONS_X8664=${ONS_X8664}")
+message(STATUS "ONS_X86_MMX_AVAILIBLE=${ONS_X86_MMX_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE_AVAILIBLE=${ONS_X86_SSE_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE2_AVAILIBLE=${ONS_X86_SSE2_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE3_AVAILIBLE=${ONS_X86_SSE3_AVAILIBLE}")
+message(STATUS "ONS_X86_SSSE3_AVAILIBLE=${ONS_X86_SSSE3_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE4_1_AVAILIBLE=${ONS_X86_SSE4_1_AVAILIBLE}")
+message(STATUS "ONS_X86_SSE4_2_AVAILIBLE=${ONS_X86_SSE4_2_AVAILIBLE}")
+message(STATUS "ONS_X86_AVX_AVAILIBLE=${ONS_X86_AVX_AVAILIBLE}")
+message(STATUS "ONS_X86_AVX2_AVAILIBLE=${ONS_X86_AVX2_AVAILIBLE}")
+message(STATUS "ONS_PPC=${ONS_PPC}")
+message(STATUS "ONS_PPC_ALTIVEC_AVAILIBLE=${ONS_PPC_ALTIVEC_AVAILIBLE}")
+message(STATUS "ONS_ARM=${ONS_ARM}")
+message(STATUS "ONS_ARM_NEON_AVAILIBLE=${ONS_ARM_NEON_AVAILIBLE}")
+message(STATUS "ONS_ARM_SVE_AVAILIBLE=${ONS_ARM_SVE_AVAILIBLE}")
+message(STATUS "ONS_ARM_SVE2_AVAILIBLE=${ONS_ARM_SVE2_AVAILIBLE}")
+message(STATUS "ONS_MIPS=${ONS_MIPS}")
+
+# Platform Specific Options
+if(PSP)
+    create_pbp_file(
+        TARGET onscripter-en
+        ICON_PATH NULL
+        BACKGROUND_PATH NULL
+        PREVIEW_PATH NULL
+        TITLE onscripter-en
+        VERSION 01.00
+    )
+
+    target_compile_definitions(onscripter-en
+    PRIVATE
+        PSP
+        PDA_WIDTH=360
+        BPP16
+        USE_OGG_VORBIS
+        INTEGER_OGG_VORBIS
+    )
+
+    target_link_libraries(onscripter-en 
+    PUBLIC
+        pspge
+        pspvfpu
+        pspgum_vfpu
+        pspgu
+        pspctrl
+        pspdebug
+        pspvram
+        psppower
+        pspdisplay
+        pspaudiolib
+        pspaudio
+        pspnet
+        pspnet_apctl
+        pspnet_resolver
+        psprtc
+        psputility
+    )
+    target_compile_options(onscripter-en PUBLIC -g)
+
+elseif(NINTENDO_WIIU)
+    configure_file(${CMAKE_SOURCE_DIR}/ons-en.png ${CMAKE_BINARY_DIR}/icon.png COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/cmake/wiiu/meta.xml.in ${CMAKE_BINARY_DIR}/meta.xml)
+    wut_create_rpx(onscripter-en)
+    wut_create_wuhb(onscripter-en
+        CONTENT
+        NAME "ONScripter-EN Version 1.00"
+        SHORTNAME "ONScripter-EN"
+        AUTHOR "Galladite"
+        ICON "${CMAKE_SOURCE_DIR}/ons-en.png"
+        TVSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
+        DRCSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
+    )
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
+    configure_file(${CMAKE_SOURCE_DIR}/ons-en.png ${CMAKE_BINARY_DIR}/package/icon.png COPYONLY)
+    configure_file(${CMAKE_SOURCE_DIR}/cmake/wii/meta.xml.in ${CMAKE_BINARY_DIR}/package/meta.xml)
+
+    ogc_create_dol(onscripter-en)
+    add_custom_command(TARGET onscripter-en POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy
+                        ${CMAKE_BINARY_DIR}/onscripter-en.dol
+                        ${CMAKE_BINARY_DIR}/package/boot.dol
+                    COMMENT "Copying onscripter-en executable into package")
+
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL NintendoGameCube)
+    target_compile_definitions(onscripter-en
+    PRIVATE
+        BPP16
+    )
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL CafeOS)
+elseif(NXDK)
+elseif(WIN32)
+    target_sources(onscripter-en
+    PRIVATE
+        onscripter.rc
+        winres.h
+        SDL_win32_main.c
+    )
+
+    if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+        target_compile_options(onscripter-en
+        PRIVATE
+            -fpermissive
+            -mwindows
+        )
+
+        target_link_options(onscripter-en
+        PRIVATE
+        )
+    endif()
+
+    target_compile_definitions(onscripter-en
+    PRIVATE
+        WIN32
+        USE_MESSAGEBOX
+        USE_OGG_VORBIS
+    )
+
+    target_link_libraries(onscripter-en
+    PRIVATE
+        #iconv
+        #m
+        user32
+        gdi32
+        winmm
+        dxguid
+        rpcrt4
+    )
+endif()

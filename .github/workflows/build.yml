@@ -434,7 +434,7 @@ jobs:
           git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/XboxDev/nxdk.git
           cd nxdk
           
-          source ./bin/activate
+          eval $(./bin/activate -s)
           make NXDK_ONLY=y
           make tools
           cd ..

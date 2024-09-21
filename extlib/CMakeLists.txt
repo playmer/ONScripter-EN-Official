@@ -122,6 +122,11 @@ endif()
 
 add_library(bzip2 STATIC "")
 
+target_compile_definitions(bzip2
+PRIVATE
+    BZ_STRICT_ANSI
+)
+
 if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
     target_compile_options(bzip2
     PRIVATE

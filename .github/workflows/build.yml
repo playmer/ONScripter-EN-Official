@@ -432,8 +432,9 @@ jobs:
           CC: ${{ matrix.cc }}
         run: |
           git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/XboxDev/nxdk.git
-          cd nxdk
-          source bin/activate
+          cd nxdk/samples/mesh
+          ../../bin/activate
+          cd ../../
           make NXDK_ONLY=y
           make tools
 

@@ -424,6 +424,9 @@ static bool parseOptionFile(const char *filename, ONScripterLabel &ons, bool &ha
 int SDL_main( int argc, char **argv )
 #elif defined(PSP)
 extern "C" int main( int argc, char **argv )
+#elif defined(NXDK)
+#undef SDL_main
+int main( void )
 #else
 int main( int argc, char **argv )
 #endif
@@ -461,8 +464,10 @@ int main( int argc, char **argv )
         }
     } else
 #endif
+#ifndef NXDK
     parseOptionFile(CFG_FILE, ons, hasArchivePath);
     parseOptions(argc, argv, ons, hasArchivePath);
+#endif
 
     // ----------------------------------------
     // Run ONScripter

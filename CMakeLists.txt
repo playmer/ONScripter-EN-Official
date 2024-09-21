@@ -290,15 +290,6 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
             -static
         )
     endif()
-
-    if (NXDK)
-        message(STATUS "Is this happening?")
-        target_link_options(onscripter-en
-        PUBLIC
-            -fpermissive
-            -Wno-c++11-narrowing
-        )
-    endif()
 elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
     target_compile_definitions(onscripter-en
         PRIVATE
@@ -550,7 +541,7 @@ elseif(NINTENDO_WIIU)
         TVSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
         DRCSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
     )
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
     configure_file(${CMAKE_SOURCE_DIR}/ons-en.png ${CMAKE_BINARY_DIR}/package/icon.png COPYONLY)
     configure_file(${CMAKE_SOURCE_DIR}/cmake/wii/meta.xml.in ${CMAKE_BINARY_DIR}/package/meta.xml)
 
@@ -561,12 +552,13 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
                         ${CMAKE_BINARY_DIR}/package/boot.dol
                     COMMENT "Copying onscripter-en executable into package")
 
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL NintendoGameCube)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL NintendoGameCube)
     target_compile_definitions(onscripter-en
     PRIVATE
         BPP16
     )
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL CafeOS)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL CafeOS)
+elseif(NXDK)
 elseif(WIN32)
     target_sources(onscripter-en
     PRIVATE

@@ -429,7 +429,7 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
         run: |
-          git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/XboxDev/nxdk.git
+          git clone --recurse-submodules https://github.com/XboxDev/nxdk.git
           
           eval $(nxdk/bin/activate -s)
           cd nxdk

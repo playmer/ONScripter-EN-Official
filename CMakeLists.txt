@@ -26,30 +26,40 @@ endif()
 if (NINTENDO_WIIU
     OR NINTENDO_SWITCH
     OR NXDK)
-    option(ONS_USE_SDLCOMPAT "" ON)
-    option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." ON)
-elseif(MINGW
+    option(ONS_USE_SYSTEM_SDL "" ON)
+    option(ONS_FORCE_SDLCOMPAT_FULLY_STATIC "" ON)
+elseif(MINGW 
        OR NINTENDO_GAMECUBE
        OR NINTENDO_WII
        OR PSP)
+    option(ONS_USE_SYSTEM_SDL "" ON)
     option(ONS_USE_SDLCOMPAT "" OFF)
-    option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." OFF)
-else()
-    option(ONS_USE_SDLCOMPAT "" ON)
-    option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." OFF)
 endif()
 
 if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL ${CMAKE_SYSTEM_NAME})
     option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" ON)
-else()
-    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
 endif()
 
+option(ONS_USE_SYSTEM_SDL "" OFF)
+option(ONS_USE_SDLCOMPAT "" ON)
+option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." OFF)
+option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
 option(ONS_PREFER_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones, where possible." ON)
 option(ONS_COMPILE_TESTS "Choose whether to compile our tests." ${ONS_HOST_PLATFORM})
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
 option(ONS_USE_LIBMAD "Choose whether to use libmad audio decoding" OFF)
-option(ONS_FORCE_SDLCOMPAT_FULLY_STATIC OFF)
+option(ONS_FORCE_SDLCOMPAT_FULLY_STATIC "" OFF)
+
+
+message(STATUS "ONS_USE_SYSTEM_SDL: ${ONS_USE_SYSTEM_SDL}")
+message(STATUS "ONS_USE_SDLCOMPAT: ${ONS_USE_SDLCOMPAT}")
+message(STATUS "ONS_PREFER_SYSTEM_PACKAGES: ${ONS_PREFER_SYSTEM_PACKAGES}")
+message(STATUS "ONS_HOST_PLATFORM: ${ONS_HOST_PLATFORM}")
+message(STATUS "ONS_PREFER_OLD_DEPS: ${ONS_PREFER_OLD_DEPS}")
+message(STATUS "ONS_COMPILE_TESTS: ${ONS_COMPILE_TESTS}")
+message(STATUS "ONS_COMPILE_TOOLS: ${ONS_COMPILE_TOOLS}")
+message(STATUS "ONS_USE_LIBMAD: ${ONS_USE_LIBMAD}")
+message(STATUS "ONS_FORCE_SDLCOMPAT_FULLY_STATIC: ${ONS_FORCE_SDLCOMPAT_FULLY_STATIC}")
 
 # A CMake implementation of embed.cpp, which we can't rely on due to a limitation in CMake's cross compilation capabilities.
 # (Essentially when cross compiling, we'd need to mix compilation target architectures. Embed.cpp would need to be compiled

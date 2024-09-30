@@ -46,10 +46,10 @@ PRIVATE
 target_link_libraries(batchconv
 PRIVATE
     gnurx
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 target_include_directories(batchconv
@@ -90,10 +90,10 @@ target_compile_definitions(nbzdec PUBLIC -DTOOLS_BUILD -DSAR)
 target_link_libraries(nbzdec
 PRIVATE
     gnurx
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 ##########
@@ -128,10 +128,10 @@ target_compile_definitions(nscdec PUBLIC -DTOOLS_BUILD -DSAR)
 target_link_libraries(nscdec
 PRIVATE
     gnurx
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 
@@ -195,10 +195,10 @@ PRIVATE
 
 target_link_libraries(sarconv
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
     gnurx
 )
 
@@ -233,10 +233,10 @@ PRIVATE
 
 target_link_libraries(sardec
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 target_compile_definitions(sardec PUBLIC -DTOOLS_BUILD -DSAR)
@@ -272,10 +272,10 @@ PRIVATE
 
 target_link_libraries(sarmake
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 target_compile_definitions(sarmake PUBLIC -DTOOLS_BUILD -DSAR)
@@ -317,10 +317,10 @@ PRIVATE
 
 target_link_libraries(ns2conv
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
     gnurx
 )
 
@@ -355,10 +355,10 @@ PRIVATE
 
 target_link_libraries(ns2dec
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 target_compile_definitions(ns2dec PUBLIC -DTOOLS_BUILD -DNS2)
@@ -396,10 +396,10 @@ PRIVATE
 
 target_link_libraries(ns2make
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 target_compile_definitions(ns2make PUBLIC -DTOOLS_BUILD -DNS2)
@@ -440,10 +440,10 @@ PRIVATE
 
 target_link_libraries(nsaconv
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
     gnurx
 )
 
@@ -478,10 +478,10 @@ PRIVATE
 
 target_link_libraries(nsadec
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 target_compile_definitions(nsadec PUBLIC -DTOOLS_BUILD -DNSA)
@@ -519,10 +519,10 @@ PRIVATE
 
 target_link_libraries(nsamake
 PRIVATE
-    bzip2
-    jpeg
-    libpng
-    zlib
+    ONS::bzip2
+    ONS::jpeg
+    ONS::libpng
+    ONS::zlib
 )
 
 target_compile_definitions(nsamake PUBLIC -DTOOLS_BUILD -DNSA)

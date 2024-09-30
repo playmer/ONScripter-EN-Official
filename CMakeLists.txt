@@ -70,6 +70,7 @@ add_custom_command(
 
 #############################################
 # Dependencies
+#include(extlib/CMakeLists.txt)
 add_subdirectory(extlib)
 
 #############################################

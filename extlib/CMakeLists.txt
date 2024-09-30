@@ -120,7 +120,7 @@ else()
         set(ONS_SDL_TARGET PkgConfigWrapper::SDL)
     endif()
 
-    if (NOT ONS_PREFER_SYSTEM_PACKAGES OR NOT TARGET PkgConfigWrapper::SDL)
+    if ((NOT ONS_PREFER_SYSTEM_PACKAGES AND NOT ONS_USE_SYSTEM_SDL) OR NOT TARGET PkgConfigWrapper::SDL)
         #if (ONS_PREFER_OLD_DEPS)
         #    set(sdl_source_prefix ${CMAKE_CURRENT_LIST_DIR}/src/old/SDL-1.2.13)
         #else()

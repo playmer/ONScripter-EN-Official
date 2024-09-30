@@ -1,3 +1,5 @@
+include(cmake/DependencyFinder.cmake)
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(ONS_GNU_FLAGS
         -w
@@ -17,69 +19,109 @@ else()
     )
 endif()
 
-##########
-# SDL
 
-if(ONS_USE_SDLCOMPAT AND NOT ONS_USE_NATIVESDL2)
-    add_subdirectory(SDL2)
-    set(SDL2_LIBRARY SDL2-static)
-    set(SDL2_INCLUDE_DIR SDL2/include)
-elseif(ONS_USE_NATIVESDL12)
-    #if (ONS_USE_OLD_DEPS)
-    #    set(sdl_source_prefix src/old/sdl-1.2.13)
-    #else()
-    #    set(sdl_source_prefix src/sdl-1.2.15)
-    #endif()
-    #
-    #add_library(sdl STATIC "")
-    #
-    #file(GLOB SDL_SOURCE
-    #    ${SDL}/src/*.c
-    #    ${SDL}/src/audio/*.c
-    #    ${SDL}/src/audio/disk/*.c
-    #    ${SDL}/src/audio/dummy/*.c
-    #    ${SDL}/src/cdrom/*.c
-    #    ${SDL}/src/cdrom/dummy/*.c
-    #    ${SDL}/src/cpuinfo/*.c
-    #    ${SDL}/src/events/*.c
-    #    ${SDL}/src/file/*.c
-    #    ${SDL}/src/joystick/*.c
-    #    ${SDL}/src/stdlib/*.c
-    #    ${SDL}/src/thread/*.c
-    #    ${SDL}/src/thread/generic/*.c
-    #    ${SDL}/src/timer/*.c
-    #    ${SDL}/src/video/*.c
-    #    ${SDL}/src/video/dummy/*.c
-    #)
-    #
-    #file(
-    #    GLOB SDL_MACOS_SOURCES
-    #    ${SDL}/src/audio/macosx/*.c
-    #    ${SDL}/src/cdrom/macosx/*.c
-    #    ${SDL}/src/joystick/darwin/*.c
-    #    ${SDL}/src/loadso/dlopen/*.c
-    #    ${SDL}/src/loadso/macosx/*.c
-    #    # ${SDL}/src/thread/pthread/*.c
-    #    ${SDL}/src/timer/unix/*.c
-    #    ${SDL}/src/video/quartz/*.m
-    #)
-    #
-    #if( UNIX AND APPLE )
-    #	set( LIBSDL_SOURCES ${LIBSDL_SOURCES} ${SDL_MACOS_SOURCES} )
-    #	set( LIBSDLMAIN_SOURCES ${SDL}/src/main/macosx/SDLMain.m )
-    #
-    #	## copy over a pre-created macOS config
-    #	set( CFLAGS "-Wall -Wextra -O2 -g -fomit-frame-pointer -fPIC" )
-    #	set( CXXFLAGS "${CFLAGS} -fno-exceptions -fno-rtti" )
-    #
-    #	file( STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/SDL_config.h.macOS SDL_CONFIG_HEADER )
-    #	message( AUTHOR_WARNING "+ Building for macOS.")
-    #else()
-    #	message( FATAL_ERROR "Unknown operating system-- aborting." )
-    #endif()
+
+message(STATUS "ONS_SDL_TARGET: ${ONS_SDL_TARGET}")
+
+
+PkgConfig_Find_Module(SDL_image)
+PkgConfig_Find_Module(SDL_mixer)
+PkgConfig_Find_Module(SDL_ttf)
+PkgConfig_Find_Module(freetype2)
+PkgConfig_Find_Module(ogg)
+PkgConfig_Find_Module(zlib)
+PkgConfig_Find_Module(vorbis)
+PkgConfig_Find_Module(vorbisfile)
+PkgConfig_Find_Module(libpng)
+PkgConfig_Find_Module(bzip2)
+PkgConfig_Find_Module(libtiff libtiff-4)
+PkgConfig_Find_Module(libwebp)
+PkgConfig_Find_Module(harfbuzz)
+
+PkgConfig_Find_Module(libjpeg libjpeg62 libjpeg9)
+
+if (PkgConfigWrapper_libjpeg_NOTFOUND)
+    add_library(PkgConfigWrapper::libjpeg INTERFACE IMPORTED)
+    set_property(TARGET PkgConfigWrapper::libjpeg APPEND PROPERTY INTERFACE_LINK_LIBRARIES libjpeg.a)
 endif()
 
+if (TARGET PkgConfigWrapper::libtiff)
+    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff)
+else()
+    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libtiff-4)
+endif()
+
+if (TARGET PkgConfigWrapper::libwebp)
+    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
+else()
+    set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libwebp)
+endif()
+
+if (ONS_USE_LIBMAD)
+    target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
+endif()
+
+run_library_config(smpeg smpeg_include_directories)
+message(STATUS "smpeg include dirs: ${smpeg_include_directories}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########
+# SDL
 if(ONS_USE_SDLCOMPAT)
+    if (ONS_PREFER_SYSTEM_PACKAGES)
+        find_package(SDL2)
+        if( NOT SDL2_FOUND )
+            pkg_search_module(SDL2 REQUIRED sdl2)
+        endif()
+    endif()
+
+    if (NOT ONS_PREFER_SYSTEM_PACKAGES OR PkgConfigWrapper_SDL2_NOTFOUND)
+        add_subdirectory(SDL2)
+        if (ONS_FORCE_SDLCOMPAT_FULLY_STATIC)
+            set(SDL2_LIBRARY SDL2-static)
+            set(SDL2_INCLUDE_DIR SDL2/include)
+        else()
+            set(SDL2_LIBRARY SDL2)
+            set(SDL2_INCLUDE_DIR SDL2/include)
+        endif()
+    endif()
+
     option(SDL12TESTS "Enable to build SDL-1.2 test programs" OFF)
     option(SDL12DEVEL "Enable installing SDL-1.2 development headers" OFF)
     option(STATICDEVEL "Enable installing static link library" OFF)
@@ -102,11 +144,128 @@ if(ONS_USE_SDLCOMPAT)
         sdl12-compat/include
         sdl12-compat/include/SDL
     )
+elseif()
+    if (ONS_PREFER_SYSTEM_PACKAGES)
+        PkgConfig_Find_Module(SDL sdl)
+        set(ONS_SDL_TARGET PkgConfigWrapper::SDL)
+    endif()
+
+    if (NOT ONS_PREFER_SYSTEM_PACKAGES OR PkgConfigWrapper_SDL_NOTFOUND)
+        if (ONS_PREFER_OLD_DEPS)
+            set(sdl_source_prefix src/old/SDL-1.2.13)
+        else()
+            set(sdl_source_prefix src/SDL-1.2.15)
+        endif()
+
+        add_library(SDL "")
+
+        file(
+            GLOB SDL_SOURCES CONFIGURE_DEPENDS
+            ${sdl_source_prefix}/src/*.c
+            ${sdl_source_prefix}/src/audio/*.c
+            ${sdl_source_prefix}/src/audio/disk/*.c
+            ${sdl_source_prefix}/src/audio/dummy/*.c
+            ${sdl_source_prefix}/src/cdrom/*.c
+            ${sdl_source_prefix}/src/cdrom/dummy/*.c
+            ${sdl_source_prefix}/src/cpuinfo/*.c
+            ${sdl_source_prefix}/src/events/*.c
+            ${sdl_source_prefix}/src/file/*.c
+            ${sdl_source_prefix}/src/joystick/*.c
+            ${sdl_source_prefix}/src/stdlib/*.c
+            ${sdl_source_prefix}/src/thread/*.c
+            ${sdl_source_prefix}/src/thread/generic/*.c
+            ${sdl_source_prefix}/src/timer/*.c
+            ${sdl_source_prefix}/src/video/*.c
+            ${sdl_source_prefix}/src/video/dummy/*.c
+        )
+
+        target_sources(SDL PRIVATE ${SDL_SOURCES})
+
+        if (WIN32)
+            file(
+                GLOB SDL_WIN32_SOURCES CONFIGURE_DEPENDS
+                ${sdl_source_prefix}/src/audio/windib/*.c
+                ${sdl_source_prefix}/src/audio/windx5/*.c
+                ${sdl_source_prefix}/src/cdrom/win32/*.c
+                ${sdl_source_prefix}/src/joystick/win32/*.c
+                ${sdl_source_prefix}/src/loadso/win32/*.c
+                ${sdl_source_prefix}/src/thread/win32/*.c
+                ${sdl_source_prefix}/src/timer/win32/*.c
+                ${sdl_source_prefix}/src/video/wincommon/*.c
+                ${sdl_source_prefix}/src/video/windib/*.c
+                ${sdl_source_prefix}/src/video/windx5/*.c
+            )
+
+            file(STRINGS ${SDL}/include/SDL_config_win32.h SDL_CONFIG_HEADER)
+            
+            target_sources(SDL 
+            PRIVATE 
+                ${SDL_WIN32_SOURCES}
+                #${SDL}/src/main/win32/SDL_win32_main.c
+            )
+        elseif(APPLE)
+            file(
+                GLOB SDL_MACOS_SOURCES CONFIGURE_DEPENDS
+                ${sdl_source_prefix}/src/audio/macosx/*.c
+                ${sdl_source_prefix}/src/cdrom/macosx/*.c
+                ${sdl_source_prefix}/src/joystick/darwin/*.c
+                ${sdl_source_prefix}/src/loadso/dlopen/*.c
+                ${sdl_source_prefix}/src/loadso/macosx/*.c
+                # ${sdl_source_prefix}/src/thread/pthread/*.c
+                ${sdl_source_prefix}/src/timer/unix/*.c
+                ${sdl_source_prefix}/src/video/quartz/*.m
+            )
+            
+            file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/SDL_config_macosx.h SDL_CONFIG_HEADER)
+            
+            target_sources(SDL 
+            PRIVATE 
+                ${SDL_MACOS_SOURCES} 
+                ${sdl_source_prefix}/src/main/macosx/SDLMain.m
+            )
+        elseif(UNIX)
+            #file(
+            #    GLOB SDL_MACOS_SOURCES CONFIGURE_DEPENDS
+            #    ${sdl_source_prefix}/src/audio/macosx/*.c
+            #    ${sdl_source_prefix}/src/cdrom/macosx/*.c
+            #    ${sdl_source_prefix}/src/joystick/darwin/*.c
+            #    ${sdl_source_prefix}/src/loadso/dlopen/*.c
+            #    ${sdl_source_prefix}/src/loadso/macosx/*.c
+            #    # ${sdl_source_prefix}/src/thread/pthread/*.c
+            #    ${sdl_source_prefix}/src/timer/unix/*.c
+            #    ${sdl_source_prefix}/src/video/quartz/*.m
+            #)
+            #
+            #file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/SDL_config_macosx.h SDL_CONFIG_HEADER)
+            #
+            #target_sources(SDL 
+            #PRIVATE 
+            #    ${SDL_MACOS_SOURCES} 
+            #    ${sdl_source_prefix}/src/main/macosx/SDLMain.m
+            #)
+
+            message( FATAL_ERROR "Configuring SDL 1.2, Unknown operating system-- aborting." )
+        else()
+            message( FATAL_ERROR "Configuring SDL 1.2, Unknown operating system-- aborting." )
+        endif()
+
+        string(REPLACE ";" "\n" SDL_CONFIG_HEADER "${SDL_CONFIG_HEADER}")
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/SDL_config.h "${SDL_CONFIG_HEADER}")
+
+        target_include_directories(SDL
+        PUBLIC 
+            ${sdl_source_prefix}/include
+            ${sdl_source_prefix}/include
+        )
+
+        #add_library(SDLmain ${LIBSDLMAIN_SOURCES})
+        #target_include_directories(SDLmain PUBLIC ${SDL}/include)
+    endif()
 endif()
 
 ##########
 # bzip2
-if (ONS_USE_OLD_DEPS)
+if (ONS_PREFER_OLD_DEPS)
     set(bzip2_source_prefix src/old/bzip2-1.0.4)
 else()
     set(bzip2_source_prefix src/bzip2-1.0.8)
@@ -154,7 +313,7 @@ PUBLIC
 
 ##########
 # libogg
-if (ONS_USE_OLD_DEPS)
+if (ONS_PREFER_OLD_DEPS)
     set(ogg_source_prefix src/old/libogg-1.1.3)
 else()
     set(ogg_source_prefix src/libogg-1.3.5)
@@ -207,7 +366,7 @@ PUBLIC
 
 ##########
 # libvorbis
-if (ONS_USE_OLD_DEPS)
+if (ONS_PREFER_OLD_DEPS)
     set(vorbis_source_prefix src/old/libvorbis-1.2.0)
 else()
     set(vorbis_source_prefix src/libvorbis-1.3.7)
@@ -318,7 +477,7 @@ PUBLIC
 
 ##########
 # libjpeg
-#if (ONS_USE_OLD_DEPS)
+#if (ONS_PREFER_OLD_DEPS)
 #    set(jpeg_source_prefix src/old/jpeg-6b)
 #else()
 #    set(jpeg_source_prefix src/jpeg-9f)
@@ -442,7 +601,7 @@ PUBLIC
 
 ##########
 # freetype
-if (ONS_USE_OLD_DEPS)
+if (ONS_PREFER_OLD_DEPS)
     set(freetype_source_prefix src/old/freetype-2.3.5)
 else()
     set(freetype_source_prefix src/freetype-2.13.0)
@@ -632,7 +791,7 @@ PUBLIC
 
 ##########
 # SDL_mixer
-#if (ONS_USE_OLD_DEPS)
+#if (ONS_PREFER_OLD_DEPS)
 #    set(sdl_mixer_source_prefix src/old/SDL_mixer-1.2.8)
 #else()
 #    set(sdl_mixer_source_prefix src/SDL_mixer-1.2.12)
@@ -730,7 +889,7 @@ PRIVATE
 
 ##########
 # SDL_ttf-2.0.11
-if (ONS_USE_OLD_DEPS)
+if (ONS_PREFER_OLD_DEPS)
     set(sdl_ttf_source_prefix src/old/SDL_ttf-2.0.8)
 else()
     set(sdl_ttf_source_prefix src/SDL_ttf-2.0.11)
@@ -825,7 +984,7 @@ PUBLIC
 
 ##########
 # libpng
-if (ONS_USE_OLD_DEPS)
+if (ONS_PREFER_OLD_DEPS)
     set(libpng_source_prefix src/old/libpng-1.2.24)
 else()
     set(libpng_source_prefix src/libpng-1.6.9)
@@ -884,7 +1043,7 @@ PUBLIC
 
 ##########
 # sdl_image
-if (ONS_USE_OLD_DEPS)
+if (ONS_PREFER_OLD_DEPS)
     set(sdl_image_source_prefix src/old/SDL_image-1.2.6)
 else()
     set(sdl_image_source_prefix src/SDL_image-1.2.12)

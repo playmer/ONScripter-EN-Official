@@ -23,24 +23,20 @@ if (ONS_COMPILER_FLAG_STYLE STREQUAL "GNU" AND (CMAKE_GENERATOR STREQUAL Ninja O
 endif()
 
 # Options we can pass into CMake, platform will determine some defaults.
-#if (PLATFORM_PSP)
-#    option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
-#    option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." OFF)
-#else()
 if (NINTENDO_WIIU
     OR NINTENDO_SWITCH
     OR NXDK)
     option(ONS_USE_SDLCOMPAT "" ON)
-    option(ONS_USE_NATIVESDL2 "" ON)
+    option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." ON)
 elseif(MINGW
        OR NINTENDO_GAMECUBE
        OR NINTENDO_WII
        OR PSP)
     option(ONS_USE_SDLCOMPAT "" OFF)
-    option(ONS_USE_NATIVESDL2 "" OFF)
+    option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." OFF)
 else()
     option(ONS_USE_SDLCOMPAT "" ON)
-    option(ONS_USE_NATIVESDL2 "" OFF)
+    option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." OFF)
 endif()
 
 if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL ${CMAKE_SYSTEM_NAME})
@@ -49,12 +45,9 @@ else()
     option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
 endif()
 
-option(ONS_USE_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones." ON)
-#endif()
-
-option(ONS_COMPILE_TESTS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
+option(ONS_PREFER_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones, where possible." ON)
+option(ONS_COMPILE_TESTS "Choose whether to compile our tests." ${ONS_HOST_PLATFORM})
 option(ONS_COMPILE_TOOLS "Choose whether to compile the creation tools." ${ONS_HOST_PLATFORM})
-option(ONS_USE_EXT_LIBS "Choose whether to use our own libraries or to use system packages" ON)
 option(ONS_USE_LIBMAD "Choose whether to use libmad audio decoding" OFF)
 option(ONS_FORCE_SDLCOMPAT_FULLY_STATIC OFF)
 
@@ -77,76 +70,7 @@ add_custom_command(
 
 #############################################
 # Dependencies
-message(STATUS "Extlibs start")
-if(ONS_USE_EXT_LIBS)
-    include(cmake/DependencyFinder.cmake)
-
-    if (NOT ONS_USE_SDLCOMPAT)
-        PkgConfig_Find_Module(SDL sdl)
-        set(ONS_SDL_TARGET PkgConfigWrapper::SDL)
-    elseif(ONS_USE_NATIVESDL2)
-        find_package(SDL2)
-        if( NOT SDL2_FOUND )
-            pkg_search_module(SDL2 REQUIRED sdl2)
-        endif()
-        set(ONS_SDL_TARGET SDL)
-    else()
-        set(ONS_SDL_TARGET SDL)
-    endif()
-
-    message(STATUS "ONS_SDL_TARGET: ${ONS_SDL_TARGET}")
-    
-
-    if(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
-        target_link_libraries(${ONS_SDL_TARGET} INTERFACE opengx)
-    endif()
-
-    if (NOT ONS_USE_OLD_DEPS)
-        PkgConfig_Find_Module(SDL_image)
-        PkgConfig_Find_Module(SDL_mixer)
-        PkgConfig_Find_Module(SDL_ttf)
-        PkgConfig_Find_Module(freetype2)
-        PkgConfig_Find_Module(ogg)
-        PkgConfig_Find_Module(zlib)
-        PkgConfig_Find_Module(vorbis)
-        PkgConfig_Find_Module(vorbisfile)
-        PkgConfig_Find_Module(libpng)
-        PkgConfig_Find_Module(bzip2)
-        PkgConfig_Find_Module(libtiff libtiff-4)
-        PkgConfig_Find_Module(libwebp)
-        PkgConfig_Find_Module(harfbuzz)
-
-        PkgConfig_Find_Module(libjpeg libjpeg62 libjpeg9)
-        
-        if (PkgConfigWrapper_libjpeg_NOTFOUND)
-            add_library(PkgConfigWrapper::libjpeg INTERFACE IMPORTED)
-            set_property(TARGET PkgConfigWrapper::libjpeg APPEND PROPERTY INTERFACE_LINK_LIBRARIES libjpeg.a)
-        endif()
-
-        if (TARGET PkgConfigWrapper::libtiff)
-            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libtiff)
-        else()
-            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libtiff-4)
-        endif()
-        
-        if (TARGET PkgConfigWrapper::libwebp)
-            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY INTERFACE_LINK_LIBRARIES PkgConfigWrapper::libwebp)
-        else()
-            set_property(TARGET PkgConfigWrapper::SDL_image APPEND PROPERTY LINK_LIBRARIES libwebp)
-        endif()
-
-        if (ONS_USE_LIBMAD)
-            target_link_libraries(PkgConfigWrapper::SDL_mixer INTERFACE mad)
-        endif()
-        
-        run_library_config(smpeg smpeg_include_directories)
-        message(STATUS "smpeg include dirs: ${smpeg_include_directories}")
-    endif()
-endif()
-
-if (ONS_USE_OLD_DEPS)
-    add_subdirectory(extlib)
-endif()
+add_subdirectory(extlib)
 
 #############################################
 # Tools
@@ -305,46 +229,24 @@ elseif(ONS_COMPILER_FLAG_STYLE STREQUAL "MSVC")
     )
 endif()
 
-# Dependencies
-if (ONS_USE_OLD_DEPS)
-    target_link_libraries(onscripter-en
-    PUBLIC
-        ${ONS_SDL_TARGET}
-
-        ogg
-        vorbis
-        SDL_mixer
-        SDL_ttf
-        SDL_image
-        bzip2
-        freetype
-        
-        smpeg
-    )
-else()
-    target_link_libraries(onscripter-en
-    PUBLIC
-        ${ONS_SDL_TARGET}
-        PkgConfigWrapper::SDL_image
-        PkgConfigWrapper::SDL_mixer
-        PkgConfigWrapper::SDL_ttf
-        PkgConfigWrapper::freetype2
-        PkgConfigWrapper::ogg
-        PkgConfigWrapper::zlib
-        PkgConfigWrapper::vorbis
-        PkgConfigWrapper::vorbisfile
-        PkgConfigWrapper::libpng
-        PkgConfigWrapper::libjpeg
-        PkgConfigWrapper::harfbuzz
-        PkgConfigWrapper::bzip2
-        smpeg
-    )
-endif()
+# Libraries
+target_link_libraries(onscripter-en
+PUBLIC
+    ONS::SDL
+    ONS::ogg
+    ONS::vorbis
+    ONS::SDL_mixer
+    ONS::SDL_ttf
+    ONS::SDL_image
+    ONS::bzip2
+    ONS::freetype
+    ONS::smpeg
+)
 
 if (ONS_USE_LIBMAD)
     target_link_libraries(onscripter-en
     PUBLIC
-        mad
+        ONS::mad
     )
 endif()
 
@@ -545,6 +447,8 @@ elseif(NINTENDO_WIIU)
         DRCSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
     )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
+    target_link_libraries(${ONS_SDL_TARGET} INTERFACE opengx)
+
     configure_file(${CMAKE_SOURCE_DIR}/ons-en.png ${CMAKE_BINARY_DIR}/package/icon.png COPYONLY)
     configure_file(${CMAKE_SOURCE_DIR}/cmake/wii/meta.xml.in ${CMAKE_BINARY_DIR}/package/meta.xml)
 

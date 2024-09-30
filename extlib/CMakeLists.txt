@@ -74,6 +74,8 @@ if (ONS_USE_SDLCOMPAT)
         if (NOT SDL2_FOUND)
             pkg_search_module(SDL2 REQUIRED sdl2)
         endif()
+        
+        PkgConfig_Find_Module(SDL2 sdl2)
     endif()
 
     if (NOT ONS_PREFER_SYSTEM_PACKAGES OR NOT TARGET PkgConfigWrapper::SDL2)

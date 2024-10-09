@@ -10,9 +10,59 @@ include(CTest)
 include(GoogleTest)
 enable_testing()
 
+function(add_onsen_test target_name)
+    add_executable(${target_name})
+
+    if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
+        target_compile_options(${target_name}
+        PRIVATE
+            -fprofile-arcs
+            -ftest-coverage
+            -O0
+            -pthread
+        )
+        
+        target_link_options(${target_name}
+        PRIVATE
+            -lgcov
+            --coverage
+        )
+
+        if (MINGW)
+            target_link_options(${target_name}
+            PRIVATE
+                -mconsole
+            )
+        endif()
+    endif()
+
+    target_compile_features(${target_name}
+    PRIVATE
+        cxx_std_98
+    )
+
+    target_compile_definitions(${target_name}
+    PRIVATE
+        GTEST_LANG_CXX11=0
+    )
+
+    target_include_directories(${target_name}
+    PRIVATE
+        ..
+    )
+
+    target_link_libraries(${target_name}
+    PRIVATE
+        gtest
+        gtest_main
+    )
+
+    gtest_discover_tests(${target_name})
+endfunction()
+
 #############################################
 # onscripter_encoding_test
-add_executable(onscripter_encoding_test)
+add_onsen_test(onscripter_encoding_test)
 
 target_sources(onscripter_encoding_test
 PRIVATE
@@ -20,48 +70,3 @@ PRIVATE
     ../Encoding.cpp
     ../sjis2utf16.cpp
 )
-if(ONS_COMPILER_FLAG_STYLE STREQUAL "GNU")
-    target_compile_options(onscripter_encoding_test
-    PRIVATE
-        -fprofile-arcs
-        -ftest-coverage
-        -O0
-        -pthread
-    )
-    
-    target_link_options(onscripter_encoding_test
-    PRIVATE
-        -lgcov
-        --coverage
-    )
-
-    if (MINGW)
-        target_link_options(onscripter_encoding_test
-        PRIVATE
-            -mconsole
-        )
-    endif()
-endif()
-
-target_compile_features(onscripter_encoding_test
-PRIVATE
-    cxx_std_98
-)
-
-target_compile_definitions(onscripter_encoding_test
-PRIVATE
-    GTEST_LANG_CXX11=0
-)
-
-target_include_directories(onscripter_encoding_test
-PRIVATE
-    ..
-)
-
-target_link_libraries(onscripter_encoding_test
-PRIVATE
-    gtest
-    gtest_main
-)
-
-gtest_discover_tests(onscripter_encoding_test)

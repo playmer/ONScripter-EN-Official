@@ -92,10 +92,7 @@ if (ONS_USE_SDLCOMPAT)
     option(SDL12TESTS "Enable to build SDL-1.2 test programs" OFF)
     option(SDL12DEVEL "Enable installing SDL-1.2 development headers" OFF)
     option(STATICDEVEL "Enable installing static link library" OFF)
-    if(NINTENDO_WIIU
-        OR NINTENDO_SWITCH
-        OR NXDK
-        OR ONS_FORCE_SDLCOMPAT_FULLY_STATIC)
+    if(ONS_FORCE_SDLCOMPAT_FULLY_STATIC)
         option(SDL12_FULLY_STATIC "Make SDL12_compat capable of being statically compiled alongside SDL2" ON)
     endif()
 
@@ -196,9 +193,9 @@ else()
                 ${sdl_source_prefix}/src/audio/macosx/*.c
                 ${sdl_source_prefix}/src/cdrom/macosx/*.c
                 ${sdl_source_prefix}/src/joystick/darwin/*.c
-                ${sdl_source_prefix}/src/loadso/dlopen/*.c
+                #${sdl_source_prefix}/src/loadso/dlopen/*.c
                 ${sdl_source_prefix}/src/loadso/macosx/*.c
-                # ${sdl_source_prefix}/src/thread/pthread/*.c
+                ${sdl_source_prefix}/src/thread/pthread/*.c
                 ${sdl_source_prefix}/src/timer/unix/*.c
                 ${sdl_source_prefix}/src/video/quartz/*.m
             )
@@ -211,17 +208,17 @@ else()
                 ${sdl_source_prefix}/src/main/macosx/SDLMain.m
             )
         elseif(UNIX)
-            #file(
-            #    GLOB SDL_MACOS_SOURCES CONFIGURE_DEPENDS
-            #    ${sdl_source_prefix}/src/audio/macosx/*.c
-            #    ${sdl_source_prefix}/src/cdrom/macosx/*.c
-            #    ${sdl_source_prefix}/src/joystick/darwin/*.c
-            #    ${sdl_source_prefix}/src/loadso/dlopen/*.c
-            #    ${sdl_source_prefix}/src/loadso/macosx/*.c
-            #    # ${sdl_source_prefix}/src/thread/pthread/*.c
-            #    ${sdl_source_prefix}/src/timer/unix/*.c
-            #    ${sdl_source_prefix}/src/video/quartz/*.m
-            #)
+            file(
+                GLOB SDL_LINUX_SOURCES CONFIGURE_DEPENDS
+                ${sdl_source_prefix}/src/audio/alsa/*.c
+                ${sdl_source_prefix}/src/audio/pulse/*.c
+                ${sdl_source_prefix}/src/cdrom/linux/*.c
+                ${sdl_source_prefix}/src/joystick/linux/*.c
+                ${sdl_source_prefix}/src/loadso/dlopen/*.c
+                ${sdl_source_prefix}/src/thread/pthread/*.c
+                ${sdl_source_prefix}/src/timer/unix/*.c
+                ${sdl_source_prefix}/src/video/x11/*.m
+            )
             #
             #file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/SDL_config_macosx.h SDL_CONFIG_HEADER)
             #
@@ -245,10 +242,11 @@ else()
             ${CMAKE_CURRENT_BINARY_DIR}/include
         )
 
-        #add_library(SDLmain ${LIBSDLMAIN_SOURCES})
-        #target_include_directories(SDLmain PUBLIC ${SDL}/include)
+        add_library(SDLmain ${LIBSDLMAIN_SOURCES})
+        target_include_directories(SDLmain PUBLIC ${SDL}/include)
         
         add_library(ONS::SDL ALIAS SDL)
+        add_library(ONS::SDLmain ALIAS SDLmain)
         message(STATUS "Added SDL locally")
     else()
         add_library(ONS::SDL ALIAS PkgConfigWrapper::SDL)

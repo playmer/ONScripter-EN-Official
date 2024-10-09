@@ -28,12 +28,18 @@ if (NINTENDO_WIIU
     OR NXDK)
     option(ONS_USE_SYSTEM_SDL "" ON)
     option(ONS_FORCE_SDLCOMPAT_FULLY_STATIC "" ON)
-elseif(MINGW 
-       OR NINTENDO_GAMECUBE
+elseif(MINGW)
+    option(ONS_USE_SYSTEM_SDL "" OFF)
+    option(ONS_USE_SDLCOMPAT "" OFF)
+elseif(NINTENDO_GAMECUBE
        OR NINTENDO_WII
        OR PSP)
     option(ONS_USE_SYSTEM_SDL "" ON)
     option(ONS_USE_SDLCOMPAT "" OFF)
+endif()
+
+if (WIN32)
+    option(ONS_USE_SDLMAIN "" ON)
 endif()
 
 if (${CMAKE_HOST_SYSTEM_NAME} STREQUAL ${CMAKE_SYSTEM_NAME})
@@ -42,6 +48,7 @@ endif()
 
 option(ONS_USE_SYSTEM_SDL "" OFF)
 option(ONS_USE_SDLCOMPAT "" ON)
+option(ONS_USE_SDLMAIN "" ON)
 option(ONS_PREFER_SYSTEM_PACKAGES "Prefer using system packages over our in-tree/submoduled libraries." OFF)
 option(ONS_HOST_PLATFORM "Platform for which could be feasibly used to develop an ONScripter title, if off, we won't compile tools/tests" OFF)
 option(ONS_PREFER_OLD_DEPS "When building our own local libraries, decide if we'll use the original versions or the newer ones, where possible." ON)

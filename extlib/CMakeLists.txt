@@ -164,6 +164,7 @@ else()
         )
 
         target_sources(SDL PRIVATE ${SDL_SOURCES})
+        set(LIBSDLMAIN_SOURCES ${sdl_source_prefix}/src/main/duummy/SDL_dummy_main.c)
 
         if (WIN32)
             file(
@@ -182,11 +183,9 @@ else()
 
             file(STRINGS ${sdl_source_prefix}/include/SDL_config_win32.h SDL_CONFIG_HEADER)
             
-            target_sources(SDL 
-            PRIVATE 
-                ${SDL_WIN32_SOURCES}
-                #${SDL}/src/main/win32/SDL_win32_main.c
-            )
+            target_sources(SDL PRIVATE ${SDL_WIN32_SOURCES})
+            
+            set(LIBSDLMAIN_SOURCES ${sdl_source_prefix}/src/main/win32/SDL_win32_main.c)
         elseif(APPLE)
             file(
                 GLOB SDL_MACOS_SOURCES CONFIGURE_DEPENDS
@@ -202,11 +201,9 @@ else()
             
             file(STRINGS ${sdl_source_prefix}/include/SDL_config_macosx.h SDL_CONFIG_HEADER)
             
-            target_sources(SDL 
-            PRIVATE 
-                ${SDL_MACOS_SOURCES} 
-                ${sdl_source_prefix}/src/main/macosx/SDLMain.m
-            )
+            target_sources(SDL PRIVATE ${SDL_MACOS_SOURCES})
+
+            set(LIBSDLMAIN_SOURCES ${sdl_source_prefix}/src/main/macosx/SDLMain.m)
         elseif(UNIX)
             file(
                 GLOB SDL_LINUX_SOURCES CONFIGURE_DEPENDS
@@ -836,6 +833,26 @@ if (NOT ONS_PREFER_SYSTEM_PACKAGES OR NOT TARGET PkgConfigWrapper::freetype2)
     PUBLIC
         ${freetype_source_prefix}/include
     )
+
+    # Clang doesn't find files that are next to a source that uses #include <> instead of #include ""
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_include_directories(freetype
+        PUBLIC
+            ${freetype_source_prefix}/src/autofit
+            ${freetype_source_prefix}/src/base
+            ${freetype_source_prefix}/src/cache
+            ${freetype_source_prefix}/src/cff
+            ${freetype_source_prefix}/src/cid
+            ${freetype_source_prefix}/src/otvalid
+            ${freetype_source_prefix}/src/psaux
+            ${freetype_source_prefix}/src/pshinter
+            ${freetype_source_prefix}/src/psnames
+            ${freetype_source_prefix}/src/sfnt
+            ${freetype_source_prefix}/src/smooth
+            ${freetype_source_prefix}/src/truetype
+            ${freetype_source_prefix}/src/type1
+        )
+    endif()
 
     add_library(ONS::freetype ALIAS freetype)
 else()

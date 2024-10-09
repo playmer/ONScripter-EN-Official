@@ -4,7 +4,11 @@ AUTOMAKE_OPTIONS = foreign 1.11 dist-zip dist-xz
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = m4 include vq lib
+SUBDIRS = m4 include vq lib test doc
+
+if BUILD_EXAMPLES 
+SUBDIRS += examples 
+endif 
 
 m4datadir = $(datadir)/aclocal
 m4data_DATA = vorbis.m4

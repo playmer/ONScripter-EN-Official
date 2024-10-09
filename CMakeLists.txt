@@ -465,8 +465,6 @@ elseif(NINTENDO_WIIU)
         DRCSPLASH "${CMAKE_SOURCE_DIR}/ons-en.png"
     )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
-    target_link_libraries(ONS::SDL INTERFACE opengx)
-
     configure_file(${CMAKE_SOURCE_DIR}/ons-en.png ${CMAKE_BINARY_DIR}/package/icon.png COPYONLY)
     configure_file(${CMAKE_SOURCE_DIR}/cmake/wii/meta.xml.in ${CMAKE_BINARY_DIR}/package/meta.xml)
 

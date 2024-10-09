@@ -240,12 +240,16 @@ else()
         )
 
         add_library(SDLmain ${LIBSDLMAIN_SOURCES})
-        target_include_directories(SDLmain PUBLIC ${SDL}/include)
+        target_link_libraries(SDLmain PUBLIC SDL)
         
         add_library(ONS::SDL ALIAS SDL)
         add_library(ONS::SDLmain ALIAS SDLmain)
         message(STATUS "Added SDL locally")
     else()
+        if (${CMAKE_SYSTEM_NAME} STREQUAL NintendoWii)
+            target_link_libraries(PkgConfigWrapper::SDL INTERFACE opengx)
+        endif()
+
         add_library(ONS::SDL ALIAS PkgConfigWrapper::SDL)
         message(STATUS "Added SDL package")
     endif()
@@ -837,7 +841,7 @@ if (NOT ONS_PREFER_SYSTEM_PACKAGES OR NOT TARGET PkgConfigWrapper::freetype2)
     # Clang doesn't find files that are next to a source that uses #include <> instead of #include ""
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_include_directories(freetype
-        PUBLIC
+        PRIVATE
             ${freetype_source_prefix}/src/autofit
             ${freetype_source_prefix}/src/base
             ${freetype_source_prefix}/src/cache

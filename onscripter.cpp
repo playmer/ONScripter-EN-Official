@@ -420,13 +420,7 @@ static bool parseOptionFile(const char *filename, ONScripterLabel &ons, bool &ha
     return false;
 }
 
-#ifdef QWS
 int SDL_main( int argc, char **argv )
-#elif defined(PSP)
-extern "C" int main( int argc, char **argv )
-#else
-int main( int argc, char **argv )
-#endif
 {
     ONScripterLabel ons;
 

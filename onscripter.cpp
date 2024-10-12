@@ -560,7 +560,7 @@ void redirect_output()
 }
 
 #else // For platforms we haven't yet redirected.
-void redirect_stdout()
+void redirect_output()
 {
 
 }

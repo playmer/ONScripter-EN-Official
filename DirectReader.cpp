@@ -368,7 +368,6 @@ int DirectReader::getRegisteredCompressionType( const char *file_name )
 struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int index )
 {
     DirectReader::FileInfo fi;
-    memset(&fi, 0, sizeof(DirectReader::FileInfo));
     return fi;
 }
 
@@ -385,6 +384,7 @@ FILE *DirectReader::getFileHandle( const char *file_name, int &compression_type,
     capital_name[ len ] = '\0';
 //Mion: need to do more careful SJIS checking in this next part
     bool has_nonascii = false;
+    (void)has_nonascii;
     for ( i=0 ; i<len ; i++ ){
         if ((unsigned char)capital_name[i] >= 0x80)
             has_nonascii = true;

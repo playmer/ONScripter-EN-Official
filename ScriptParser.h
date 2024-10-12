@@ -78,8 +78,8 @@
 #define DEFAULT_LOOKBACK_NAME3 "doffcur.bmp"
 
 // Mion: kinsoku
-#define DEFAULT_START_KINSOKU "vxjnpABCDEHIRSTUX["
-#define DEFAULT_END_KINSOKU   "uwimo"
+#define DEFAULT_START_KINSOKU "ï¿½vï¿½xï¿½jï¿½nï¿½pï¿½Aï¿½Bï¿½Cï¿½Dï¿½Eï¿½Hï¿½Iï¿½Rï¿½Sï¿½Tï¿½Uï¿½Xï¿½["
+#define DEFAULT_END_KINSOKU   "ï¿½uï¿½wï¿½iï¿½mï¿½o"
 
 typedef unsigned char uchar3[3];
 
@@ -487,8 +487,10 @@ protected:
         Page(): next(NULL), previous(NULL),
                 text(NULL), max_text(0), text_count(0), tag(NULL){}
         ~Page(){
-            if (text) delete[] text; text = NULL;
-            if (tag)  delete[] tag;  tag = NULL;
+            if (text) delete[] text;
+            text = NULL;
+            if (tag)  delete[] tag;
+            tag = NULL;
             next = previous = NULL;
         }
         int add(unsigned char ch){

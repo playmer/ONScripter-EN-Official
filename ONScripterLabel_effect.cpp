@@ -518,6 +518,9 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
     }
 }
 
+// TODO: Remove when GCC bug is resolved: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110091
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-pointer="
 void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Surface *surface)
 {
     SDL_Rect clipped_rect;
@@ -531,6 +534,7 @@ void ONScripterLabel::drawEffect(SDL_Rect *dst_rect, SDL_Rect *src_rect, SDL_Sur
 
     SDL_BlitSurface(surface, src_rect, accumulation_surface, dst_rect);
 }
+#pragma GCC diagnostic pop
 
 void ONScripterLabel::generateMosaic( SDL_Surface *src_surface, int level )
 {

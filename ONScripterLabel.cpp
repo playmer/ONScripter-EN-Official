@@ -1199,7 +1199,6 @@ int ONScripterLabel::init()
 
     int font_picker = -1;
 
-    FILE *fp;
     // No longer causes segfault :) -Galladite 2023-06-05
     char* archive_default_font_ttf = create_filepath(archive_path, "default.ttf");
     char* archive_default_font_ttc = create_filepath(archive_path, "default.ttc");

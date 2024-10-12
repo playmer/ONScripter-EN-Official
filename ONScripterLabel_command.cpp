@@ -499,6 +499,10 @@ int ONScripterLabel::strpxlenCommand()
 {
     // Get int variable
     int val = script_h.readInt();
+
+    // FIXME: Use this?
+    (void)val;
+
     script_h.pushVariable();
 
     // Get string
@@ -2855,11 +2859,9 @@ int ONScripterLabel::gettagCommand()
         errorAndExit( "gettag: not in a subroutine, i.e. pretextgosub" );
 
     char *buf = current_page->tag;
-
-    int n;
     unsigned short unicode1, unicode2;
-
     int end_status;
+
     do{
         script_h.readVariable();
         end_status = script_h.getEndStatus();
@@ -4258,9 +4260,12 @@ int ONScripterLabel::btnwaitCommand()
                     sprite_info[ cur_button_link->sprite_no ].setCell(0);
                 }
                 else if ( cur_button_link->button_type == ButtonLink::TEXT_BUTTON ){
-                    if (txtbtn_visible)
+                    if (txtbtn_visible) {
                         cur_button_link->show_flag = 1;
-                        sprite_info[ cur_button_link->sprite_no ].setCell(0);
+                    }
+
+                    // FIXME: Should this be part of the above if? The previous indentation inplied it.
+                    sprite_info[ cur_button_link->sprite_no ].setCell(0);
                 }
                 else if ( cur_button_link->anim[1] != NULL ){
                     cur_button_link->show_flag = 2;

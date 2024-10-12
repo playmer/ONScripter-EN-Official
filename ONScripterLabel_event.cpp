@@ -78,7 +78,7 @@ SDL_TimerID timer_seqmusic_id = NULL;
 #endif
 bool ext_music_play_once_flag = false;
 
-static inline void clearTimer(SDL_TimerID &timer_id)
+void clearTimer(SDL_TimerID &timer_id)
 {
     if (timer_id != NULL ) {
         SDL_RemoveTimer( timer_id );

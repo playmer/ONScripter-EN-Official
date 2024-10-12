@@ -65,7 +65,7 @@
 #include <windows.h>
 #include "SDL_syswm.h"
 #include "winres.h"
-typedef HRESULT (WINAPI *GETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPTSTR);
+typedef HRESULT (WINAPI *SHGetFolderPathA_t)(HWND, int, HANDLE, DWORD, LPTSTR);
 #endif
 #ifdef LINUX
 #include <unistd.h>
@@ -1087,18 +1087,18 @@ int ONScripterLabel::init()
         // On Windows, store in [Profiles]/All Users/Application Data.
         // Permit saves to be per-user rather than shared if
         // option --current-user-appdata is specified
-        HMODULE shdll = LoadLibrary("shfolder");
+        void* shdll = SDL_LoadObject("shfolder");
         if (shdll) {
-            GETFOLDERPATH gfp = GETFOLDERPATH(GetProcAddress(shdll, "SHGetFolderPathA"));
-            if (gfp) {
+            SHGetFolderPathA_t SHGetFolderPathAFn = SHGetFolderPathA_t(SDL_LoadFunction(shdll, "SHGetFolderPathA"));
+            if (SHGetFolderPathAFn) {
                 char hpath[MAX_PATH];
 #define CSIDL_COMMON_APPDATA 0x0023 // for [Profiles]/All Users/Application Data
 #define CSIDL_APPDATA 0x001A // for [Profiles]/[User]/Application Data
                 HRESULT res;
                 if (current_user_appdata)
-                    res = gfp(0, CSIDL_APPDATA, 0, 0, hpath);
+                    res = SHGetFolderPathAFn(0, CSIDL_APPDATA, 0, 0, hpath);
                 else
-                    res = gfp(0, CSIDL_COMMON_APPDATA, 0, 0, hpath);
+                    res = SHGetFolderPathAFn(0, CSIDL_COMMON_APPDATA, 0, 0, hpath);
                 if (res != S_FALSE && res != E_FAIL && res != E_INVALIDARG) {
                     script_h.save_path = new char[strlen(hpath) + strlen(gameid) + 3];
                     sprintf(script_h.save_path, "%s%c%s%c",
@@ -1106,7 +1106,7 @@ int ONScripterLabel::init()
                     CreateDirectory(script_h.save_path, 0);
                 }
             }
-            FreeLibrary(shdll);
+            SDL_UnloadObject(shdll);
         }
         if (script_h.save_path == NULL) {
             // Error; assume ancient Windows. In this case it's safe
@@ -1609,6 +1609,8 @@ void ONScripterLabel::resetSentenceFont()
 bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool is_simple, bool is_warning )
 //returns true if we need to exit
 {
+    (void)is_simple;
+
     //The OS X dialog box routines are crashing when in fullscreen mode,
     //so let's switch to windowed mode just in case
     menu_windowCommand();
@@ -1673,30 +1675,30 @@ void ONScripterLabel::openDebugFolders()
     // to make it easier to debug user issues on Windows, open
     // the current directory, save_path and ONScripter output folders
     // in Explorer
-    HMODULE shdll = LoadLibrary("shell32");
+    void* shdll = SDL_LoadObject("shell32");
     if (shdll) {
         char hpath[MAX_PATH];
         bool havefp = false;
-        GETFOLDERPATH gfp = GETFOLDERPATH(GetProcAddress(shdll, "SHGetFolderPathA"));
-        if (gfp) {
-            HRESULT res = gfp(0, CSIDL_APPDATA, 0, 0, hpath); //now user-based
+        SHGetFolderPathA_t SHGetFolderPathAFn = SHGetFolderPathA_t(SDL_LoadFunction(shdll, "SHGetFolderPathA"));
+        if (SHGetFolderPathAFn) {
+            HRESULT res = SHGetFolderPathAFn(0, CSIDL_APPDATA, 0, 0, hpath); //now user-based
             if (res != S_FALSE && res != E_FAIL && res != E_INVALIDARG) {
                 havefp = true;
                 sprintf((char *)&hpath + strlen(hpath), "%c%s",
                         DELIMITER, "ONScripter-EN");
             }
         }
-        typedef HINSTANCE (WINAPI *SHELLEXECUTE)(HWND, LPCSTR, LPCSTR,
+        typedef HINSTANCE (WINAPI *ShellExecuteA_t)(HWND, LPCSTR, LPCSTR,
                            LPCSTR, LPCSTR, int);
-        SHELLEXECUTE shexec =
-            SHELLEXECUTE(GetProcAddress(shdll, "ShellExecuteA"));
-        if (shexec) {
-            shexec(NULL, "open", "", NULL, NULL, SW_SHOWNORMAL);
-            shexec(NULL, "open", script_h.save_path, NULL, NULL, SW_SHOWNORMAL);
+        ShellExecuteA_t ShellExecuteAFn =
+            ShellExecuteA_t(SDL_LoadFunction(shdll, "ShellExecuteA"));
+        if (ShellExecuteAFn) {
+            ShellExecuteAFn(NULL, "open", "", NULL, NULL, SW_SHOWNORMAL);
+            ShellExecuteAFn(NULL, "open", script_h.save_path, NULL, NULL, SW_SHOWNORMAL);
             if (havefp)
-                shexec(NULL, "open", hpath, NULL, NULL, SW_SHOWNORMAL);
+                ShellExecuteAFn(NULL, "open", hpath, NULL, NULL, SW_SHOWNORMAL);
         }
-        FreeLibrary(shdll);
+        SDL_UnloadObject(shdll);
     }
 }
 #endif
@@ -2348,7 +2350,7 @@ void ONScripterLabel::newPage( bool next_flag )
     flush( refreshMode(), &sentence_font_info.pos );
 }
 
-AnimationInfo* ONScripterLabel::getSentence( char *buffer, Fontinfo *info, int num_cells, bool flush_flag, bool nofile_flag, bool skip_whitespace )
+AnimationInfo* ONScripterLabel::getSentence( char *buffer, Fontinfo *info, int num_cells, bool, bool nofile_flag, bool skip_whitespace )
 {
     //Mion: moved from getSelectableSentence and modified
     int current_text_xy[2];

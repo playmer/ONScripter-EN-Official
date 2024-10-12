@@ -1383,6 +1383,9 @@ bool ONScripterLabel::processText()
 char ONScripterLabel::doLineBreak(bool isHardBreak)
 // Mion: for text processing
 {
+    // FIXME: Use or remove.
+    (void)isHardBreak;
+
     sentence_font.newLine();
     /* Mion: working on proper handling for "soft" page breaks,
          but commented out for now until log text processing
@@ -2119,7 +2122,7 @@ float ONScripterLabel::strpxlen(const char *buf, Fontinfo *fi)
     float w = 0.0;
     char two_chars[7] = {};
     char num_chars = 1;
-    
+
     // FIXME: Use these
     (void)two_chars;
     (void)num_chars;

@@ -500,9 +500,9 @@ void redirect_output()
 	DWORD pathlen = 0;
 	FILE *newfp = NULL;
     outputPath[0] = 0;
-    HMODULE shdll = LoadLibrary("shfolder");
+    void* shdll = SDL_LoadObject("shfolder");
     if (shdll) {
-        SHGetFolderPathA_t SHGetFolderPathA = (SHGetFolderPathA_t)GetProcAddress(shdll, "SHGetFolderPathA");
+        SHGetFolderPathA_t SHGetFolderPathA = (SHGetFolderPathA_t)SDL_LoadFunction(shdll, "SHGetFolderPathA");
         if (SHGetFolderPathA) {
             char hpath[MAX_PATH];
             HRESULT res = SHGetFolderPathA(0, CSIDL_APPDATA, 0, 0, hpath); //now user-based
@@ -513,7 +513,7 @@ void redirect_output()
                 pathlen = strlen(outputPath);
             }
         }
-        FreeLibrary(shdll);
+        SDL_UnloadObject(shdll);
     }
     if (outputPath[0] == 0) pathlen = GetModuleFileName(NULL, outputPath, SDL_arraysize(outputPath));
     

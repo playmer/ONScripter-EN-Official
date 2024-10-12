@@ -2350,7 +2350,7 @@ void ScriptHandler::parseStr( char **buf )
     }
     else{ // str alias
         const char* fmt = "Undefined string alias '%s'";
-        char ch, alias_buf[MAX_ERRBUF_LEN - (strlen(fmt) - 2)]; // minus 2 accounts for the %s format specifier
+        char ch, alias_buf[MAX_ERRBUF_LEN - (sizeof(fmt) - 3)]; // minus 3 accounts for the %s format specifier and null terminator
         unsigned int alias_buf_len = 0;
         bool first_flag = true;
 

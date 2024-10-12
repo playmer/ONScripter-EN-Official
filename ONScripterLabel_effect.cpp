@@ -284,7 +284,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
                      effect_no);
             errorAndCont(script_h.errbuf);
         }
-
+        // fall through
       case 10: // Cross fade
         height = 256 * effect_counter / effect_duration;
         effectBlend( NULL, ALPHA_BLEND_CONST, height, &dirty_rect.bounding_box );

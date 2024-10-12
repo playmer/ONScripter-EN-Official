@@ -317,7 +317,7 @@ unsigned long DirectReader::swapLong( unsigned long ch )
            ((ch & 0x0000ff00) << 8) | ((ch & 0x000000ff) << 24);
 }
 
-int DirectReader::open( const char *name )
+int DirectReader::open( const char *)
 {
     return 0;
 }
@@ -365,7 +365,7 @@ int DirectReader::getRegisteredCompressionType( const char *file_name )
     return NO_COMPRESSION;
 }
     
-struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int index )
+struct DirectReader::FileInfo DirectReader::getFileByIndex( unsigned int)
 {
     DirectReader::FileInfo fi;
     return fi;

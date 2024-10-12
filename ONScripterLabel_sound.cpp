@@ -879,6 +879,8 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 
 int ONScripterLabel::playAVI( const char *filename, bool click_flag )
 {
+    (void)filename, (void)click_flag;
+
 #ifdef USE_AVIFILE
     char *absolute_filename = new char[ strlen(archive_path) + strlen(filename) + 1 ];
     sprintf( absolute_filename, "%s%s", archive_path, filename );
@@ -1133,6 +1135,7 @@ static int oc_seek_func(void *datasource, ogg_int64_t offset, int whence)
 
 static int oc_close_func(void *datasource)
 {
+    (void)datasource;
     return 0;
 }
 

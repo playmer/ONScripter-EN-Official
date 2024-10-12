@@ -870,16 +870,16 @@ int ONScripterLabel::shellCommand()
 {
 #ifdef WIN32
     const char *url = script_h.readStr();
-    HMODULE shdll = LoadLibrary("shell32");
+    void* shdll = SDL_LoadObject("shell32");
     if (shdll) {
-        typedef HINSTANCE (WINAPI *SHELLEXECUTE)(HWND, LPCSTR, LPCSTR, LPCSTR,
+        typedef HINSTANCE (WINAPI *ShellExecuteA_t)(HWND, LPCSTR, LPCSTR, LPCSTR,
 						 LPCSTR, int);
-        SHELLEXECUTE shexec =
-	    SHELLEXECUTE(GetProcAddress(shdll, "ShellExecuteA"));
-        if (shexec) {
-            shexec(NULL, "open", url, NULL, NULL, SW_SHOW);
+        ShellExecuteA_t ShellExecuteAFn =
+	    ShellExecuteA_t(SDL_LoadFunction(shdll, "ShellExecuteA"));
+        if (ShellExecuteAFn) {
+            ShellExecuteAFn(NULL, "open", url, NULL, NULL, SW_SHOW);
         }
-        FreeLibrary(shdll);
+        SDL_UnloadObject(shdll);
     }
     
 #elif defined MACOSX

@@ -25,24 +25,43 @@
 #ifndef __GRAPHICS_CPU_H__
 #define __GRAPHICS_CPU_H__
 
-#include "graphics_common.h"
+#include <stdint.h>
 
-#if defined (USE_X86_GFX) && !defined(MACOSX)
-#include <cpuid.h>
-#endif
+#include "graphics_common.h"
 
 namespace ons_gfx {
 
     enum{
-        CPUF_NONE           =  0,
-        CPUF_X86_MMX        =  1,
-        CPUF_X86_SSE        =  2,
-        CPUF_X86_SSE2       =  4,
-        CPUF_PPC_ALTIVEC    =  8
+        CPUF_NONE           =  1 <<  0,
+        CPUF_X86_MMX         =  1 <<  1,
+        CPUF_X86_SSE         =  1 <<  2,
+        CPUF_X86_SSE2        =  1 <<  3,
+        CPUF_X86_SSE3        =  1 <<  4,
+        CPUF_X86_SSSE3       =  1 <<  5,
+        CPUF_X86_SSE4_1      =  1 <<  6,
+        CPUF_X86_SSE4_2      =  1 <<  7,
+        CPUF_X86_AVX         =  1 <<  8,
+        CPUF_X86_AVX2        =  1 <<  9,
+        CPUF_PPC_ALTIVEC    =  1 << 10,
+        CPUF_ARM_NEON       =  1 << 11,
+        CPUF_ARM_SVE        =  1 << 12,
+        CPUF_ARM_SVE2       =  1 << 13,
     };
 
-    void setCpufuncs(unsigned int func);
-    unsigned int getCpufuncs();
+    void initCpuFuncs();
+    void disableCpuAccelFuncs();
+    
+    void imageFilterMean_CPU(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
+    void imageFilterAddTo_CPU(unsigned char *dst, unsigned char *src, int length);
+    void imageFilterSubFrom_CPU(unsigned char *dst, unsigned char *src, int length);
+    void imageFilterBlend_CPU(uint32_t *dst_buffer, uint32_t *src_buffer,
+                            uint8_t *alphap, int alpha, int length);
+    void imageFilterEffectBlend_CPU(uint32_t *dst_buffer, uint32_t *src1_buffer,
+                                    uint32_t *src2_buffer, uint32_t mask2, int length);
+    void imageFilterEffectMaskBlend_CPU(uint32_t *dst_buffer, uint32_t *src1_buffer,
+                                        uint32_t *src2_buffer, uint32_t *mask_buffer,
+                                        uint32_t overflow_mask, uint32_t mask_value,
+                                        int length);
 
 }
 

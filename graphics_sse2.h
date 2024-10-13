@@ -25,17 +25,17 @@
 #ifndef __GRAPHICS_SSE2_H__
 #define __GRAPHICS_SSE2_H__
 
-#ifdef USE_X86_GFX
+#ifdef ONS_X86_SSE2_AVAILIBLE
 namespace ons_gfx {
 
-int imageFilterMean_SSE2(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
-int imageFilterAddTo_SSE2(unsigned char *dst, unsigned char *src, int length);
-int imageFilterSubFrom_SSE2(unsigned char *dst, unsigned char *src, int length);
-int imageFilterBlend_SSE2(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap, int alpha, int length);
-int imageFilterEffectBlend_SSE2(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 mask2, int length);
-int imageFilterEffectMaskBlend_SSE2(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *mask_buffer, Uint32 is_crossfade, Uint32 mask_value, int length);
+void imageFilterMean_SSE2(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length);
+void imageFilterAddTo_SSE2(uint8_t *dst, uint8_t *src, int length);
+void imageFilterSubFrom_SSE2(uint8_t *dst, uint8_t *src, int length);
+void imageFilterBlend_SSE2(uint32_t *dst_buffer, uint32_t *src_buffer, uint8_t *alphap, int alpha, int length);
+void imageFilterEffectBlend_SSE2(uint32_t *dst_buffer, uint32_t *src1_buffer, uint32_t *src2_buffer, uint32_t mask2, int length);
+void imageFilterEffectMaskBlend_SSE2(uint32_t *dst_buffer, uint32_t *src1_buffer, uint32_t *src2_buffer, uint32_t *mask_buffer, uint32_t is_crossfade, uint32_t mask_value, int length);
 
 }
-#endif //USE_X86_GFX
+#endif //ONS_X86_SSE2_AVAILIBLE
 
 #endif // __GRAPHICS_SSE2_H__

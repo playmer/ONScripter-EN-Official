@@ -89,9 +89,9 @@ static void optionHelp()
     printf( "      --force-png-nscmask\talways use NScripter-style masks\n");
     printf( "      --detect-png-nscmask\tdetect PNG alpha images that actually use masks\n");
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
-#ifdef USE_X86_GFX
+#if defined(ONS_X86) || defined(ONS_X8664)
     printf( "      --disable-cpu-gfx\tdo not use MMX/SSE2 graphics acceleration routines\n");
-#elif  USE_PPC_GFX
+#elif  defined(ONS_PPC)
     printf( "      --disable-cpu-gfx\tdo not use Altivec graphics acceleration routines\n");
 #endif
     printf( "      --automode-time time\tdefault time at clickwaits before continuing, when in automode\n");
@@ -262,7 +262,7 @@ static void parseOptions(int argc, char **argv, ONScripterLabel &ons, bool &hasA
             else if ( !strcmp( argv[0]+1, "-debug" ) ){
                 ons.add_debug_level();
             }
-#if defined (USE_X86_GFX) || defined(USE_PPC_GFX)
+#if defined(ONS_X86) || defined(ONS_X8664) || defined(ONS_PPC)
             else if ( !strcmp( argv[0]+1, "-disable-cpu-gfx" ) ){
                 ons.disableCpuGfx();
                 printf("disabling CPU accelerated graphics routines\n");

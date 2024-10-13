@@ -25,14 +25,14 @@
 #ifndef __GRAPHICS_MMX_H__
 #define __GRAPHICS_MMX_H__
 
-#ifdef USE_X86_GFX
+#ifdef ONS_X86_MMX_AVAILIBLE
 namespace ons_gfx {
 
-void imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
-void imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length);
-void imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length);
+void imageFilterMean_MMX(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length);
+void imageFilterAddTo_MMX(uint8_t *dst, uint8_t *src, int length);
+void imageFilterSubFrom_MMX(uint8_t *dst, uint8_t *src, int length);
 
 }
-#endif //USE_X86_GFX
+#endif //ONS_X86_MMX_AVAILIBLE
 
 #endif // __GRAPHICS_SSE2_H__

@@ -24,9 +24,14 @@
 
 // Based upon routines provided by Roto
 
-#ifdef USE_X86_GFX
+#ifdef ONS_X86_SSE2_AVAILIBLE
 
-#include <emmintrin.h>
+#if defined(_MSC_VER) // MSVC
+    #include <intrin.h>
+#else
+    #include <emmintrin.h>
+#endif
+
 #include <math.h>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -37,12 +42,12 @@
 
 namespace ons_gfx {
 
-int imageFilterMean_SSE2(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
+void imageFilterMean_SSE2(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 16-byte boundary in dst
-    while( (((long)dst & 0xF) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst & 0xF) > 0) && (n > 0) ) {
         MEAN_PIXEL();
         --n; ++dst; ++src1; ++src2;
     }
@@ -65,17 +70,15 @@ int imageFilterMean_SSE2(unsigned char *src1, unsigned char *src2, unsigned char
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_MEAN();
-
-    return length - n;
 }
 
 
-int imageFilterAddTo_SSE2(unsigned char *dst, unsigned char *src, int length)
+void imageFilterAddTo_SSE2(uint8_t *dst, uint8_t *src, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 16-byte boundary in dst
-    while( (((long)dst & 0xF) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst & 0xF) > 0) && (n > 0) ) {
         ADDTO_PIXEL();
         --n; ++dst; ++src;
     }
@@ -93,17 +96,15 @@ int imageFilterAddTo_SSE2(unsigned char *dst, unsigned char *src, int length)
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_ADDTO();
-
-    return length - n;
 }
 
 
-void imageFilterSubFrom_SSE2(unsigned char *dst, unsigned char *src, int length)
+void imageFilterSubFrom_SSE2(uint8_t *dst, uint8_t *src, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 16-byte boundary in dst
-    while( (((long)dst & 0xF) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst & 0xF) > 0) && (n > 0) ) {
         SUBFROM_PIXEL();
         --n; ++dst; ++src;
     }
@@ -157,12 +158,12 @@ static inline __m128i alphaBlendCore_SSE2(__m128i src1, __m128i src2, __m128i d_
     return _mm_or_si128(rb, g);
 }
 
-int imageFilterBlend_SSE2(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap, int alpha, int length)
+void imageFilterBlend_SSE2(uint32_t *dst_buffer, uint32_t *src_buffer, uint8_t *alphap, int alpha, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 16-byte boundary in dst_buffer
-    while( (((long)dst_buffer & 0xF) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst_buffer & 0xF) > 0) && (n > 0) ) {
         BLEND_PIXEL();
         --n; ++dst_buffer; ++src_buffer;
     }
@@ -189,16 +190,14 @@ int imageFilterBlend_SSE2(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap,
     // If any pixels are left over, deal with them individually
     ++n;
     BASIC_BLEND();
-
-    return length - n;
 }
 
-int imageFilterEffectBlend_SSE2(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 mask2, int length)
+void imageFilterEffectBlend_SSE2(uint32_t *dst_buffer, uint32_t *src1_buffer, uint32_t *src2_buffer, uint32_t mask2, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 16-byte boundary in dst_buffer
-    while( (((long)dst_buffer & 0xF) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst_buffer & 0xF) > 0) && (n > 0) ) {
         BLEND_EFFECT_PIXEL();
         --n; ++dst_buffer; ++src1_buffer; ++src2_buffer;
     }
@@ -224,16 +223,14 @@ int imageFilterEffectBlend_SSE2(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 
         BLEND_EFFECT_PIXEL();
         ++dst_buffer, ++src1_buffer, ++src2_buffer;
     }
-
-    return length - n;
 }
 
-int imageFilterEffectMaskBlend_SSE2(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *mask_buffer, Uint32 overflow_mask, Uint32 mask_value, int length)
+void imageFilterEffectMaskBlend_SSE2(uint32_t *dst_buffer, uint32_t *src1_buffer, uint32_t *src2_buffer, uint32_t *mask_buffer, uint32_t overflow_mask, uint32_t mask_value, int length)
 {
     int n = length;
 
     // Compute first few values so we're on a 16-byte boundary in dst_buffer
-    while( (((long)dst_buffer & 0xF) > 0) && (n > 0) ) {
+    while( (((uintptr_t)dst_buffer & 0xF) > 0) && (n > 0) ) {
         BLEND_EFFECT_MASK_PIXEL();
         --n; ++dst_buffer; ++src1_buffer; ++src2_buffer; ++mask_buffer;
     }
@@ -275,10 +272,8 @@ int imageFilterEffectMaskBlend_SSE2(Uint32 *dst_buffer, Uint32 *src1_buffer, Uin
         BLEND_EFFECT_MASK_PIXEL();
         ++dst_buffer, ++src1_buffer, ++src2_buffer; ++mask_buffer;
     }
-
-    return length - n;
 }
 
 }//namespace ons_gfx
 
-#endif //USE_X86_GFX
+#endif //ONS_X86_SSE2_AVAILIBLE

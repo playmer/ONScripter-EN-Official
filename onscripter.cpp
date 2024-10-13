@@ -497,8 +497,8 @@ int ret = SDL_putenv("SDL_STDIO_REDIRECT=0");
 
 void redirect_output()
 {
-	DWORD pathlen = 0;
-	FILE *newfp = NULL;
+    DWORD pathlen = 0;
+    FILE *newfp = NULL;
     outputPath[0] = 0;
     HMODULE shdll = LoadLibrary("shfolder");
     if (shdll) {

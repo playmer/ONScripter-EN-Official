@@ -9,6 +9,8 @@
     #define ONS_PPC 1
 #elif defined(__PPC64__) || defined(__ppc64__) || defined(_ARCH_PPC64)
     #define ONS_PPC64 1
+#else
+    #error "Unknown architecture, please add it and report to GitHub."
 #endif
 
 #if defined(ONS_X8664) || defined(ONS_X86) 

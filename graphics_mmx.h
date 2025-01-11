@@ -27,6 +27,8 @@
 
 #include "PlatformDefines.h"
 
+#include <stdint.h>
+
 #ifdef ONS_X86_MMX_AVAILIBLE
 namespace ons_gfx {
 

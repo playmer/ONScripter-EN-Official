@@ -27,6 +27,8 @@
 
 #include "PlatformDefines.h"
 
+#include <stdint.h>
+
 #ifdef ONS_PPC_ALTIVEC_AVAILIBLE
 namespace ons_gfx {
 

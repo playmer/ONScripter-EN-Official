@@ -77,6 +77,7 @@ autoupdate
 Finally you can build ONScripter-EN and it's tools:
 
 ```bash
+./configure
 make all
 ```
 

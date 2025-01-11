@@ -24,6 +24,8 @@
 
 // Based upon routines provided by Roto
 
+#include "graphics_altivec.h"
+
 #ifdef ONS_PPC_ALTIVEC_AVAILIBLE
 
 #include <altivec.h>

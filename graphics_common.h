@@ -25,10 +25,6 @@
 #ifndef __GRAPHICS_COMMON_H__
 #define __GRAPHICS_COMMON_H__
 
-#if !defined(USE_CPU_GFX) && (defined(USE_X86_GFX) || defined(USE_PPC_GFX))
-#define USE_CPU_GFX
-#endif
-
 #ifdef BPP16
 #define BPP 16
 #define BLENDMASK  0x07e0f81f

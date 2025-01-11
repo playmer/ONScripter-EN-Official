@@ -24,6 +24,8 @@
 
 // Based upon routines provided by Roto
 
+#include "graphics_sse2.h"
+
 #ifdef ONS_X86_SSE2_AVAILIBLE
 
 #if defined(_MSC_VER) // MSVC

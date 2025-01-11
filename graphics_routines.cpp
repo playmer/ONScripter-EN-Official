@@ -25,11 +25,6 @@
 
 #include <cstddef>
 
-
-#if (ONS_X86 || ONS_X8664) && !defined(MACOSX) && !defined(_MSC_VER)
-#include <cpuid.h>
-#endif
-
 #include <SDL.h>
 
 #include "graphics_cpu.h"
@@ -38,7 +33,7 @@
 #include "graphics_resize.h"
 
 // These are internally guarded, and we already guard for usage of their functions below, 
-// so there's no need to check availiblity for the headers..
+// so there's no need to check availiblity for the headers.
 #include "graphics_altivec.h"
 #include "graphics_mmx.h"
 #include "graphics_sse2.h"
@@ -99,8 +94,6 @@ void imageFilterEffectMaskBlend_CPU(uint32_t *dst_buffer, uint32_t *src1_buffer,
 //Mion: for special graphics routine handling
 static unsigned int cpufuncs;
 
-
-
 void (*imageFilterMean)(uint8_t *src1, uint8_t *src2, uint8_t *dst, int length) = imageFilterMean_CPU;
 void (*imageFilterAddTo)(uint8_t *dst, uint8_t *src, int length) = imageFilterAddTo_CPU;
 void (*imageFilterSubFrom)(uint8_t *dst, uint8_t *src, int length) = imageFilterSubFrom_CPU;
@@ -108,51 +101,42 @@ void (*imageFilterBlend)(uint32_t *dst_buffer, uint32_t *src_buffer, uint8_t *al
 void (*imageFilterEffectBlend)(uint32_t *dst_buffer, uint32_t *src1_buffer, uint32_t *src2_buffer, uint32_t mask2, int length) = imageFilterEffectBlend_CPU;
 void (*imageFilterEffectMaskBlend)(uint32_t *dst_buffer, uint32_t *src1_buffer, uint32_t *src2_buffer, uint32_t *mask_buffer, uint32_t overflow_mask, uint32_t mask_value, int length) = imageFilterEffectMaskBlend_CPU;
 
-
 void initCpuFuncs()
 {
-    unsigned int func = CPUF_NONE;
+    unsigned int func = ons_gfx::CPUF_NONE;
 
 #ifndef BPP16 // currently none of the fast CPU routines support 16bpp
-#if (ONS_X86 || ONS_X8664) && !defined(MACOSX) && !defined(_MSC_VER)
+#if (defined(ONS_X86) || defined(ONS_X8664)) && !defined(MACOSX) && !defined(_MSC_VER)
     // determine what functions the cpu supports (Mion)
     {
-        unsigned int func, eax, ebx, ecx, edx;
-        func = CPUF_NONE;
-        if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) != 0) {
-            printf("System info: Intel CPU, with functions: ");
-            if (edx & bit_MMX) {
-                func |= CPUF_X86_MMX;
-                printf("MMX ");
-            }
-            if (edx & bit_SSE) {
-                func |= CPUF_X86_SSE;
-                printf("SSE ");
-            }
-            if (edx & bit_SSE2) {
-                func |= CPUF_X86_SSE2;
-                printf("SSE2 ");
-            }
-            printf("\n");
+        printf("System info: Intel CPU, with functions: ");
+        if (SDL_HasMMX()) {
+            func |= ons_gfx::CPUF_X86_MMX;
+            printf("MMX ");
         }
+        if (SDL_HasSSE()) {
+            func |= ons_gfx::CPUF_X86_SSE;
+            printf("SSE ");
+        }
+        if (SDL_HasSSE2()) {
+            func |= ons_gfx::CPUF_X86_SSE2;
+            printf("SSE2 ");
+        }
+        printf("\n");
     }
-#elif ONS_X8664 && defined(MACOSX)
+#elif defined(ONS_X8664) && defined(MACOSX)
     {
         // x86 CPU on Mac OS X all support SSE2
         func = ons_gfx::CPUF_X86_SSE2;
         printf("System info: Intel CPU with SSE2 functionality\n");   
     }
-#elif ONS_PPC && defined(MACOSX)
+#elif defined(ONS_PPC) && defined(MACOSX)
     // Determine if this PPC CPU supports AltiVec (Roto)
     {
-        unsigned int func = CPUF_NONE;
-        int altivec_present = 0;
-    
-        size_t length = sizeof(altivec_present);
-        int error = sysctlbyname("hw.optional.altivec", &altivec_present, &length, NULL, 0);
+        unsigned int func = ons_gfx::CPUF_NONE;
 
-        if((error == 0) && altivec_present) {
-            func |= CPUF_PPC_ALTIVEC;
+        if(SDL_HasAltiVec()) {
+            func |= ons_gfx::CPUF_PPC_ALTIVEC;
             printf("System info: PowerPC CPU, supports altivec\n");
         } else {
             printf("System info: PowerPC CPU, DOES NOT support altivec\n");

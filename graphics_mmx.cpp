@@ -24,6 +24,8 @@
 
 // Based upon routines provided by Roto
 
+#include "graphics_mmx.h"
+
 #ifdef ONS_X86_MMX_AVAILIBLE
 
 #if defined(_MSC_VER) // MSVC

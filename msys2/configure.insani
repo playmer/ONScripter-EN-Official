@@ -427,10 +427,9 @@ then
         $CXX -msse2 -mmmx test.cc -o gtest >/dev/null 2>&1
         case $? in
         0)  echo "yes"
-            GFX_MMX_FLAGS="-mmmx -DUSE_X86_GFX"
-            GFX_SSE2_FLAGS="-msse2 -DUSE_X86_GFX"
+            GFX_MMX_FLAGS="-mmmx"
+            GFX_SSE2_FLAGS="-msse2"
             GFX_EXT_OBJS="graphics_mmx.o graphics_sse2.o"
-            CFLAGSEXTRA="$CFLAGSEXTRA -DUSE_X86_GFX"
             echo "     Compiling with x86 MMX/SSE2 custom graphics routines"
             ;;
         *) echo "no"; USE_X86_GFX=false; USE_CPU_GFX=false ;;
@@ -446,9 +445,8 @@ then
         $CXX -maltivec test.cc -o gtest >/dev/null 2>&1
         case $? in
         0)  echo "yes"
-            GFX_MALTIVEC_FLAGS="-maltivec -DUSE_PPC_GFX"
+            GFX_MALTIVEC_FLAGS="-maltivec"
             GFX_EXT_OBJS="graphics_maltivec.o"
-            CFLAGSEXTRA="$CFLAGSEXTRA -DUSE_PPC_GFX"
             echo "     Compiling with PPC custom graphics routines"
             ;;
         *) echo "no"; USE_PPC_GFX=false; USE_CPU_GFX=false ;;

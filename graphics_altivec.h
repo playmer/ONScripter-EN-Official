@@ -25,6 +25,8 @@
 #ifndef __GRAPHICS_ALTIVEC_H__
 #define __GRAPHICS_ALTIVEC_H__
 
+#include "PlatformDefines.h"
+
 #ifdef ONS_PPC_ALTIVEC_AVAILIBLE
 namespace ons_gfx {
 

@@ -27,6 +27,7 @@
  *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "PlatformDefines.h"
 #include "ONScripterLabel.h"
 #include "version.h"
 
@@ -91,7 +92,7 @@ static void optionHelp()
     printf( "      --force-button-shortcut\tignore useescspc and getenter command\n");
 #if defined(ONS_X86) || defined(ONS_X8664)
     printf( "      --disable-cpu-gfx\tdo not use MMX/SSE2 graphics acceleration routines\n");
-#elif  defined(ONS_PPC)
+#elif defined(ONS_PPC)
     printf( "      --disable-cpu-gfx\tdo not use Altivec graphics acceleration routines\n");
 #endif
     printf( "      --automode-time time\tdefault time at clickwaits before continuing, when in automode\n");

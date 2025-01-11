@@ -25,6 +25,8 @@
 #ifndef __GRAPHICS_MMX_H__
 #define __GRAPHICS_MMX_H__
 
+#include "PlatformDefines.h"
+
 #ifdef ONS_X86_MMX_AVAILIBLE
 namespace ons_gfx {
 

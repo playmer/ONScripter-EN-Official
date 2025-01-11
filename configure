@@ -30,7 +30,6 @@ if [ -z "$MAKE"   ]; then MAKE=make; fi
 if [ -z "$AR"     ]; then AR=ar; fi
 if [ -z "$RANLIB" ]; then RANLIB=ranlib; fi
 UNSUPPORTED_COMPILER=false
-USE_CPU_GFX=true
 VECTORIZE=false
 VECTORIZE_LEVEL=0
 FASTMATH=-ffast-math
@@ -111,8 +110,6 @@ do
       --unsupported-compiler=* | -unsupported-compiler=*)
         UNSUPPORTED_COMPILER=$arg
         ;;
-      --no-cpu-gfx | -no-cpu-gfx)
-        USE_CPU_GFX=false ;;
       --novectorize | -novectorize)
         VECTORIZE=false ;;
       --vectorize | -vectorize)
@@ -222,8 +219,6 @@ do
 	  --pedantic               compile with -pedantic
 	  --unsupported-compiler   don't check for known compilers
 	  --no-werror              don't compile with -Werror
-	  --no-cpu-gfx             don't compile with custom intrinsic graphics
-	                           routines (normally compiled for x86/PPC if GCC 4.3+)
 	  --vectorize              try to use compiler vectorization (requires GCC 4+)
 	  --novectorize            don't use compiler vectorization (default)
 	  --vectorize-verbose[=(1-5)] set vectorization verbosity level (def 0)
@@ -566,91 +561,6 @@ rm -rf .configtest
 rm -rf .configtest
 mkdir .configtest
 cd .configtest
-
-if $USE_CPU_GFX
-then
-    case "x$ARCH" in
-    xx86_64|x*86)
-    $echo_n "Checking for compiler cpuid support... ${nobr}"
-    cat > test.cc <<-_EOF
-	#include <cpuid.h>
-	unsigned int eax, ebx, ecx, edx; int main(int argc, char**argv){return __get_cpuid(1, &eax, &ebx, &ecx, &edx);}
-	_EOF
-    $CXX test.cc -o ctest >/dev/null 2>&1
-    case $? in
-    0) echo "yes" ;;
-    *) echo "no"; USE_CPU_GFX=false ;;
-    esac
-    if not $USE_CPU_GFX
-    then
-        echo "     Won't compile custom graphics routines"
-    fi
-    ;;
-    esac
-fi
-
-if $USE_CPU_GFX
-then
-    USE_X86_GFX=false;
-    USE_PPC_GFX=false;
-
-    case "x$ARCH" in
-    xx86_64) USE_X86_GFX=true ;;
-    x*86)    USE_X86_GFX=true ;;
-    xppc)    USE_PPC_GFX=true ;;
-    *)       GFX_EXT_OBJS=
-             USE_CPU_GFX=false
-             echo "     No custom graphics routines available for the given architecture"
-             ;;
-    esac
-fi
-
-if $USE_CPU_GFX
-then
-    if $USE_X86_GFX
-    then
-        $echo_n "Checking for compiler x86 MMX & SSE2 intrinsics support... ${nobr}"
-        cat > test.cc <<-_EOF
-	#include <mmintrin.h>
-	#include <emmintrin.h>
-	int main(int argc, char**argv){__m64 mmxchk = _mm_set1_pi8(0); __m128i sse2chk = _mm_set1_epi8(0); return 0;}
-	_EOF
-        $CXX -msse2 -mmmx test.cc -o gtest >/dev/null 2>&1
-        case $? in
-        0)  echo "yes"
-            GFX_MMX_FLAGS="-mmmx -DUSE_X86_GFX"
-            GFX_SSE2_FLAGS="-msse2 -DUSE_X86_GFX"
-            GFX_EXT_OBJS="graphics_mmx.o graphics_sse2.o"
-            CFLAGSEXTRA="$CFLAGSEXTRA -DUSE_X86_GFX"
-            echo "     Compiling with x86 MMX/SSE2 custom graphics routines"
-            ;;
-        *) echo "no"; USE_X86_GFX=false; USE_CPU_GFX=false ;;
-        esac
-
-    elif $USE_PPC_GFX
-    then
-        $echo_n "Checking for compiler PPC Altivec intrinsics support... ${nobr}"
-        cat > test.cc <<-_EOF
-	#include <altivec.h>
-	int main(int argc, char**argv){vector unsigned char altichk = vec_splat_u8(0);}
-	_EOF
-        $CXX -maltivec test.cc -o gtest >/dev/null 2>&1
-        case $? in
-        0)  echo "yes"
-            GFX_MALTIVEC_FLAGS="-maltivec -DUSE_PPC_GFX"
-            GFX_EXT_OBJS="graphics_maltivec.o"
-            CFLAGSEXTRA="$CFLAGSEXTRA -DUSE_PPC_GFX"
-            echo "     Compiling with PPC custom graphics routines"
-            ;;
-        *) echo "no"; USE_PPC_GFX=false; USE_CPU_GFX=false ;;
-        esac
-    fi
-
-    if not $USE_CPU_GFX
-    then
-        echo "     Won't compile custom graphics routines"
-    fi
-fi
 
 cd ..
 rm -rf .configtest
@@ -1347,17 +1257,17 @@ then
 cat >> Makefile <<_EOF
 
 graphics_sse2.o: graphics_sse2.cpp graphics_sse2.h graphics_common.h graphics_sum.h graphics_blend.h
-	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) $GFX_SSE2_FLAGS -c \$< -o \$@
+	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) -msse2 -c \$< -o \$@
 
 graphics_mmx.o: graphics_mmx.cpp graphics_mmx.h graphics_common.h graphics_sum.h
-	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) $GFX_MMX_FLAGS -c \$< -o \$@
+	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) -mmmx -c \$< -o \$@
 _EOF
 elif $USE_PPC_GFX
 then
 cat >> Makefile <<_EOF
 
 graphics_maltivec.o: graphics_maltivec.cpp graphics_maltivec.h graphics_common.h graphics_sum.h
-	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) $GFX_MALTIVEC_FLAGS -c \$< -o \$@
+	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) -maltivec -c \$< -o \$@
 _EOF
 fi
 

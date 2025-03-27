@@ -319,7 +319,7 @@ static void parseOptions(int argc, char **argv, ONScripterLabel &ons, bool &hasA
             }
             else{
                 char errstr[256];
-                snprintf(errstr, 256, "unknown option %s", argv[0]);
+                SDL_snprintf(errstr, 256, "unknown option %s", argv[0]);
                 ons.errorAndCont(errstr, NULL, "Command-Line Issue", true);
             }
         }
@@ -432,7 +432,7 @@ int main( int argc, char **argv )
 #endif
 {
     // Handle redirection of stdout/stderr on a per-platform basis.
-    redirect_output();
+    //redirect_output();
 
     ONScripterLabel ons;
 
@@ -501,7 +501,7 @@ static char stderrPath[MAX_PATH];
 
 #define CSIDL_APPDATA 0x001a // for [Profiles]/[User]/Application Data
 # define DIR_SEPARATOR TEXT("/")
-typedef HRESULT (WINAPI *SHGetFolderPathA_t )(HWND, int, HANDLE, DWORD, LPTSTR);
+typedef HRESULT (WINAPI *SHGetFolderPathA_t )(HWND, int, HANDLE, DWORD, LPSTR);
 
 /* The standard output files */
 #define STDOUT_FILE	TEXT("stdout.txt")
@@ -515,7 +515,7 @@ void redirect_output()
     DWORD pathlen = 0;
     FILE *newfp = NULL;
     outputPath[0] = 0;
-    HMODULE shdll = LoadLibrary("shfolder");
+    HMODULE shdll = LoadLibraryA("shfolder");
     if (shdll) {
         SHGetFolderPathA_t SHGetFolderPathA = (SHGetFolderPathA_t)GetProcAddress(shdll, "SHGetFolderPathA");
         if (SHGetFolderPathA) {

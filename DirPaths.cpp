@@ -22,6 +22,7 @@
  *  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "SDL.h"
 #include "DirPaths.h"
 
 DirPaths::DirPaths( const char *new_paths )
@@ -135,7 +136,7 @@ void DirPaths::add( const char *new_paths )
             //was an "empty path"
             //keep the "" as the first of the paths by making it a "."
             paths[0] = new char[3];
-            snprintf(paths[0], 3, "%s%c", ".", DELIMITER);
+            SDL_snprintf(paths[0], 3, "%s%c", ".", DELIMITER);
         }
     }
     const char *ptr2 = ptr1 = new_paths;
@@ -183,11 +184,11 @@ void DirPaths::add( const char *new_paths )
     char *dptr = all_paths;
     for (cur_num=0; cur_num<(num_paths-1); cur_num++) {
         size_t curlen = strlen(paths[cur_num]) + 1;
-        snprintf(dptr, len, "%s%c", paths[cur_num], PATH_DELIMITER);
+        SDL_snprintf(dptr, len, "%s%c", paths[cur_num], PATH_DELIMITER);
         dptr += curlen;
         len -= curlen;
     }
-    snprintf(dptr, len, "%s", paths[cur_num]);
+    SDL_snprintf(dptr, len, "%s", paths[cur_num]);
 }
 
 const char* DirPaths::get_path( int n ) const

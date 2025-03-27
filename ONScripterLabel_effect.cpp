@@ -279,7 +279,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
       default:
         not_implemented = true;
         if (first_time) {
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "effect No. %d not implemented; substituting crossfade",
                      effect_no);
             errorAndCont(script_h.errbuf);
@@ -445,7 +445,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
             } else {
                 not_implemented = true;
                 if (first_time) {
-                    snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+                    SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                              "dll effect '%s' (%d) not implemented; substituting crossfade",
                              dll, effect_no);
                     errorAndCont(script_h.errbuf);
@@ -454,7 +454,7 @@ bool ONScripterLabel::doEffect( EffectLink *effect, bool clear_dirty_region )
         } else { //just in case no dll is given
             not_implemented = true;
             if (first_time) {
-                snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+                SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                          "no dll provided for effect %d; substituting crossfade",
                          effect_no);
                 errorAndCont(script_h.errbuf);

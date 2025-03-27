@@ -215,6 +215,15 @@ static void SDL_RestoreDesktopMode(void)
    Therefore, we implement our own version of _TrackMouseEvent() which
    uses our own implementation if TrackMouseEvent() is not available.
 */
+#if 1 // Check if VC2003
+typedef struct tagTRACKMOUSEEVENT {
+    DWORD cbSize;
+    DWORD dwFlags;
+    HWND  hwndTrack;
+    DWORD dwHoverTime;
+} TRACKMOUSEEVENT, *LPTRACKMOUSEEVENT;
+#define TME_LEAVE       0x00000002
+#endif
 static BOOL (WINAPI *_TrackMouseEvent)(TRACKMOUSEEVENT *ptme) = NULL;
 
 static VOID CALLBACK

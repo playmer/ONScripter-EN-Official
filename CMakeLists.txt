@@ -90,7 +90,10 @@ elseif(${ONS_TARGET_ARCH} STREQUAL "mips")
 endif()
 
 # Options we can pass into CMake, platform will determine some defaults.
-if (NINTENDO_WIIU
+if (TRUE) # I don't know how to detect vc2003/vc6 right now, so we're just forcing this.
+    option(ONS_USE_SYSTEM_SDL "" OFF)
+    option(ONS_USE_SDLCOMPAT "" OFF)
+elseif (NINTENDO_WIIU
     OR NINTENDO_SWITCH
     OR NXDK)
     option(ONS_USE_SYSTEM_SDL "" ON)
@@ -215,10 +218,10 @@ PRIVATE
     _GNU_SOURCE=1
 )
 
-target_compile_features(onscripter-en 
-PUBLIC 
-    cxx_std_98
-)
+#target_compile_features(onscripter-en 
+#PUBLIC 
+#    cxx_std_98
+#)
 
 target_sources(onscripter-en
 PRIVATE
@@ -518,6 +521,7 @@ elseif(WIN32)
         WIN32
         USE_MESSAGEBOX
         USE_OGG_VORBIS
+        UTF8_FILESYSTEM
     )
 
     target_link_libraries(onscripter-en

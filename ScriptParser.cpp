@@ -627,7 +627,7 @@ int ScriptParser::parseLine()
     else if ( *cmd == ':' ) return RET_CONTINUE;
 
     if (*cmd != '_'){
-        snprintf(script_h.current_cmd, 64, "%s", cmd);
+        SDL_snprintf(script_h.current_cmd, 64, "%s", cmd);
         //Check against user-defined cmds
         if (cmd[0] >= 'a' && cmd[0] <= 'z'){
             UserFuncHash &ufh = user_func_hash[cmd[0]-'a'];
@@ -795,7 +795,7 @@ int ScriptParser::saveFileIOBuf( const char *filename, int offset, const char *s
         if ( (fputc('"', fp) == EOF) ||
              (fwrite(savestr, 1, savelen, fp) != savelen) ||
              (fputs("\"*", fp) == EOF) ) {
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "error writing to '%s'", filename);
             errorAndCont( script_h.errbuf, NULL, "I/O Issue" );
         }
@@ -1007,7 +1007,7 @@ void ScriptParser::writeLog( ScriptHandler::LogInfo &info )
     }
 
     if (saveFileIOBuf( info.filename )){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "can't write to '%s'", info.filename);
         errorAndExit( script_h.errbuf, NULL, "I/O Error" );
     }
@@ -1113,7 +1113,7 @@ int ScriptParser::readEffect( EffectLink *effect )
             effect->anim.remove();
     }
     else if (effect->effect < 0 || effect->effect > 255){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "effect %d out of range, changing to 0", effect->effect);
         errorAndCont( script_h.errbuf );
         effect->effect = 0; // to suppress error
@@ -1138,7 +1138,7 @@ ScriptParser::EffectLink *ScriptParser::parseEffect(bool init_flag)
         link = link->next;
     }
 
-    snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+    SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
              "effect %d not found", tmp_effect.effect);
     errorAndExit( script_h.errbuf );
 
@@ -1188,7 +1188,7 @@ void ScriptParser::createKeyTable( const char *key_exe )
     
     FILE *fp = ::fopen(key_exe, "rb");
     if (fp == NULL){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "createKeyTable: can't open EXE file '%s'", key_exe);
         errorAndCont(script_h.errbuf, NULL, "Init Issue", true);
         return;
@@ -1238,9 +1238,9 @@ void ScriptParser::setDefaultMenuLabels()
         setStr( &save_item_name, "Slot " );
     }
     else {
-        setStr( &save_menu_name, "ƒƒZ[ƒu„" );
-        setStr( &load_menu_name, "ƒƒ[ƒh„" );
-        setStr( &save_item_name, "‚µ‚¨‚è" );
+        setStr( &save_menu_name, "ï¿½ï¿½ï¿½Zï¿½[ï¿½uï¿½ï¿½" );
+        setStr( &load_menu_name, "ï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½hï¿½ï¿½" );
+        setStr( &save_item_name, "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" );
     }
 }
 

@@ -1,6 +1,6 @@
 #include "winres.h"
 
-ONSCRICON ICON @I@
+//ONSCRICON ICON @I@
 
 1 VERSIONINFO
 FILEVERSION @Y@, @M@, @D@, 0

@@ -218,7 +218,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *locatio
             strcmp(filename, "doffcur.bmp") &&
             strcmp(filename, "cursor0.bmp") &&
             strcmp(filename, "cursor1.bmp")) {
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "can't find file [%s]", filename);
             errorAndCont( script_h.errbuf, NULL, "I/O Issue" );
         }
@@ -240,7 +240,7 @@ SDL_Surface *ONScripterLabel::createSurfaceFromFile(char *filename, int *locatio
     if (length > tmp_image_buf_length){
         buffer = new(std::nothrow) unsigned char[length];
         if (buffer == NULL) {
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "failed to load image file [%s] (%lu bytes)",
                      filename, length);
             errorAndCont( script_h.errbuf, "unable to allocate buffer", "Memory Issue" );

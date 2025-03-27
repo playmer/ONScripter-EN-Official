@@ -288,7 +288,7 @@ void ONScripterLabel::drawChar( char* text, Fontinfo *info, bool flush_flag,
 
     if ( info->ttf_font == NULL ){
         if ( info->openFont( font_file, screen_ratio1, screen_ratio2 ) == NULL ){
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "can't open font file: %s\n", font_file );
             errorAndExit(script_h.errbuf);
         }
@@ -323,7 +323,7 @@ void ONScripterLabel::drawChar( char* text, Fontinfo *info, bool flush_flag,
     } else if (text[0] == '\t') {
         out_text[0] = ' '; //draw tabs as spaces, for now
     } else if ((unsigned char)text[0] < 0x20) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "drawChar: got unrecognized control character 0x%02x", text[0]);
         errorAndCont(script_h.errbuf);
         out_text[0] = ' ';

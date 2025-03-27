@@ -224,7 +224,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
     else{
         buffer = new(std::nothrow) unsigned char[length];
         if (buffer == NULL) {
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "failed to load sound file [%s] (%lu bytes)",
                      filename, length);
             errorAndCont( script_h.errbuf, "unable to allocate buffer", "Memory Issue" );
@@ -240,7 +240,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 
     /* check for WMA (i.e. ASF header format) */
     if ( IS_ASF_HDR(buffer) ){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
         "sound file '%s' is in WMA format, skipping", filename);
         errorAndCont(script_h.errbuf);
         delete[] buffer;
@@ -249,7 +249,7 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
 
     /* check for AVI header format */
     if ( IS_AVI_HDR(buffer) ){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
         "sound file '%s' is in AVI format, skipping", filename);
         errorAndCont(script_h.errbuf);
         delete[] buffer;
@@ -325,13 +325,13 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
         if (music_cmd){
             FILE *fp;
             if ( (fp = fopen(TMP_MUSIC_FILE, "wb", true)) == NULL){
-                snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+                SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                          "can't open temporary music file %s", TMP_MUSIC_FILE);
                 errorAndCont(script_h.errbuf);
             }
             else{
                 if (fwrite(buffer, 1, length, fp) != (size_t)length){
-                    snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+                    SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                              "can't write to temporary music file %s", TMP_MUSIC_FILE);
                     errorAndCont(script_h.errbuf);
                 }
@@ -374,13 +374,13 @@ int ONScripterLabel::playSound(const char *filename, int format, bool loop_flag,
     if (format & SOUND_SEQMUSIC){
         FILE *fp;
         if ( (fp = fopen(TMP_SEQMUSIC_FILE, "wb", true)) == NULL){
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "can't open temporary music file %s", TMP_SEQMUSIC_FILE);
             errorAndCont(script_h.errbuf);
         }
         else{
             if (fwrite(buffer, 1, length, fp) != (size_t)length){
-                snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+                SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                          "can't write to temporary music file %s",
                          TMP_SEQMUSIC_FILE);
                 errorAndCont(script_h.errbuf);
@@ -553,7 +553,7 @@ int ONScripterLabel::playExternalMusic(bool loop_flag)
     char music_filename[256];
     sprintf(music_filename, "%s%s", script_h.save_path, TMP_MUSIC_FILE);
     if ((music_info = Mix_LoadMUS(music_filename)) == NULL){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "can't load music file %s", music_filename );
         errorAndCont(script_h.errbuf);
         return -1;
@@ -573,7 +573,7 @@ int ONScripterLabel::playSequencedMusic(bool loop_flag)
     sprintf(seqmusic_filename, "%s%s", script_h.save_path, TMP_SEQMUSIC_FILE);
     seqmusic_info = Mix_LoadMUS(seqmusic_filename);
     if (seqmusic_info == NULL) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "error in sequenced music file %s", seqmusic_filename );
         errorAndCont(script_h.errbuf, Mix_GetError());
         return -1;
@@ -672,7 +672,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
     unsigned long length = script_h.cBR->getFileLength( filename );
 
     if (length == 0) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "couldn't load movie '%s'", filename);
         errorAndCont(script_h.errbuf);
         return 0;
@@ -683,7 +683,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 
     /* check for AVI header format */
     if ( IS_AVI_HDR(movie_buffer) ){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "movie file '%s' is in AVI format", filename);
         errorAndCont(script_h.errbuf);
         if (movie_buffer) delete[] movie_buffer;
@@ -695,7 +695,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
     char *errstr = SMPEG_error( mpeg_sample );
     if (errstr){
         
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "SMPEG error on '%s'", filename);
         errorAndCont(script_h.errbuf, errstr);
         if (movie_buffer) delete[] movie_buffer;

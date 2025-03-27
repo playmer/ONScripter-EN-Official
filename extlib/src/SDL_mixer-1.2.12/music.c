@@ -1581,7 +1581,8 @@ int Mix_EachSoundFont(int (*function)(const char*, void*), void *data)
 #if defined(__MINGW32__) || defined(__MINGW64__)
 	for (path = strtok(paths, ";"); path; path = strtok(NULL, ";")) {
 #elif defined(_WIN32)
-	for (path = strtok_s(paths, ";", &context); path; path = strtok_s(NULL, ";", &context)) {
+	//for (path = strtok_s(paths, ";", &context); path; path = strtok_s(NULL, ";", &context)) {
+	for (path = strtok(paths, ";"); path; path = strtok(NULL, ";")) {
 #else
 	for (path = strtok_r(paths, ":;", &context); path; path = strtok_r(NULL, ":;", &context)) {
 #endif

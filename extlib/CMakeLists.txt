@@ -186,16 +186,17 @@ else()
                 ${sdl_source_prefix}/src/video/windx5/*.c
             )
 
-            file(STRINGS ${sdl_source_prefix}/include/SDL_config_win32.h SDL_CONFIG_HEADER)
+            file(READ ${sdl_source_prefix}/include/SDL_config_win32.h SDL_CONFIG_HEADER)
+            target_link_libraries(SDL PRIVATE unicows.lib)
             
             target_sources(SDL PRIVATE ${SDL_WIN32_SOURCES})
             target_sources(SDLmain PRIVATE ${sdl_source_prefix}/src/main/win32/SDL_win32_main.c)
 
-            if (${ONS_X86})
-                target_link_options(SDLmain PUBLIC -e _WinMain@16)
-            elseif(${ONS_X8664})
-                target_link_options(SDLmain PUBLIC -e WinMain)
-            endif()
+            #if (${ONS_X86})
+            #    target_link_options(SDLmain PUBLIC -e _WinMain@16)
+            #elseif(${ONS_X8664})
+            #    target_link_options(SDLmain PUBLIC -e WinMain)
+            #endif()
         elseif(APPLE)
             file(
                 GLOB SDL_MACOS_SOURCES CONFIGURE_DEPENDS
@@ -209,7 +210,7 @@ else()
                 ${sdl_source_prefix}/src/video/quartz/*.m
             )
             
-            file(STRINGS ${sdl_source_prefix}/include/SDL_config_macosx.h SDL_CONFIG_HEADER)
+            file(READ ${sdl_source_prefix}/include/SDL_config_macosx.h SDL_CONFIG_HEADER)
             
             target_sources(SDL PRIVATE ${SDL_MACOS_SOURCES})
             target_sources(SDLmain PRIVATE ${sdl_source_prefix}/src/main/macosx/SDLMain.m)
@@ -232,7 +233,7 @@ else()
             message( FATAL_ERROR "Configuring SDL 1.2, Unknown operating system-- aborting." )
         endif()
 
-        string(REPLACE ";" "\n" SDL_CONFIG_HEADER "${SDL_CONFIG_HEADER}")
+        #string(REPLACE ";" "\n" SDL_CONFIG_HEADER "${SDL_CONFIG_HEADER}")
         file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/include/SDL_config.h "${SDL_CONFIG_HEADER}")
 
         target_include_directories(SDL
@@ -1297,10 +1298,10 @@ if (NOT ONS_PREFER_SYSTEM_PACKAGES OR RunLibraryConfig_smpeg_NOTFOUND)
         )
     endif()
 
-    target_compile_features(smpeg
-    PUBLIC 
-        cxx_std_98
-    )
+    #target_compile_features(smpeg
+    #PUBLIC 
+    #    cxx_std_98
+    #)
 
     target_sources(smpeg
     PRIVATE

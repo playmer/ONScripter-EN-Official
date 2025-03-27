@@ -43,6 +43,8 @@
 #include "Encoding.h"
 #include "Reporter.h" // error reporting
 
+#include "SDL.h"
+
 #ifndef NXDK
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -788,7 +790,7 @@ const char *ScriptHandler::readToken(bool check_pretext)
         markAsKidoku( buf++ );
     }
     else if (ch != '\0'){
-        snprintf(errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(errbuf, MAX_ERRBUF_LEN,
                  "readToken: skipping unknown heading character %c (%x)", ch, ch);
         errorAndCont( errbuf );
         buf++;
@@ -928,13 +930,13 @@ const char *ScriptHandler::readLabel()
         ch = *buf;
         *buf = '\0';
         if (tmp != NULL) {
-            snprintf(errbuf, MAX_ERRBUF_LEN, 
+            SDL_snprintf(errbuf, MAX_ERRBUF_LEN, 
                      "Invalid label specification '%s' ('%s')",
                      current_script, str_string_buffer);
             *buf = ch;
             errorAndExit(errbuf);
         } else {
-            snprintf(errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(errbuf, MAX_ERRBUF_LEN,
                      "Invalid label specification '%s'", current_script);
             *buf = ch;
             errorAndExit(errbuf);
@@ -1145,7 +1147,7 @@ ScriptHandler::LabelInfo ScriptHandler::getLabelByLine( int line )
     if (i == num_of_labels-1) {
         int num_lines = label_info[i].start_line + label_info[i].num_of_lines;
         if (line >= num_lines) {
-            snprintf(errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(errbuf, MAX_ERRBUF_LEN,
                      "getLabelByLine: line %d outside script bounds (%d lines)",
                      line, num_lines);
             errorAndExit( errbuf, NULL, "Address Error" );
@@ -1961,7 +1963,7 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabel( const char *label )
     int i = findLabel( label );
 
     if (i == -1) {
-        snprintf(errbuf, MAX_ERRBUF_LEN, "Label \"*%s\" not found.", label);
+        SDL_snprintf(errbuf, MAX_ERRBUF_LEN, "Label \"*%s\" not found.", label);
         errorAndExit( errbuf, NULL, "Label Error" );
     }
 
@@ -1974,7 +1976,7 @@ struct ScriptHandler::LabelInfo ScriptHandler::lookupLabelNext( const char *labe
     int i = findLabel( label );
 
     if (i == -1) {
-        snprintf(errbuf, MAX_ERRBUF_LEN, "Label \"*%s\" not found.", label);
+        SDL_snprintf(errbuf, MAX_ERRBUF_LEN, "Label \"*%s\" not found.", label);
         errorAndExit( errbuf, NULL, "Label Error" );
     }
 
@@ -2115,9 +2117,9 @@ void ScriptHandler::processError( const char *str, const char *title, const char
         errcmd[0] = '\0';
         if (strlen(current_cmd) > 0) {
             if (current_cmd_type == CMD_BUILTIN)
-                snprintf(errcmd, 128, ", cmd \"%s\"", current_cmd);
+                SDL_snprintf(errcmd, 128, ", cmd \"%s\"", current_cmd);
             else if (current_cmd_type == CMD_USERDEF)
-                snprintf(errcmd, 128, ", user-defined cmd \"%s\"", current_cmd);
+                SDL_snprintf(errcmd, 128, ", user-defined cmd \"%s\"", current_cmd);
         }
         if (linenum < 0) {
             fprintf(stderr, " ***[%s] %s at line ?? (*%s:)%s - %s ***\n",
@@ -2137,11 +2139,11 @@ void ScriptHandler::processError( const char *str, const char *title, const char
 
         if (is_warning) {
             if (linenum < 0) {
-                snprintf(errhist, 1024, "%s\nat line ?? (*%s:)%s\n%s",
+                SDL_snprintf(errhist, 1024, "%s\nat line ?? (*%s:)%s\n%s",
                          str, label.name, errcmd,
                          detail ? detail : "");
             } else {
-                snprintf(errhist, 1024, "%s\nat line %d (*%s:%d)%s\n%s",
+                SDL_snprintf(errhist, 1024, "%s\nat line %d (*%s:%d)%s\n%s",
                          str, linenum, label.name, lblinenum, errcmd,
                          detail ? detail : "");
             }
@@ -2175,7 +2177,7 @@ void ScriptHandler::processError( const char *str, const char *title, const char
                 line[i] = end;
         }
 
-        snprintf(errhist, 1024, "%s\nat line %d (*%s:%d)%s\n\n| %s\n| %s\n> %s",
+        SDL_snprintf(errhist, 1024, "%s\nat line %d (*%s:%d)%s\n\n| %s\n| %s\n> %s",
                  str, linenum, label.name, lblinenum, errcmd,
                  line[0], line[1], line[2]);
 
@@ -2426,7 +2428,7 @@ void ScriptHandler::parseStr( char **buf )
         }
 
         if (!findStrAlias( (const char*)alias_buf, str_string_buffer )) {
-            snprintf(errbuf, MAX_ERRBUF_LEN, fmt, alias_buf);
+            SDL_snprintf(errbuf, MAX_ERRBUF_LEN, fmt, alias_buf);
             errorAndExit(errbuf);
         }
         current_variable.type |= VAR_CONST;
@@ -2643,7 +2645,7 @@ int *ScriptHandler::getArrayPtr( int no, ArrayVariable &array, int offset )
         av = av->next;
     }
     if (av == NULL) {
-        snprintf(errbuf, MAX_ERRBUF_LEN, "Undeclared array number %d", no);
+        SDL_snprintf(errbuf, MAX_ERRBUF_LEN, "Undeclared array number %d", no);
         errorAndExit( errbuf, NULL, "Access Error" );
     }
 

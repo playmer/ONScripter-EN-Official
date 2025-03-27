@@ -65,7 +65,7 @@
 #include <windows.h>
 #include "SDL_syswm.h"
 #include "winres.h"
-typedef HRESULT (WINAPI *SHGetFolderPathA_t)(HWND, int, HANDLE, DWORD, LPTSTR);
+typedef HRESULT (WINAPI *SHGetFolderPathA_t)(HWND, int, HANDLE, DWORD, LPSTR);
 typedef HINSTANCE (WINAPI *ShellExecuteA_t)(HWND, LPCSTR, LPCSTR, LPCSTR, LPCSTR, int);
 #endif
 #ifdef LINUX
@@ -582,7 +582,7 @@ void ONScripterLabel::initSDL()
 #endif
 
     if ( screen_surface == NULL ) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "Couldn't set %dx%dx%d video mode",
                  screen_width, screen_height, screen_bpp);
         errorAndExit(script_h.errbuf, SDL_GetError(), "Init Error", true);
@@ -862,7 +862,7 @@ void ONScripterLabel::setAudiodriver(const char *driver)
 {
     char buf[128];
     if (driver && driver[0] != '\0')
-        snprintf(buf, 128, "SDL_AUDIODRIVER=%s", driver);
+        SDL_snprintf(buf, 128, "SDL_AUDIODRIVER=%s", driver);
     else
         strncpy(buf, "SDL_AUDIODRIVER=", 128);
     SDL_putenv(buf);
@@ -876,7 +876,7 @@ void ONScripterLabel::setAudioBufferSize(int kbyte_size)
         audiobuffer_size = kbyte_size * 1024;
         fprintf(stderr, "Using audiobuffer of %d bytes\n", audiobuffer_size);
     } else {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "Invalid audiobuffer size %dk"
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "Invalid audiobuffer size %dk"
                  " - using prior size of %d bytes", kbyte_size, audiobuffer_size);
         errorAndCont(script_h.errbuf, NULL, "Config Issue", true);
     }
@@ -1098,7 +1098,7 @@ int ONScripterLabel::init()
         // If no gameid, use default name
         if (!gameid) {
             gameid=(char*)&gamename;
-            snprintf(gameid, 20, "ONScripter-%x", script_h.game_hash);
+            SDL_snprintf(gameid, 20, "ONScripter-%x", script_h.game_hash);
         }
 #ifdef WIN32
         // On Windows, store in [Profiles]/All Users/Application Data.
@@ -1120,7 +1120,7 @@ int ONScripterLabel::init()
                     script_h.save_path = new char[strlen(hpath) + strlen(gameid) + 3];
                     sprintf(script_h.save_path, "%s%c%s%c",
                             hpath, DELIMITER, gameid, DELIMITER);
-                    CreateDirectory(script_h.save_path, 0);
+                    CreateDirectoryA(script_h.save_path, 0);
                 }
             }
             SDL_UnloadObject(shdll);
@@ -1225,7 +1225,7 @@ int ONScripterLabel::init()
 #if defined(MACOSX)
     char* macos_font_file;
     NSFileManager *fm = [NSFileManager defaultManager];
-    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸コ�? ProN W4.ttc";
+    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸コ�? ProN W4.ttc";
     if ([fm fileExistsAtPath:hiraginoPath])
     {
         macos_font_file = new char[ strlen([hiraginoPath UTF8String]) + 1 ];
@@ -1344,10 +1344,10 @@ int ONScripterLabel::init()
 
     if ( sentence_font.openFont( font_file, screen_ratio1, screen_ratio2 ) == NULL ){
 #if defined(MACOSX)
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "Could not find the font file '%s'.\n"
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "Could not find the font file '%s'.\n"
                  "Please ensure it is present with the game data.", default_font);
 #else
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "Could not find the font file '%s'.", default_font);
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "Could not find the font file '%s'.", default_font);
 #endif
         errorAndExit(script_h.errbuf, NULL, "Missing font file", true);
         return -1;
@@ -1648,9 +1648,9 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool /*
 
     if (SDL_GetWMInfo(&info) == 1) {
         pwin = info.window;
-        snprintf(errtitle, 256, "%s", title);
+        SDL_snprintf(errtitle, 256, "%s", title);
     } else {
-        snprintf(errtitle, 256, "ONScripter-EN: %s", title);
+        SDL_snprintf(errtitle, 256, "ONScripter-EN: %s", title);
     }
 
     if (is_warning) {
@@ -1660,7 +1660,7 @@ bool ONScripterLabel::doErrorBox( const char *title, const char *errstr, bool /*
     }
     else
         mb_type |= MB_ICONERROR;
-    int res = MessageBox(pwin, errstr, errtitle, mb_type);
+    int res = MessageBoxA(pwin, errstr, errtitle, mb_type);
     if (is_warning)
         return (res == IDABORT); //should do exit if got Abort
 #else
@@ -2062,7 +2062,7 @@ int ONScripterLabel::parseLine( )
     }
     const char *s_buf = script_h.getStringBuffer();
     if ( !script_h.isText() && !script_h.isPretext() ){
-        snprintf(script_h.current_cmd, 64, "%s", s_buf);
+        SDL_snprintf(script_h.current_cmd, 64, "%s", s_buf);
         //Check against builtin cmds
         if (cmd[0] >= 'a' && cmd[0] <= 'z'){
             FuncHash &fh = func_hash[cmd[0]-'a'];
@@ -2094,7 +2094,7 @@ int ONScripterLabel::parseLine( )
         }
 
         script_h.current_cmd_type = ScriptHandler::CMD_UNKNOWN;
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "command [%s] is not supported yet!!", s_buf );
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN, "command [%s] is not supported yet!!", s_buf );
         errorAndCont(script_h.errbuf);
 
         script_h.skipToken();
@@ -2530,7 +2530,7 @@ void ONScripterLabel::loadEnvData()
         text_speed_no = readInt();
         if (text_speed_no < 0 || text_speed_no > 2) {
             //catch corrupted text_speed_no
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                     "envdata has invalid text speed setting %d, changing to default",
                     text_speed_no);
             errorAndCont(script_h.errbuf, NULL, "Env Issue", true);

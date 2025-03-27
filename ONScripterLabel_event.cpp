@@ -1429,7 +1429,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
         HWND pwin = NULL;
         if (SDL_GetWMInfo(&info) == 1)
             pwin = info.window;
-        MessageBox(pwin, version_str, "About",
+        MessageBoxA(pwin, version_str, "About",
                    MB_OK|MB_ICONINFORMATION);
 
         key_pressed_flag = true;

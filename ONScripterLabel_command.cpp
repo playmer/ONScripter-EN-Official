@@ -123,7 +123,7 @@ int ONScripterLabel::yesnoboxCommand()
         SDL_VERSION(&info.version);
         if (SDL_GetWMInfo(&info) == 1)
             pwin = info.window;
-        res = MessageBox(pwin, msg, title, mb_type);
+        res = MessageBoxA(pwin, msg, title, mb_type);
         res = ((res == IDYES) || (res == IDOK)) ? 1 : 0;
 #elif defined(LINUX)
         strncat(msg, "\n", 1); // This is used in order to prevent a... wierd... bug -Galladite 2023-4-10
@@ -1658,7 +1658,7 @@ int ONScripterLabel::prnumCommand()
     int no = script_h.readInt();
     if (no < 0 || no >= MAX_PARAM_NUM){
 
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "prnum: label id %d outside allowed range 0-%d, skipping",
                  no, MAX_PARAM_NUM-1);
         errorAndCont(script_h.errbuf);
@@ -2068,7 +2068,7 @@ int ONScripterLabel::mesboxCommand()
     SDL_VERSION(&info.version);
     if (SDL_GetWMInfo(&info) == 1)
         pwin = info.window;
-    MessageBox(pwin, msg, title, MB_OK);
+    MessageBoxA(pwin, msg, title, MB_OK);
 #endif
     fprintf(stderr,"Got message box '%s': '%s'\n", title, msg);
     delete[] msg;
@@ -2611,7 +2611,7 @@ int ONScripterLabel::languageCommand()
         script_h.preferred_script = ScriptHandler::LATIN_SCRIPT;
     }
     else {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "language: unknown language '%s'", which);
         errorAndExit(script_h.errbuf, "valid options are 'japanese' and 'english'");
     }
@@ -2917,7 +2917,7 @@ int ONScripterLabel::gettagCommand()
 
                 else {
                     unicode1 = script_h.enc.getUTF16(buf);
-                    unicode2 = script_h.enc.getUTF16("?¿½?¿½", Encoding::CODE_CP932);
+                    unicode2 = script_h.enc.getUTF16("?ï¿½ï¿½?ï¿½ï¿½", Encoding::CODE_CP932);
                     while(*buf != '/' && *buf != 0 && unicode1 != unicode2) {
                         buf += script_h.enc.getBytes(buf[0]);
                     }
@@ -3307,7 +3307,7 @@ int ONScripterLabel::getcselstrCommand()
     if (!link) {
         //NScr doesn't exit if getcselstr accesses a non-existent select link,
         //so just give a warning and set the string to null
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "getcselstr: no select link at index %d (max index is %d)",
                  csel_no, counter-1);
         errorAndCont(script_h.errbuf);
@@ -3911,7 +3911,7 @@ int ONScripterLabel::cselgotoCommand()
         link = link->next;
     }
     if ( !link ) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "cselgoto: no select link at index %d (max index is %d)",
                  csel_no, counter-1);
         errorAndExit(script_h.errbuf);
@@ -4182,10 +4182,18 @@ int ONScripterLabel::captionCommand()
     char *buf1 = new char[len+1];
     strcpy(buf1, buf);
 
+    printf("buf [%d] '%s'\n", (int)len, buf1);
+    putchar('\t');
+    for (size_t i = 0; i < len; ++i) {
+        putchar(buf1[i]);
+    }
+    putchar('\n');
+
     /* I don't think that onsen supports UTF8_CAPTION
      * -Galladite 2023-6-19
      */
     if (script_h.enc.getEncoding() == Encoding::CODE_CP932) {
+        printf("CP932 Conversion\n");
         DirectReader::convertFromSJISToUTF8(buf2, buf1);
     } else {
         strcpy(buf2, buf1);
@@ -4195,7 +4203,8 @@ int ONScripterLabel::captionCommand()
     setStr( &wm_title_string, buf2 );
     setStr( &wm_icon_string,  buf2 );
     delete[] buf2;
-    //printf("caption (utf8): '%s'\n", wm_title_string);
+    printf("caption (utf8): [%d] '%s'\n", (int)len, wm_title_string);
+
     SDL_WM_SetCaption( wm_title_string, wm_icon_string );
 #ifdef WIN32
     //convert from UTF-8 to Wide (Unicode) and thence to system ANSI

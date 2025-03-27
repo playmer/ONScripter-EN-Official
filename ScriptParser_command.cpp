@@ -220,7 +220,7 @@ int ScriptParser::soundpressplginCommand()
     for (int i=0 ; i<12 ; i++)
         if (buf2[i] >= 'A' && buf2[i] <= 'Z') buf2[i] += 'a' - 'A';
     if (strncmp(buf2, "nbzplgin.dll", 12) && strncmp(buf2, "jpgplgin.dll", 12)){
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "soundpressplgin: plugin %s is not available.", buf);
         errorAndCont(script_h.errbuf);
         return RET_CONTINUE;
@@ -278,13 +278,13 @@ int ScriptParser::setlayerCommand()
     const char *dll = script_h.readStr();
 
 #ifdef NO_LAYER_EFFECTS
-    snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+    SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
              "setlayer: layer effect support not available (%d,%d,'%s')",
              no, interval, dll);
     errorAndCont(script_h.errbuf);
 #else
     if (!use_layers) {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "setlayer: ignoring layer effect '%s'.", dll);
         errorAndCont(script_h.errbuf);
         return RET_CONTINUE;
@@ -305,7 +305,7 @@ int ScriptParser::setlayerCommand()
                !strncmp(dll, "hana.dll", 8)) {
         handler = new FuruLayer( screen_width, screen_height, true, script_h.cBR );
     } else {
-        snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+        SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "setlayer: layer effect '%s' is not implemented.", dll);
         errorAndCont(script_h.errbuf);
         return RET_CONTINUE;
@@ -1602,14 +1602,14 @@ int ScriptParser::arcCommand()
         delete script_h.cBR;
         script_h.cBR = new SarReader( archive_path, key_table );
         if ( script_h.cBR->open( buf2 ) ){
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "arc: couldn't open archive '%s'", buf2);
             errorAndCont( script_h.errbuf );
         }
     }
     else if ( strcmp( script_h.cBR->getArchiveName(), "sar" ) == 0 ){
         if ( script_h.cBR->open( buf2 ) ){
-            snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
+            SDL_snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                      "arc: couldn't open archive '%s'", buf2);
             errorAndCont( script_h.errbuf );
         }

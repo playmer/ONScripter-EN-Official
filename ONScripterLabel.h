@@ -585,6 +585,15 @@ private:
         REFRESH_CURSOR_MODE = 16  //show textwindow cursor
     };
 
+    template <typename tEventType>
+    bool TranslateMouse(tEventType& event);
+    SDL_Surface* SetVideoMode(int width, int height, int bpp, Uint32 flags);
+    void ResizeEvent(int width, int height, int bpp, Uint32 flags);
+    void DisplayWindow();
+    unsigned int surface_texture;
+    //bool test;
+    //unsigned int mag_type;
+
     int refresh_window_text_mode;
     int display_mode;
     bool did_leavetext;

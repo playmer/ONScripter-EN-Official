@@ -2096,7 +2096,7 @@ int ONScripterLabel::menu_windowCommand()
     if ( fullscreen_mode ){
 #ifndef PSP
         if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
         SDL_Rect rect = {0, 0, (Uint16)screen_width, (Uint16)screen_height};
         flushDirect( rect, refreshMode() );
         if (async_movie){
@@ -2131,12 +2131,12 @@ int ONScripterLabel::menu_fullCommand()
     if ( !fullscreen_mode ){
 #ifndef PSP
         if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
         if (screen_surface)
             fullscreen_mode = true;
         else {
             fprintf(stderr, "*** menu_full: Error: %s (using windowed surface instead) ***\n", SDL_GetError());
-            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+            screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
             fullscreen_mode = false;
         }
         SDL_Rect rect = {0, 0, (Uint16)screen_width, (Uint16)screen_height};
@@ -4534,6 +4534,7 @@ int ONScripterLabel::bltCommand()
 
         SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
         SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
+        DisplayWindow();
         dirty_rect.clear();
     }
     else{

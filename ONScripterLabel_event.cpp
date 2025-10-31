@@ -34,6 +34,8 @@
 // Modified by Mion, November 2009, to update from
 // Ogapee's 20091115 release source code.
 
+#include <algorithm>
+
 #include "ONScripterLabel.h"
 #include "ScriptParser.h"
 #ifdef LINUX
@@ -1413,6 +1415,28 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             if ( fullscreen_mode ) menu_windowCommand();
             else                   menu_fullCommand();
         }
+        
+        if ( (event->keysym.sym == SDLK_r) && !ctrl_pressed_status ){
+            struct Res{ int w, h; };
+            Res res[] = {
+                Res{640, 480},
+                Res{800, 600},
+                Res{1024, 768},
+                Res{1280, 960},
+                Res{1400, 1050},
+                Res{1600, 1200},
+                Res{1920, 1440},
+                Res{2048, 1536},
+            };
+
+            static int index = 0;
+
+            int modded_index = index % (sizeof(res)/sizeof(res[0]));
+
+            Res& next = res[modded_index];
+            ResizeEvent(next.w, next.h, 32, 0);
+            ++index;
+        }
 
     //using insani's skippable wait
     if ( event_mode & WAIT_SLEEP_MODE) {
@@ -1482,6 +1506,49 @@ void ONScripterLabel::timerEvent( void )
     volatile_button_state.reset();
 }
 
+template <typename tEventType>
+bool ONScripterLabel::TranslateMouse(tEventType& event)
+{
+    const SDL_VideoInfo* info = SDL_GetVideoInfo();
+
+    const int x = event.x;
+    const int y = event.y;
+
+    float scaleHeight = info->current_h / (float)accumulation_surface->h;
+    float scaleWidth = info->current_w / (float)accumulation_surface->w;
+    float scale = std::min(scaleHeight, scaleWidth);
+
+    SDL_Rect dstRect = {};
+    dstRect.w = scale * accumulation_surface->w;
+    dstRect.h = scale * accumulation_surface->h;
+    dstRect.x = (info->current_w - dstRect.w) / 2;
+    dstRect.y = (info->current_h - dstRect.h) / 2;
+
+    int new_x = (x / scale) - (dstRect.x / scale);
+    int new_y = (y / scale) - (dstRect.y / scale);
+
+    if (new_x < 0 || new_x > accumulation_surface->w || new_y < 0 || new_y > accumulation_surface->h)
+    {
+        // clip the mouse to the window
+        if (new_x < 0)
+            event.x = 0;
+
+        if (new_x > accumulation_surface->w)
+            event.x = accumulation_surface->w;
+
+        if (new_y < 0)
+            event.y = 0;
+
+        if (new_y > accumulation_surface->h)
+            event.y = accumulation_surface->h;
+
+        return false;
+    }
+
+    event.x = new_x;
+    event.y = new_y;
+    return true;
+}
 
 void ONScripterLabel::runEventLoop()
 {
@@ -1496,6 +1563,7 @@ void ONScripterLabel::runEventLoop()
 
         // ignore continous SDL_MOUSEMOTION
         while (event.type == SDL_MOUSEMOTION){
+            TranslateMouse(event.motion);
             if ( SDL_PeepEvents( &tmp_event, 1, SDL_PEEKEVENT, SDL_ALLEVENTS ) == 0 ) break;
             if (tmp_event.type != SDL_MOUSEMOTION) break;
             SDL_PeepEvents( &tmp_event, 1, SDL_GETEVENT, SDL_ALLEVENTS );
@@ -1504,6 +1572,7 @@ void ONScripterLabel::runEventLoop()
 
         switch (event.type) {
           case SDL_MOUSEMOTION:
+            TranslateMouse(event.button);
             ret = mouseMoveEvent( (SDL_MouseMotionEvent*)&event );
             if (ret) return;
             break;
@@ -1638,11 +1707,18 @@ void ONScripterLabel::runEventLoop()
             // fall through
           case SDL_VIDEOEXPOSE:
               SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
+              DisplayWindow();
               break;
 
           case SDL_QUIT:
             endCommand();
             break;
+
+          case SDL_VIDEORESIZE:
+          {
+            ResizeEvent(event.resize.w, event.resize.h, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG | SDL_RESIZABLE );
+            break;
+          }
 #if 0
           case SDL_VIDEORESIZE:
             //Mion: beginning stab at handling resizable windows; tends to crash

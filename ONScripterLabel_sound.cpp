@@ -832,9 +832,9 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
                             SMPEG_pause( mpeg_sample );
                             SDL_FreeSurface(screen_surface);
                             if ( fullscreen_mode )
-                                screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
                             else
-                                screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
                             SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
                             SMPEG_play( mpeg_sample );
                         }

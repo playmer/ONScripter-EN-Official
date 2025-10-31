@@ -570,7 +570,7 @@ void ONScripterLabel::initSDL()
         }
     }
 #endif
-    screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+    screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
 
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
@@ -579,7 +579,7 @@ void ONScripterLabel::initSDL()
         screen_ratio1 /= 2;
         screen_width  /= 2;
         screen_height /= 2;
-        screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
 #endif
 
@@ -1796,10 +1796,12 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode, bool update
             }
         }
         if (updaterect) SDL_UpdateRects( screen_surface, 4, tmp_rects );
+        DisplayWindow();
     } else { 
         refreshSurface( accumulation_surface, &rect, refresh_mode );
         SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
         if (updaterect) SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
+        DisplayWindow();
     }
 }
 
@@ -2669,3 +2671,152 @@ int ONScripterLabel::getNumberFromBuffer( const char **buf )
     return ret;
 }
 
+#include <GL/gl.h>
+
+void check_gl_error() {
+    switch (glGetError()) {
+        case GL_INVALID_ENUM: printf("An unacceptable value is specified for an enumerated argument. The offending function is ignored, having no side effect other than to set the error flag.\n"); break;
+        case GL_INVALID_VALUE: printf("A numeric argument is out of range. The offending function is ignored, having no side effect other than to set the error flag.\n"); break;
+        case GL_INVALID_OPERATION: printf("The specified operation is not allowed in the current state. The offending function is ignored, having no side effect other than to set the error flag.\n"); break;
+        //case GL_NO_ERROR: printf("No error has been recorded. The value of this symbolic constant is guaranteed to be zero.\n"); break;
+        case GL_STACK_OVERFLOW: printf("This function would cause a stack overflow. The offending function is ignored, having no side effect other than to set the error flag.\n"); break;
+        case GL_STACK_UNDERFLOW: printf("This function would cause a stack underflow. The offending function is ignored, having no side effect other than to set the error flag.\n"); break;
+        case GL_OUT_OF_MEMORY: printf("There is not enough memory left to execute the function. The state of OpenGL is undefined, except for the state of the error flags, after this error is recorded.\n"); break;
+        default: break;
+    }
+}
+
+
+SDL_Surface* gWindow = NULL;
+
+void ONScripterLabel::DisplayWindow()
+{
+    const SDL_VideoInfo* info = SDL_GetVideoInfo();
+    
+    glViewport(0, 0, (GLsizei) info->current_w, (GLsizei) info->current_h);
+
+    static int i = 0;
+    printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
+
+    //glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+    //glMatrixMode(GL_PROJECTION);
+    //glLoadIdentity();
+    //gluPerspective(60.0, (GLfloat) w/(GLfloat) h, 1.0, 30.0);
+    //glMatrixMode(GL_MODELVIEW);
+    //glLoadIdentity();
+    //glTranslatef(0.0, 0.0, -3.6);
+
+    //SDL_SaveBMP(accumulation_surface, "temp.bmp");
+    
+    /* initialize viewing values  */
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    //glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+    glOrtho(0.0, info->current_w, 0.0, info->current_h, -1.0, 1.0);
+    
+    glEnable(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, surface_texture);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    SDL_LockSurface(accumulation_surface);
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, accumulation_surface->w, accumulation_surface->h, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, accumulation_surface->pixels);
+    SDL_UnlockSurface(accumulation_surface);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindTexture(GL_TEXTURE_2D, surface_texture);
+
+    SDL_Rect dstRect = { 0, 0, 0, 0 };
+    {
+        float scaleHeight = info->current_h / (float)accumulation_surface->h;
+        float scaleWidth = info->current_w / (float)accumulation_surface->w;
+        float scale = std::min(scaleHeight, scaleWidth);
+
+        dstRect.w = scale * accumulation_surface->w;
+        dstRect.h = scale * accumulation_surface->h;
+        dstRect.x = (info->current_w - dstRect.w) / 2;
+        dstRect.y = (info->current_h - dstRect.h) / 2;
+    }
+
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0, 1.0); glVertex3f(dstRect.x            , dstRect.y            , 0.0);
+        glTexCoord2f(1.0, 1.0); glVertex3f(dstRect.x + dstRect.w, dstRect.y            , 0.0);
+        glTexCoord2f(1.0, 0.0); glVertex3f(dstRect.x + dstRect.w, dstRect.y + dstRect.h, 0.0);
+        glTexCoord2f(0.0, 0.0); glVertex3f(dstRect.x            , dstRect.y + dstRect.h, 0.0);
+    glEnd();
+    
+
+    glFlush();
+
+    SDL_GL_SwapBuffers();
+}
+
+void ONScripterLabel::ResizeEvent(int width, int height, int bpp, Uint32 flags) {
+    gWindow = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
+    DisplayWindow();
+}
+
+SDL_Surface* ONScripterLabel::SetVideoMode(int width, int height, int bpp, Uint32 flags)
+{
+    static bool sWindowInitialized = false;
+
+    if (!sWindowInitialized) {
+        gWindow = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
+        sWindowInitialized = true;
+        
+        glEnable(GL_TEXTURE_2D);
+        //glDisable(GL_TEXTURE_2D);
+
+        /* select clearing color 	*/
+        glClearColor (0.0, 0.0, 0.0, 0.0);
+            
+        glShadeModel(GL_FLAT);
+        glEnable(GL_DEPTH_TEST);
+
+        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // glEnable(GL_TEXTURE_2D);
+        // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        // #ifdef GL_VERSION_1_1
+        //     glBindTexture(GL_TEXTURE_2D, texName);
+        // #endif
+
+        // glBegin(GL_QUADS);
+        // glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -1.0, 0.0);
+        // glTexCoord2f(0.0, 1.0); glVertex3f(-2.0, 1.0, 0.0);
+        // glTexCoord2f(1.0, 1.0); glVertex3f(0.0, 1.0, 0.0);
+        // glTexCoord2f(1.0, 0.0); glVertex3f(0.0, -1.0, 0.0);
+
+        // glTexCoord2f(0.0, 0.0); glVertex3f(1.0, -1.0, 0.0);
+        // glTexCoord2f(0.0, 1.0); glVertex3f(1.0, 1.0, 0.0);
+        // glTexCoord2f(1.0, 1.0); glVertex3f(2.41421, 1.0, -1.41421);
+        // glTexCoord2f(1.0, 0.0); glVertex3f(2.41421, -1.0, -1.41421);
+        // glEnd();
+        // glFlush();
+        // glDisable(GL_TEXTURE_2D);
+    }
+
+
+    if (SDL_FULLSCREEN & flags) {
+
+    }
+    else if (SDL_RESIZABLE & flags) {
+
+    }
+
+    if (screen_surface) {
+        SDL_FreeSurface(screen_surface);
+
+        glDeleteTextures(1, &surface_texture);
+    }
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    check_gl_error();
+    glGenTextures(1, &surface_texture);
+    check_gl_error();
+
+    return SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+}

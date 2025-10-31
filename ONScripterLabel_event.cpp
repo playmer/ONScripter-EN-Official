@@ -501,6 +501,8 @@ void ONScripterLabel::waitEventSub(int count)
     if (break_id != NULL){ // already in wait queue
         return;
     }
+    
+    //printf("waitEventSub\n");
 
     //use WAIT_NO_ANIM_MODE to avoid animation refresh (e.g. in effect mode)
     //use count<0 to prevent generating an automatic break event (i.e. run until "done")
@@ -536,6 +538,7 @@ void ONScripterLabel::waitEventSub(int count)
         SDL_PushEvent( &event );
     }
 
+    //printf("runEventLoop from waiteventsub\n");
     runEventLoop();
 
     clearTimer(break_id);
@@ -544,7 +547,9 @@ void ONScripterLabel::waitEventSub(int count)
 bool ONScripterLabel::waitEvent( int count )
 {
     while(1){
+        //printf("waitEvent\n");
         waitEventSub( count );
+        //printf("waitEventSub done\n");
         if ( system_menu_mode == SYSTEM_NULL ) break;
         // Only do this if we *actually tried to use the menu*
         // -Galladite 2025-05-09

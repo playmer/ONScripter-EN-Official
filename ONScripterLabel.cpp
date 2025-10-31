@@ -2696,7 +2696,7 @@ void ONScripterLabel::DisplayWindow()
     glViewport(0, 0, (GLsizei) info->current_w, (GLsizei) info->current_h);
 
     static int i = 0;
-    printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
+    //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
 
     //glViewport(0, 0, (GLsizei) w, (GLsizei) h);
     //glMatrixMode(GL_PROJECTION);

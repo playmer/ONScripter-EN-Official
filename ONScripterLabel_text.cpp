@@ -702,6 +702,8 @@ bool ONScripterLabel::doClickEnd()
     bool ret = false;
 
     draw_cursor_flag = true;
+    
+    //printf("doClickEnd\n");
 
     if (!((skip_mode & SKIP_TO_EOL) && clickskippage_flag))
         skip_mode &= ~(SKIP_TO_WAIT | SKIP_TO_EOL);
@@ -709,16 +711,22 @@ bool ONScripterLabel::doClickEnd()
     if ( automode_flag ){
         event_mode =  WAIT_TEXT_MODE | WAIT_INPUT_MODE |
                       WAIT_VOICE_MODE | WAIT_TIMER_MODE;
-        if ( automode_time < 0 )
+        if ( automode_time < 0 ) {
+            //printf("automode_flag?\n");
             ret = waitEvent( -automode_time * num_chars_in_sentence );
-        else
+        }
+        else {
+            //printf("not automode_flag?\n");
             ret = waitEvent( automode_time );
+        }
     }
     else if ( autoclick_time > 0 ){
+        //printf("AutoClick?\n");
         event_mode = WAIT_SLEEP_MODE | WAIT_TIMER_MODE;
         ret = waitEvent( autoclick_time );
     }
     else{
+        //printf("Normal?\n");
         event_mode = WAIT_TEXT_MODE | WAIT_INPUT_MODE | WAIT_TIMER_MODE;
         ret = waitEvent(-1);
     }
@@ -731,6 +739,7 @@ bool ONScripterLabel::doClickEnd()
 
 bool ONScripterLabel::clickWait()
 {
+    //printf("Clickwait\n");
     int tmp_skip = skip_mode;
     skip_mode &= ~(SKIP_TO_WAIT | SKIP_TO_EOL);
     flush( REFRESH_NONE_MODE );
@@ -746,7 +755,12 @@ bool ONScripterLabel::clickWait()
         if ( textgosub_label && (script_h.getNext()[0] != 0x0a))
             new_line_skip_flag = true;
         event_mode = IDLE_EVENT_MODE;
-        if ( waitEvent(0) ) return false;
+        //printf("waiting\n");
+        if ( waitEvent(0) ) {
+            //printf("failed\n");
+            return false;
+        }
+        //printf("our vigil has ended.\n");
     }
     else{
 

@@ -117,7 +117,6 @@ struct Window {
 
 protected:
     SDL_Rect CalculateDstRect();
-    SDL_Surface* GetAccumulationSurface();
 };
 
 

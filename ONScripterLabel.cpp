@@ -2692,15 +2692,14 @@ SDL_Rect Window::CalculateDstRect()
 {
     const SDL_VideoInfo* info = SDL_GetVideoInfo();
 
-    SDL_Surface* accumulation_surface = GetAccumulationSurface();
 
     SDL_Rect dstRect = { 0, 0, 0, 0 };
-    float scaleHeight = info->current_h / (float)accumulation_surface->h;
-    float scaleWidth = info->current_w / (float)accumulation_surface->w;
+    float scaleHeight = info->current_h / (float)screen_surface->h;
+    float scaleWidth = info->current_w / (float)screen_surface->w;
     float scale = std::min(scaleHeight, scaleWidth);
 
-    dstRect.w = scale * accumulation_surface->w;
-    dstRect.h = scale * accumulation_surface->h;
+    dstRect.w = scale * screen_surface->w;
+    dstRect.h = scale * screen_surface->h;
     dstRect.x = (info->current_w - dstRect.w) / 2;
     dstRect.y = (info->current_h - dstRect.h) / 2;
 
@@ -2716,11 +2715,6 @@ Window::Window(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp
 Window::~Window()
 {
 
-}
-
-SDL_Surface* Window::GetAccumulationSurface()
-{
-    return onscripter->accumulation_surface;
 }
 
 struct BasicWindow : public Window
@@ -2748,10 +2742,6 @@ struct BasicWindow : public Window
     {
         internal_window = SDL_SetVideoMode(width, height, bpp, SDL_RESIZABLE);
         
-        SDL_FreeSurface(screen_surface);
-        screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
-        SDL_SetAlpha( screen_surface, 0, SDL_ALPHA_OPAQUE );
-        
         SDL_Rect dstRect = CalculateDstRect();
         SDL_FreeSurface(intermediate_window);
         //intermediate_window = AnimationInfo::allocSurface(dstRect.w, dstRect.h);
@@ -2763,7 +2753,6 @@ struct BasicWindow : public Window
     {
         const SDL_VideoInfo* info = SDL_GetVideoInfo();
         SDL_Rect dstRect = CalculateDstRect();
-        SDL_Surface* accumulation_surface =  GetAccumulationSurface();
 
         if (!intermediate_window) {
             intermediate_window = SDL_CreateRGBSurface(SDL_SWSURFACE, dstRect.w, dstRect.h, BPP, RMASK, GMASK, BMASK, AMASK);
@@ -2773,15 +2762,15 @@ struct BasicWindow : public Window
         static int i = 0;
         //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
         
-        SDL_SaveBMP(accumulation_surface, "A_accumulation.bmp");
+        SDL_SaveBMP(screen_surface, "A_accumulation.bmp");
 
-        if (intermediate_window->w != accumulation_surface->w || intermediate_window->w != accumulation_surface->w) {
-            ons_gfx::resizeSurface(accumulation_surface, intermediate_window);
+        if (intermediate_window->w != screen_surface->w || intermediate_window->w != screen_surface->w) {
+            ons_gfx::resizeSurface(screen_surface, intermediate_window);
             SDL_SaveBMP(intermediate_window, "A_intermediate.bmp");
 
             SDL_BlitSurface(intermediate_window, NULL, internal_window, &dstRect);
         } else {
-            SDL_BlitSurface(accumulation_surface, NULL, internal_window, &dstRect);
+            SDL_BlitSurface(screen_surface, NULL, internal_window, &dstRect);
         }
 
         SDL_UpdateRect(internal_window, 0, 0, internal_window->w, internal_window->h);
@@ -2840,14 +2829,12 @@ struct OpenGL1_1Window : public Window {
     void DisplayWindow()
     {
         const SDL_VideoInfo* info = SDL_GetVideoInfo();
-        SDL_Surface* accumulation_surface = GetAccumulationSurface();
         
         glViewport(0, 0, (GLsizei) info->current_w, (GLsizei) info->current_h);
 
         //static int i = 0;
         //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
 
-        //SDL_SaveBMP(GetAccumulationSurface(), "temp.bmp");
         
         /* initialize viewing values  */
         glMatrixMode(GL_PROJECTION);
@@ -2863,9 +2850,9 @@ struct OpenGL1_1Window : public Window {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-        SDL_LockSurface(accumulation_surface);
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, accumulation_surface->w, accumulation_surface->h, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, accumulation_surface->pixels);
-        SDL_UnlockSurface(accumulation_surface);
+        SDL_LockSurface(screen_surface);
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, screen_surface->w, screen_surface->h, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, screen_surface->pixels);
+        SDL_UnlockSurface(screen_surface);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBindTexture(GL_TEXTURE_2D, accumulation_texture);

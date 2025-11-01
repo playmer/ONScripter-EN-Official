@@ -570,20 +570,20 @@ void ONScripterLabel::initSDL()
         }
     }
 #endif
-    screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+    window = Window::CreateBestWindow( this, screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
 
     /* ---------------------------------------- */
     /* Check if VGA screen is available. */
 #if defined(PDA) && (PDA_WIDTH==640)
-    if ( screen_surface == NULL ){
+    if ( window == NULL ){
         screen_ratio1 /= 2;
         screen_width  /= 2;
         screen_height /= 2;
-        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
+        window = Window::CreateBestWindow( this, screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|(fullscreen_mode?SDL_FULLSCREEN:0) );
     }
 #endif
 
-    if ( screen_surface == NULL ) {
+    if ( window == NULL ) {
         snprintf(script_h.errbuf, MAX_ERRBUF_LEN,
                  "Couldn't set %dx%dx%d video mode",
                  screen_width, screen_height, screen_bpp);
@@ -681,6 +681,8 @@ ONScripterLabel::ONScripterLabel()
 
     resetFlags();
     resetFlagsSub();
+
+    window = NULL;
 
     //init envdata variables
     fullscreen_mode = false;
@@ -1227,7 +1229,7 @@ int ONScripterLabel::init()
 #if defined(MACOSX)
     char* macos_font_file;
     NSFileManager *fm = [NSFileManager defaultManager];
-    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸コ�? ProN W4.ttc";
+    NSString *hiraginoPath = @"/System/Library/Fonts/ヒラギノ丸コ?��? ProN W4.ttc";
     if ([fm fileExistsAtPath:hiraginoPath])
     {
         macos_font_file = new char[ strlen([hiraginoPath UTF8String]) + 1 ];
@@ -1792,16 +1794,16 @@ void ONScripterLabel::flushDirect( SDL_Rect &rect, int refresh_mode, bool update
         for (int i=0; i<4; ++i) {
             if (intersectRects(tmp_rects[i], rect, surround_rects[i])) {
                 refreshSurface( accumulation_surface, &tmp_rects[i], refresh_mode );
-                SDL_BlitSurface( accumulation_surface, &tmp_rects[i], screen_surface, &tmp_rects[i] );
+                SDL_BlitSurface( accumulation_surface, &tmp_rects[i], window->screen_surface, &tmp_rects[i] );
             }
         }
-        if (updaterect) SDL_UpdateRects( screen_surface, 4, tmp_rects );
-        DisplayWindow();
+        if (updaterect) SDL_UpdateRects( window->screen_surface, 4, tmp_rects );
+        window->DisplayWindow();
     } else { 
         refreshSurface( accumulation_surface, &rect, refresh_mode );
-        SDL_BlitSurface( accumulation_surface, &rect, screen_surface, &rect );
-        if (updaterect) SDL_UpdateRect( screen_surface, rect.x, rect.y, rect.w, rect.h );
-        DisplayWindow();
+        SDL_BlitSurface( accumulation_surface, &rect, window->screen_surface, &rect );
+        if (updaterect) SDL_UpdateRect( window->screen_surface, rect.x, rect.y, rect.w, rect.h );
+        window->DisplayWindow();
     }
 }
 
@@ -2686,90 +2688,79 @@ void check_gl_error() {
     }
 }
 
-
-SDL_Surface* gWindow = NULL;
-
-void ONScripterLabel::DisplayWindow()
+Window::Window(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp)
+: onscripter(onscripter), screen_surface(screen_surface), bpp(bpp)
 {
-    const SDL_VideoInfo* info = SDL_GetVideoInfo();
-    
-    glViewport(0, 0, (GLsizei) info->current_w, (GLsizei) info->current_h);
 
-    static int i = 0;
-    //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
+}
 
-    //glViewport(0, 0, (GLsizei) w, (GLsizei) h);
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-    //gluPerspective(60.0, (GLfloat) w/(GLfloat) h, 1.0, 30.0);
-    //glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
-    //glTranslatef(0.0, 0.0, -3.6);
+Window::~Window()
+{
 
-    //SDL_SaveBMP(accumulation_surface, "temp.bmp");
-    
-    /* initialize viewing values  */
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    //glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-    glOrtho(0.0, info->current_w, 0.0, info->current_h, -1.0, 1.0);
-    
-    glEnable(GL_TEXTURE_2D);
+}
 
-    glBindTexture(GL_TEXTURE_2D, surface_texture);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+SDL_Surface* Window::GetAccumulationSurface()
+{
+    return GetAccumulationSurface();
+}
 
-    SDL_LockSurface(accumulation_surface);
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, accumulation_surface->w, accumulation_surface->h, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, accumulation_surface->pixels);
-    SDL_UnlockSurface(accumulation_surface);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glBindTexture(GL_TEXTURE_2D, surface_texture);
-
-    SDL_Rect dstRect = { 0, 0, 0, 0 };
+struct BasicWindow : public Window
+{
+    BasicWindow(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp)
+     : Window(onscripter, screen_surface, bpp)
     {
-        float scaleHeight = info->current_h / (float)accumulation_surface->h;
-        float scaleWidth = info->current_w / (float)accumulation_surface->w;
-        float scale = std::min(scaleHeight, scaleWidth);
 
-        dstRect.w = scale * accumulation_surface->w;
-        dstRect.h = scale * accumulation_surface->h;
-        dstRect.x = (info->current_w - dstRect.w) / 2;
-        dstRect.y = (info->current_h - dstRect.h) / 2;
     }
 
-    glBegin(GL_QUADS);
-        glTexCoord2f(0.0, 1.0); glVertex3f(dstRect.x            , dstRect.y            , 0.0);
-        glTexCoord2f(1.0, 1.0); glVertex3f(dstRect.x + dstRect.w, dstRect.y            , 0.0);
-        glTexCoord2f(1.0, 0.0); glVertex3f(dstRect.x + dstRect.w, dstRect.y + dstRect.h, 0.0);
-        glTexCoord2f(0.0, 0.0); glVertex3f(dstRect.x            , dstRect.y + dstRect.h, 0.0);
-    glEnd();
+    static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
+    {
+        return NULL;
+        //window_surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
+        //screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+        //return new BasicWindow(width, height, bpp, flags);
+    }
+
+    void Resize(int width, int height, int bpp, Uint32 flags)
+    {
+        SDL_FreeSurface(screen_surface);
+        window_surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
+        screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+    }
     
+    void DisplayWindow()
+    {
 
-    glFlush();
+    }
 
-    SDL_GL_SwapBuffers();
-}
+    SDL_Surface* window_surface;
+};
 
-void ONScripterLabel::ResizeEvent(int width, int height, int bpp, Uint32 flags) {
-    gWindow = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
-    DisplayWindow();
-}
+struct OpenGL1_1Window : public Window {
+    OpenGL1_1Window(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp)
+     : Window(onscripter, screen_surface, bpp)
+    {
 
-SDL_Surface* ONScripterLabel::SetVideoMode(int width, int height, int bpp, Uint32 flags)
-{
-    static bool sWindowInitialized = false;
+    }
 
-    if (!sWindowInitialized) {
-        gWindow = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
-        sWindowInitialized = true;
+    ~OpenGL1_1Window()
+    {
+
+    }
+
+    static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
+    {
+        SDL_Surface* window_surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
+
+        if (!window_surface) {
+            return NULL;
+        }
         
+        SDL_Surface* screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+
+        OpenGL1_1Window* window = new OpenGL1_1Window(onscripter, screen_surface, bpp);
+        window->internal_window = window_surface;
+
         glEnable(GL_TEXTURE_2D);
-        //glDisable(GL_TEXTURE_2D);
 
         /* select clearing color 	*/
         glClearColor (0.0, 0.0, 0.0, 0.0);
@@ -2777,46 +2768,118 @@ SDL_Surface* ONScripterLabel::SetVideoMode(int width, int height, int bpp, Uint3
         glShadeModel(GL_FLAT);
         glEnable(GL_DEPTH_TEST);
 
-        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // glEnable(GL_TEXTURE_2D);
-        // glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-        // #ifdef GL_VERSION_1_1
-        //     glBindTexture(GL_TEXTURE_2D, texName);
-        // #endif
-
-        // glBegin(GL_QUADS);
-        // glTexCoord2f(0.0, 0.0); glVertex3f(-2.0, -1.0, 0.0);
-        // glTexCoord2f(0.0, 1.0); glVertex3f(-2.0, 1.0, 0.0);
-        // glTexCoord2f(1.0, 1.0); glVertex3f(0.0, 1.0, 0.0);
-        // glTexCoord2f(1.0, 0.0); glVertex3f(0.0, -1.0, 0.0);
-
-        // glTexCoord2f(0.0, 0.0); glVertex3f(1.0, -1.0, 0.0);
-        // glTexCoord2f(0.0, 1.0); glVertex3f(1.0, 1.0, 0.0);
-        // glTexCoord2f(1.0, 1.0); glVertex3f(2.41421, 1.0, -1.41421);
-        // glTexCoord2f(1.0, 0.0); glVertex3f(2.41421, -1.0, -1.41421);
-        // glEnd();
-        // glFlush();
-        // glDisable(GL_TEXTURE_2D);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        check_gl_error();
+        glGenTextures(1, &window->accumulation_texture);
+        check_gl_error();
+        return window;
     }
 
+    void Resize(int width, int height, int bpp, Uint32 flags)
+    {
+        internal_window = SDL_SetVideoMode(width, height, BPP, SDL_OPENGL | SDL_RESIZABLE);
+        DisplayWindow();
+    }
+    
+    void DisplayWindow()
+    {
+        const SDL_VideoInfo* info = SDL_GetVideoInfo();
+        
+        glViewport(0, 0, (GLsizei) info->current_w, (GLsizei) info->current_h);
 
-    if (SDL_FULLSCREEN & flags) {
+        //static int i = 0;
+        //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
+
+        //SDL_SaveBMP(GetAccumulationSurface(), "temp.bmp");
+        
+        /* initialize viewing values  */
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0.0, info->current_w, 0.0, info->current_h, -1.0, 1.0);
+        
+        glEnable(GL_TEXTURE_2D);
+
+        glBindTexture(GL_TEXTURE_2D, accumulation_texture);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+        SDL_LockSurface(GetAccumulationSurface());
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, GetAccumulationSurface()->w, GetAccumulationSurface()->h, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, GetAccumulationSurface()->pixels);
+        SDL_UnlockSurface(GetAccumulationSurface());
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindTexture(GL_TEXTURE_2D, accumulation_texture);
+
+        SDL_Rect dstRect = { 0, 0, 0, 0 };
+        {
+            float scaleHeight = info->current_h / (float)GetAccumulationSurface()->h;
+            float scaleWidth = info->current_w / (float)GetAccumulationSurface()->w;
+            float scale = std::min(scaleHeight, scaleWidth);
+
+            dstRect.w = scale * GetAccumulationSurface()->w;
+            dstRect.h = scale * GetAccumulationSurface()->h;
+            dstRect.x = (info->current_w - dstRect.w) / 2;
+            dstRect.y = (info->current_h - dstRect.h) / 2;
+        }
+
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 1.0); glVertex3f(dstRect.x            , dstRect.y            , 0.0);
+            glTexCoord2f(1.0, 1.0); glVertex3f(dstRect.x + dstRect.w, dstRect.y            , 0.0);
+            glTexCoord2f(1.0, 0.0); glVertex3f(dstRect.x + dstRect.w, dstRect.y + dstRect.h, 0.0);
+            glTexCoord2f(0.0, 0.0); glVertex3f(dstRect.x            , dstRect.y + dstRect.h, 0.0);
+        glEnd();
+
+        glFlush();
+
+        SDL_GL_SwapBuffers();
+    }
+    
+    SDL_Surface* internal_window = NULL;
+    unsigned int accumulation_texture = 0;
+};
+
+
+#ifdef WIN32
+struct DX9Window : public Window {
+    DX9Window(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp) : Window(onscripter, screen_surface, bpp) {
 
     }
-    else if (SDL_RESIZABLE & flags) {
+
+    ~DX9Window() {
 
     }
 
-    if (screen_surface) {
-        SDL_FreeSurface(screen_surface);
-
-        glDeleteTextures(1, &surface_texture);
+    static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags) {
+        return NULL;
     }
 
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    check_gl_error();
-    glGenTextures(1, &surface_texture);
-    check_gl_error();
+    void Resize(int width, int height, int bpp, Uint32 flags)
+    {
 
-    return SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+    }
+    
+    void DisplayWindow()
+    {
+
+    }
+};
+#endif
+
+
+Window* Window::CreateBestWindow(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
+{
+    Window* window = NULL;
+    #ifdef WIN32
+    window = DX9Window::TryCreate(onscripter, width, height, bpp, flags);
+    if (window) return window;
+    #endif
+    
+    window = OpenGL1_1Window::TryCreate(onscripter, width, height, bpp, flags);
+    if (window) return window;
+    window = BasicWindow::TryCreate(onscripter, width, height, bpp, flags);
+    if (window) return window;
 }
+

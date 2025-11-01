@@ -1769,7 +1769,7 @@ int ONScripterLabel::playCommand()
 
 int ONScripterLabel::ofscopyCommand()
 {
-    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+    SDL_BlitSurface( window->screen_surface, NULL, accumulation_surface, NULL );
 
     return RET_CONTINUE;
 }
@@ -2096,11 +2096,11 @@ int ONScripterLabel::menu_windowCommand()
     if ( fullscreen_mode ){
 #ifndef PSP
         if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+        window->Resize( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
         SDL_Rect rect = {0, 0, (Uint16)screen_width, (Uint16)screen_height};
         flushDirect( rect, refreshMode() );
         if (async_movie){
-            SMPEG_setdisplay( async_movie, screen_surface, NULL, NULL );
+            SMPEG_setdisplay( async_movie, window->screen_surface, NULL, NULL );
             SMPEG_play( async_movie );
         }
 #endif
@@ -2131,18 +2131,18 @@ int ONScripterLabel::menu_fullCommand()
     if ( !fullscreen_mode ){
 #ifndef PSP
         if (async_movie) SMPEG_pause( async_movie );
-        screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
-        if (screen_surface)
+        window->Resize( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+        if (window->screen_surface)
             fullscreen_mode = true;
         else {
             fprintf(stderr, "*** menu_full: Error: %s (using windowed surface instead) ***\n", SDL_GetError());
-            screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+            window->Resize( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
             fullscreen_mode = false;
         }
         SDL_Rect rect = {0, 0, (Uint16)screen_width, (Uint16)screen_height};
         flushDirect( rect, refreshMode() );
         if (async_movie){
-            SMPEG_setdisplay( async_movie, screen_surface, NULL, NULL );
+            SMPEG_setdisplay( async_movie, window->screen_surface, NULL, NULL );
             SMPEG_play( async_movie );
         }
 #else
@@ -3024,7 +3024,7 @@ int ONScripterLabel::getscreenshotCommand()
     if ( screenshot_surface == NULL )
         screenshot_surface = SDL_CreateRGBSurface( SDL_SWSURFACE, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
 
-    SDL_Surface *surface = SDL_ConvertSurface( screen_surface, image_surface->format, SDL_SWSURFACE );
+    SDL_Surface *surface = SDL_ConvertSurface( window->screen_surface, image_surface->format, SDL_SWSURFACE );
     ons_gfx::resizeSurface( surface, screenshot_surface );
     SDL_FreeSurface( surface );
 
@@ -3712,7 +3712,7 @@ int ONScripterLabel::drawsp3Command()
         si.inv_mat[1][1] =  si.mat[0][0] * 1000 / denom;
     }
 
-    SDL_Rect clip = {0, 0, (Uint16)screen_surface->w, (Uint16)screen_surface->h};
+    SDL_Rect clip = {0, 0, (Uint16)window->screen_surface->w, (Uint16)window->screen_surface->h};
     si.blendOnSurface2( accumulation_surface, x, y, clip, alpha );
     si.setCell(old_cell_no);
 
@@ -3735,7 +3735,7 @@ int ONScripterLabel::drawsp2Command()
     si.calcAffineMatrix();
     si.setCell(cell_no);
 
-    SDL_Rect clip = {0, 0, (Uint16)screen_surface->w, (Uint16)screen_surface->h};
+    SDL_Rect clip = {0, 0, (Uint16)window->screen_surface->w, (Uint16)window->screen_surface->h};
     si.blendOnSurface2( accumulation_surface, si.pos.x, si.pos.y, clip, alpha );
 
     return RET_CONTINUE;
@@ -3796,7 +3796,7 @@ int ONScripterLabel::drawbg2Command()
     bi.rot = script_h.readInt();
     bi.calcAffineMatrix();
 
-    SDL_Rect clip = {0, 0, (Uint16)screen_surface->w, (Uint16)screen_surface->h};
+    SDL_Rect clip = {0, 0, (Uint16)window->screen_surface->w, (Uint16)window->screen_surface->h};
     bi.blendOnSurface2( accumulation_surface, bi.pos.x, bi.pos.y,
                         clip, 256 );
 
@@ -4532,9 +4532,9 @@ int ONScripterLabel::bltCommand()
         SDL_Rect src_rect = {(Sint16)sx,(Sint16)sy,(Uint16)sw,(Uint16)sh};
         SDL_Rect dst_rect = {(Sint16)dx,(Sint16)dy,(Uint16)dw,(Uint16)dh};
 
-        SDL_BlitSurface( btndef_info.image_surface, &src_rect, screen_surface, &dst_rect );
-        SDL_UpdateRect( screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
-        DisplayWindow();
+        SDL_BlitSurface( btndef_info.image_surface, &src_rect, window->screen_surface, &dst_rect );
+        SDL_UpdateRect( window->screen_surface, dst_rect.x, dst_rect.y, dst_rect.w, dst_rect.h );
+        window->DisplayWindow();
         dirty_rect.clear();
     }
     else{
@@ -4603,7 +4603,7 @@ int ONScripterLabel::bgmdownmodeCommand()
 
 int ONScripterLabel::bgcopyCommand()
 {
-    SDL_BlitSurface( screen_surface, NULL, accumulation_surface, NULL );
+    SDL_BlitSurface( window->screen_surface, NULL, accumulation_surface, NULL );
 
     bg_info.num_of_cells = 1;
     bg_info.trans_mode = AnimationInfo::TRANS_COPY;

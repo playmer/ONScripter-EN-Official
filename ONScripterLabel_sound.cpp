@@ -735,7 +735,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
             different_spec = false;
         }
         SMPEG_enablevideo( mpeg_sample, 1 );
-        SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
+        SMPEG_setdisplay( mpeg_sample, window->screen_surface, NULL, NULL );
         if (use_pos) {
             SMPEG_scaleXY( mpeg_sample, width, height );
             SMPEG_move( mpeg_sample, xpos, ypos );
@@ -828,14 +828,13 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
                         done_flag = movie_click_flag;
                     else if ( ((SDL_KeyboardEvent *)&event)->keysym.sym == SDLK_f ){
 #ifndef PSP
-                        if ( !SDL_WM_ToggleFullScreen( screen_surface ) ){
+                        if ( !SDL_WM_ToggleFullScreen( window->screen_surface ) ){
                             SMPEG_pause( mpeg_sample );
-                            SDL_FreeSurface(screen_surface);
                             if ( fullscreen_mode )
-                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
+                                window->Resize( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
                             else
-                                screen_surface = SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
-                            SMPEG_setdisplay( mpeg_sample, screen_surface, NULL, NULL );
+                                window->Resize( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+                            SMPEG_setdisplay( mpeg_sample, window->screen_surface, NULL, NULL );
                             SMPEG_play( mpeg_sample );
                         }
 #endif
@@ -893,7 +892,7 @@ int ONScripterLabel::playAVI( const char *filename, bool click_flag )
 
     AVIWrapper *avi = new AVIWrapper();
     if ( avi->init( absolute_filename, false ) == 0 &&
-         avi->initAV( screen_surface, audio_open_flag ) == 0 ){
+         avi->initAV( window->screen_surface, audio_open_flag ) == 0 ){
         if (avi->play( click_flag )) return 1;
     }
     delete avi;

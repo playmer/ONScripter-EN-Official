@@ -103,6 +103,23 @@
 
 void clearTimer(SDL_TimerID &timer_id);
 
+struct Window {
+    Window(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp);
+    virtual ~Window() = 0;
+
+    static Window* CreateBestWindow(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags);
+    virtual void Resize(int width, int height, int bpp, Uint32 flags) = 0;
+    virtual void DisplayWindow() = 0;
+
+    ONScripterLabel* onscripter;
+    SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
+    int bpp;
+
+protected:
+    SDL_Surface* GetAccumulationSurface();
+};
+
+
 class ONScripterLabel : public ScriptParser
 {
 public:
@@ -587,12 +604,7 @@ private:
 
     template <typename tEventType>
     bool TranslateMouse(tEventType& event);
-    SDL_Surface* SetVideoMode(int width, int height, int bpp, Uint32 flags);
-    void ResizeEvent(int width, int height, int bpp, Uint32 flags);
-    void DisplayWindow();
-    unsigned int surface_texture;
-    //bool test;
-    //unsigned int mag_type;
+    Window* window;
 
     int refresh_window_text_mode;
     int display_mode;
@@ -600,7 +612,6 @@ private:
     int event_mode;
     SDL_Surface *accumulation_surface; // Final image, i.e. picture_surface (+ text_window + text_surface)
     SDL_Surface *backup_surface; // Final image w/o (text_window + text_surface) used in leaveTextDisplayMode()
-    SDL_Surface *screen_surface; // Text + Select_image + Tachi image + background
     SDL_Surface *effect_dst_surface; // Intermediate source buffer for effect
     SDL_Surface *effect_src_surface; // Intermediate destination buffer for effect
     SDL_Surface *effect_tmp_surface; // Intermediate buffer for effect
@@ -1163,6 +1174,8 @@ private:
     bool executeSystemYesNo( int caller, int file_no=0 );
     void setupLookbackButton();
     void executeSystemLookback();
+
+    friend Window;
 };
 
 #endif // __ONSCRIPTER_LABEL_H__

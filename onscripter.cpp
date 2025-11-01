@@ -425,7 +425,7 @@ void redirect_output();
 int main( int argc, char **argv )
 {
     // Handle redirection of stdout/stderr on a per-platform basis.
-    redirect_output();
+    //redirect_output();
 
     ONScripterLabel ons;
 

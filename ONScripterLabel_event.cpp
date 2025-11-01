@@ -1439,7 +1439,7 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             int modded_index = index % (sizeof(res)/sizeof(res[0]));
 
             Res& next = res[modded_index];
-            ResizeEvent(next.w, next.h, 32, 0);
+            window->Resize(next.w, next.h, 32, 0);
             ++index;
         }
 
@@ -1711,8 +1711,8 @@ void ONScripterLabel::runEventLoop()
             
             // fall through
           case SDL_VIDEOEXPOSE:
-              SDL_UpdateRect( screen_surface, 0, 0, screen_width, screen_height );
-              DisplayWindow();
+              SDL_UpdateRect( window->screen_surface, 0, 0, screen_width, screen_height );
+              window->DisplayWindow();
               break;
 
           case SDL_QUIT:
@@ -1721,25 +1721,25 @@ void ONScripterLabel::runEventLoop()
 
           case SDL_VIDEORESIZE:
           {
-            ResizeEvent(event.resize.w, event.resize.h, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG | SDL_RESIZABLE );
+            window->Resize(event.resize.w, event.resize.h, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG | SDL_RESIZABLE );
             break;
           }
 #if 0
           case SDL_VIDEORESIZE:
             //Mion: beginning stab at handling resizable windows; tends to crash
             if (async_movie) SMPEG_pause( async_movie );
-            SDL_FreeSurface(screen_surface);
+            SDL_FreeSurface(window->screen_surface);
             screen_ratio1 = event.resize.w;
             screen_ratio2 = script_width;
             screen_width  = ExpandPos(script_width);
             screen_height = ExpandPos(script_height);
-            screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG | SDL_RESIZABLE );
+            window->screen_surface = SDL_SetVideoMode( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG | SDL_RESIZABLE );
             {
                 SDL_Rect rect = {0, 0, screen_width, screen_height};
                 flushDirect( rect, refreshMode() );
             }
             if (async_movie){
-                SMPEG_setdisplay( async_movie, screen_surface, NULL, NULL );
+                SMPEG_setdisplay( async_movie, window->screen_surface, NULL, NULL );
                 SMPEG_play( async_movie );
             }
             break;

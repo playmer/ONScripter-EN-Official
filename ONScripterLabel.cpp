@@ -2701,7 +2701,7 @@ Window::~Window()
 
 SDL_Surface* Window::GetAccumulationSurface()
 {
-    return GetAccumulationSurface();
+    return onscripter->accumulation_surface;
 }
 
 struct BasicWindow : public Window

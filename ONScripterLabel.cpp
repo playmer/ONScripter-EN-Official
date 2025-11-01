@@ -2688,6 +2688,25 @@ void check_gl_error() {
     }
 }
 
+SDL_Rect Window::CalculateDstRect()
+{
+    const SDL_VideoInfo* info = SDL_GetVideoInfo();
+
+    SDL_Surface* accumulation_surface = GetAccumulationSurface();
+
+    SDL_Rect dstRect = { 0, 0, 0, 0 };
+    float scaleHeight = info->current_h / (float)accumulation_surface->h;
+    float scaleWidth = info->current_w / (float)accumulation_surface->w;
+    float scale = std::min(scaleHeight, scaleWidth);
+
+    dstRect.w = scale * accumulation_surface->w;
+    dstRect.h = scale * accumulation_surface->h;
+    dstRect.x = (info->current_w - dstRect.w) / 2;
+    dstRect.y = (info->current_h - dstRect.h) / 2;
+
+    return dstRect;
+}
+
 Window::Window(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp)
 : onscripter(onscripter), screen_surface(screen_surface), bpp(bpp)
 {
@@ -2713,26 +2732,63 @@ struct BasicWindow : public Window
     }
 
     static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
-    {
-        return NULL;
-        //window_surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
-        //screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
-        //return new BasicWindow(width, height, bpp, flags);
+    {        
+        SDL_Surface* screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+        SDL_SetAlpha( screen_surface, 0, SDL_ALPHA_OPAQUE );
+
+        BasicWindow* window = new BasicWindow(onscripter, screen_surface, bpp);
+        window->internal_window = SDL_SetVideoMode(width, height, bpp, SDL_RESIZABLE);
+
+        window->intermediate_window = NULL;
+
+        return window;
     }
 
     void Resize(int width, int height, int bpp, Uint32 flags)
     {
+        internal_window = SDL_SetVideoMode(width, height, bpp, SDL_RESIZABLE);
+        
         SDL_FreeSurface(screen_surface);
-        window_surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
         screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+        SDL_SetAlpha( screen_surface, 0, SDL_ALPHA_OPAQUE );
+        
+        SDL_Rect dstRect = CalculateDstRect();
+        SDL_FreeSurface(intermediate_window);
+        //intermediate_window = AnimationInfo::allocSurface(dstRect.w, dstRect.h);
+        intermediate_window = SDL_CreateRGBSurface(SDL_SWSURFACE, dstRect.w, dstRect.h, BPP, RMASK, GMASK, BMASK, AMASK);
+        SDL_SetAlpha( intermediate_window, 0, SDL_ALPHA_OPAQUE );
     }
     
     void DisplayWindow()
     {
+        const SDL_VideoInfo* info = SDL_GetVideoInfo();
+        SDL_Rect dstRect = CalculateDstRect();
+        SDL_Surface* accumulation_surface =  GetAccumulationSurface();
 
+        if (!intermediate_window) {
+            intermediate_window = SDL_CreateRGBSurface(SDL_SWSURFACE, dstRect.w, dstRect.h, BPP, RMASK, GMASK, BMASK, AMASK);
+            SDL_SetAlpha( intermediate_window, 0, SDL_ALPHA_OPAQUE );
+        }
+
+        static int i = 0;
+        //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
+        
+        SDL_SaveBMP(accumulation_surface, "A_accumulation.bmp");
+
+        if (intermediate_window->w != accumulation_surface->w || intermediate_window->w != accumulation_surface->w) {
+            ons_gfx::resizeSurface(accumulation_surface, intermediate_window);
+            SDL_SaveBMP(intermediate_window, "A_intermediate.bmp");
+
+            SDL_BlitSurface(intermediate_window, NULL, internal_window, &dstRect);
+        } else {
+            SDL_BlitSurface(accumulation_surface, NULL, internal_window, &dstRect);
+        }
+
+        SDL_UpdateRect(internal_window, 0, 0, internal_window->w, internal_window->h);
     }
 
-    SDL_Surface* window_surface;
+    SDL_Surface* internal_window = NULL;
+    SDL_Surface* intermediate_window = NULL;
 };
 
 struct OpenGL1_1Window : public Window {
@@ -2784,6 +2840,7 @@ struct OpenGL1_1Window : public Window {
     void DisplayWindow()
     {
         const SDL_VideoInfo* info = SDL_GetVideoInfo();
+        SDL_Surface* accumulation_surface = GetAccumulationSurface();
         
         glViewport(0, 0, (GLsizei) info->current_w, (GLsizei) info->current_h);
 
@@ -2806,24 +2863,14 @@ struct OpenGL1_1Window : public Window {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-        SDL_LockSurface(GetAccumulationSurface());
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, GetAccumulationSurface()->w, GetAccumulationSurface()->h, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, GetAccumulationSurface()->pixels);
-        SDL_UnlockSurface(GetAccumulationSurface());
+        SDL_LockSurface(accumulation_surface);
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, accumulation_surface->w, accumulation_surface->h, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, accumulation_surface->pixels);
+        SDL_UnlockSurface(accumulation_surface);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBindTexture(GL_TEXTURE_2D, accumulation_texture);
 
-        SDL_Rect dstRect = { 0, 0, 0, 0 };
-        {
-            float scaleHeight = info->current_h / (float)GetAccumulationSurface()->h;
-            float scaleWidth = info->current_w / (float)GetAccumulationSurface()->w;
-            float scale = std::min(scaleHeight, scaleWidth);
-
-            dstRect.w = scale * GetAccumulationSurface()->w;
-            dstRect.h = scale * GetAccumulationSurface()->h;
-            dstRect.x = (info->current_w - dstRect.w) / 2;
-            dstRect.y = (info->current_h - dstRect.h) / 2;
-        }
+        SDL_Rect dstRect = CalculateDstRect();
 
         glBegin(GL_QUADS);
             glTexCoord2f(0.0, 1.0); glVertex3f(dstRect.x            , dstRect.y            , 0.0);
@@ -2877,8 +2924,8 @@ Window* Window::CreateBestWindow(ONScripterLabel* onscripter, int width, int hei
     if (window) return window;
     #endif
     
-    window = OpenGL1_1Window::TryCreate(onscripter, width, height, bpp, flags);
-    if (window) return window;
+    //window = OpenGL1_1Window::TryCreate(onscripter, width, height, bpp, flags);
+    //if (window) return window;
     window = BasicWindow::TryCreate(onscripter, width, height, bpp, flags);
     if (window) return window;
 }

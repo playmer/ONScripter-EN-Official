@@ -1084,28 +1084,29 @@ void ScriptParser::setStr( char **dst, const char *src, int num, bool to_utf8 )
     if ( *dst ) delete[] *dst;
     *dst = NULL;
     
-    if ( src ){
-        if ( num >= 0 ){
-            *dst = new char[ num + 1 ];
-            memcpy( *dst, src, num );
-            (*dst)[num] = '\0';
-        }
-        else{
-            num = strlen(src);
+    if ( !src ) {
+        return;
+    }
 
-            if ( to_utf8 && script_h.enc.getEncoding() == Encoding::CODE_UTF8 ) {
-                char *tmp_buf = new char[ num*2 + 1 ];
-                DirectReader::convertFromSJISToUTF8(tmp_buf, src);
-                num = strlen(tmp_buf);
-                *dst = new char[ num + 1 ];
-                strcpy(*dst, tmp_buf);
-                delete[] tmp_buf;
-            }
-            else {
-                *dst = new char[ num + 1 ];
-                strcpy( *dst, src );
-            }
-        }
+    if ( num < 0) {
+        num = strlen(src);
+    }
+
+    const char *real_src = src;
+
+    if ( to_utf8 && script_h.enc.getEncoding() == Encoding::CODE_UTF8 ) {
+        char *tmp_buf = new char[ num*2 + 1 ];
+        DirectReader::convertFromSJISToUTF8(tmp_buf, src);
+        num = strlen(tmp_buf);
+        real_src = tmp_buf;
+    }
+
+    *dst = new char[ num + 1 ];
+    memcpy( *dst, src, num );
+    (*dst)[num] = '\0';
+
+    if (real_src != src) {
+        delete[] real_src;
     }
 }
 

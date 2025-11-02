@@ -750,25 +750,17 @@ int ONScripterLabel::splitonceCommand()
 
     // Get thing to hold strings, and scan until we hit the delimeter
     // TODO this currently cannot use a multi-byte UTF-8 character to deliminate
-    char *token = new char[strlen(save_buf)+1];
     unsigned int c=0;
     while(save_buf[c] != delimiter && save_buf[c] != '\0'){
         // TODO decide based on encoding, and if UTF-8 use byte number checking function
         // Is this also a problem in splitCommand?
-        if (IS_TWO_BYTE(save_buf[c]))
-            c += 2;
-        else
-            c++;
+        c += IS_TWO_BYTE(save_buf[c]) ? 2 : 1;
     }
-    // Copy that much of save_buf into token
-    memcpy( token, save_buf, c );
-    // Terminate the string there
-    token[c] = '\0';
 
     // Save the first part of the string back into the source
     // Not sure exactly why current_var_no is of the first readStr, but hey.
     // Please let me know if you know. -Galladite
-    setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, token );
+    setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, save_buf, c );
 
     /*
     if ( script_h.current_variable.type & ScriptHandler::VAR_INT ||
@@ -782,7 +774,7 @@ int ONScripterLabel::splitonceCommand()
 
     // Advance buffer
     save_buf += c;
-    if (save_buf != '\0') save_buf++; // Don't include the delimeter in the remainder, unless we had no delimeter.
+    if (*save_buf != '\0') save_buf++; // Don't include the delimeter in the remainder, unless we had no delimeter.
     // If we have more of the string, save it into another variable
     //
     // UPDATE: do this no matter what. If there is nothing left over,
@@ -795,17 +787,12 @@ int ONScripterLabel::splitonceCommand()
     // -Galladite 2025-3-2
     script_h.readVariable();
     if ( script_h.current_variable.type & ScriptHandler::VAR_STR ){
-        if (save_buf[0] != '\0')
-            setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, save_buf );
-        else
-            setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, "\0" );
+        setStr( &script_h.getVariableData(script_h.current_variable.var_no).str, save_buf );
     }
     else {
         // Because we want to save the rest of a STRING - int vars are no good
         errorAndCont("splitonce: no variable (or wrong type, viz. int/array) provided to save remainder of string to");
     }
-
-    delete[] token;
 
     return RET_CONTINUE;
 }

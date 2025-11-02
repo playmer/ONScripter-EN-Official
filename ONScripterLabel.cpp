@@ -2829,7 +2829,7 @@ struct OpenGL1_1Window : public Window {
 
         SDL_Surface* window_surface = SDL_SetVideoMode(screen_width, screen_height, bpp, SDL_OPENGL | flags);
 
-        if (!window_surface) {
+        if (!window_surface || ((window_surface->flags & SDL_OPENGL) != SDL_OPENGL)) {
             return NULL;
         }
         
@@ -2953,13 +2953,19 @@ struct DX9Window : public Window {
 Window* Window::CreateBestWindow(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
 {
     Window* window = NULL;
+    
     #ifdef WIN32
     window = DX9Window::TryCreate(onscripter, width, height, bpp, flags);
     if (window) return window;
+    
+    printf("Falling back to OpenGL 1.1 Presention");
     #endif
 
-    //window = OpenGL1_1Window::TryCreate(onscripter, width, height, bpp, flags);
-    //if (window) return window;
+    window = OpenGL1_1Window::TryCreate(onscripter, width, height, bpp, flags);
+    if (window) return window;
+
+    printf("Falling back to Software Presention");
+
     window = BasicWindow::TryCreate(onscripter, width, height, bpp, flags);
     if (window) return window;
 }

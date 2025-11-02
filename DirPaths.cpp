@@ -27,20 +27,18 @@
 DirPaths::DirPaths( const char *new_paths )
 : num_paths(0), paths(NULL), all_paths(NULL)
 {
-    //printf("DirPaths cons\n");
     add(new_paths);
 }
 
 DirPaths::DirPaths( const DirPaths& dp )
+    : num_paths(0), paths(NULL), all_paths(NULL)
 {
-    //printf("DirPaths copy cons\n");
     set(dp);
 }
 
 DirPaths& DirPaths::operator =( const DirPaths &dp )
 {
     if (this != &dp){
-        //printf("DirPaths =op\n");
         set(dp);
     }
     return *this;
@@ -48,22 +46,21 @@ DirPaths& DirPaths::operator =( const DirPaths &dp )
 
 void DirPaths::set( const DirPaths &dp )
 {
-    memcpy(this, &dp, sizeof(DirPaths));
-    if (paths != NULL) {
-        char **old_paths = paths;
+    num_paths = dp.num_paths;
+
+    if (dp.paths != NULL) {
         paths = new char*[num_paths + 1];
         for (int i=0; i<=num_paths; i++) {
-            if (old_paths[i] != NULL) {
-                paths[i] = new char[strlen(old_paths[i]) + 1];
-                strcpy(paths[i], old_paths[i]);
+            if (dp.paths[i] != NULL) {
+                paths[i] = new char[strlen(dp.paths[i]) + 1];
+                strcpy(paths[i], dp.paths[i]);
             } else
                 paths[i] = NULL;
         }
     }
-    if (all_paths != NULL) {
-        char *old_all_paths = all_paths;
-        all_paths = new char[strlen(old_all_paths) + 1];
-        strcpy(all_paths, old_all_paths);
+    if (dp.all_paths != NULL) {
+        all_paths = new char[strlen(dp.all_paths) + 1];
+        strcpy(all_paths, dp.all_paths);
     }
 }
 

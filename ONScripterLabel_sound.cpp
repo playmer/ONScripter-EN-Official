@@ -830,10 +830,7 @@ int ONScripterLabel::playMPEG( const char *filename, bool async_flag, bool use_p
 #ifndef PSP
                         if ( !SDL_WM_ToggleFullScreen( window->screen_surface ) ){
                             SMPEG_pause( mpeg_sample );
-                            if ( fullscreen_mode )
-                                window->Resize( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG );
-                            else
-                                window->Resize( screen_width, screen_height, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG|SDL_FULLSCREEN );
+                            window->Resize( screen_width, screen_height, screen_bpp, fullscreen_mode ? SDL_FULLSCREEN : DEFAULT_VIDEO_SURFACE_FLAG );
                             SMPEG_setdisplay( mpeg_sample, window->screen_surface, NULL, NULL );
                             SMPEG_play( mpeg_sample );
                         }

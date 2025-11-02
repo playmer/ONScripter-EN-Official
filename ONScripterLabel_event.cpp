@@ -1439,7 +1439,8 @@ bool ONScripterLabel::keyPressEvent( SDL_KeyboardEvent *event )
             int modded_index = index % (sizeof(res)/sizeof(res[0]));
 
             Res& next = res[modded_index];
-            window->Resize(next.w, next.h, 32, 0);
+            window->Resize(next.w, next.h, 32, DEFAULT_VIDEO_SURFACE_FLAG);
+            fullscreen_mode = false;
             ++index;
         }
 
@@ -1721,7 +1722,7 @@ void ONScripterLabel::runEventLoop()
 
           case SDL_VIDEORESIZE:
           {
-            window->Resize(event.resize.w, event.resize.h, screen_bpp, DEFAULT_VIDEO_SURFACE_FLAG | SDL_RESIZABLE );
+            window->Resize(event.resize.w, event.resize.h, screen_bpp, fullscreen_mode ? SDL_FULLSCREEN : DEFAULT_VIDEO_SURFACE_FLAG );
             break;
           }
 #if 0

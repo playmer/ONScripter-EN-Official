@@ -371,6 +371,10 @@ static void SDL_Quit_Wrapper()
     SDL_Quit();
 }
 
+
+int gNativeWidth = 0;
+int gNativeHeight = 0;
+
 void ONScripterLabel::initSDL()
 {
     /* ---------------------------------------- */
@@ -380,6 +384,13 @@ void ONScripterLabel::initSDL()
         errorAndExit("Couldn't initialize SDL", SDL_GetError(), "Init Error", true);
         return; //dummy
     }
+
+    const SDL_VideoInfo* info = SDL_GetVideoInfo();
+    gNativeWidth = info->current_w;
+    gNativeHeight = info->current_h;
+
+    printf("Current video mode: {%d, %d}", info->current_w, info->current_h);
+
     atexit(SDL_Quit_Wrapper); // work-around for OS/2
 
     if( cdaudio_flag && SDL_InitSubSystem( SDL_INIT_CDROM ) < 0 ){
@@ -509,25 +520,21 @@ void ONScripterLabel::initSDL()
     scr_stretch_y = 1.0;
 #endif
     if (scaled_flag) {
-        const SDL_VideoInfo* info = SDL_GetVideoInfo();
-        int native_width = info->current_w;
-        int native_height = info->current_h;
-        
         // Resize up to fill screen
 #ifndef RCA_SCALE
         float scr_stretch_x, scr_stretch_y;
 #endif
-        scr_stretch_x = (float)native_width / (float)screen_width;
-        scr_stretch_y = (float)native_height / (float)screen_height;
+        scr_stretch_x = (float)gNativeWidth / (float)screen_width;
+        scr_stretch_y = (float)gNativeHeight / (float)screen_height;
 #ifdef RCA_SCALE
         if (widescreen_flag) {
             if (scr_stretch_x > scr_stretch_y) {
-                screen_ratio1 = native_height;
+                screen_ratio1 = gNativeHeight;
                 screen_ratio2 = script_height;
                 scr_stretch_x /= scr_stretch_y;
                 scr_stretch_y = 1.0;
             } else { 
-                screen_ratio1 = native_width;
+                screen_ratio1 = gNativeWidth;
                 screen_ratio2 = script_width;
                 scr_stretch_y /= scr_stretch_x;
                 scr_stretch_x = 1.0;
@@ -539,10 +546,10 @@ void ONScripterLabel::initSDL()
         {
             // Constrain aspect to same as game
             if (scr_stretch_x > scr_stretch_y) {
-                screen_ratio1 = native_height;
+                screen_ratio1 = gNativeHeight;
                 screen_ratio2 = script_height;
             } else { 
-                screen_ratio1 = native_width;
+                screen_ratio1 = gNativeWidth;
                 screen_ratio2 = script_width;
             }
             scr_stretch_x = scr_stretch_y = 1.0;
@@ -553,12 +560,12 @@ void ONScripterLabel::initSDL()
 #ifdef RCA_SCALE
     else if (widescreen_flag) {
         const SDL_VideoInfo* info = SDL_GetVideoInfo();
-        int native_width = info->current_w;
-        int native_height = info->current_h;
+        int gNativeWidth = info->current_w;
+        int gNativeHeight = info->current_h;
         
         // Resize to screen aspect ratio
         const float screen_asp = (float)screen_width / (float)screen_height;
-        const float native_asp = (float)native_width / (float)native_height;
+        const float native_asp = (float)gNativeWidth / (float)gNativeHeight;
         const float aspquot = native_asp / screen_asp;
         if (aspquot >1.01) {
             // Widescreen; make gamearea wider
@@ -2726,38 +2733,56 @@ struct BasicWindow : public Window
     }
 
     static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
-    {        
+    {
+        int screen_width = width;
+        int screen_height = height;
+
+        if ((flags & SDL_FULLSCREEN) == SDL_FULLSCREEN) {
+            screen_width = gNativeWidth;
+            screen_height = gNativeHeight;
+        }
+
         SDL_Surface* screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
         SDL_SetAlpha( screen_surface, 0, SDL_ALPHA_OPAQUE );
 
         BasicWindow* window = new BasicWindow(onscripter, screen_surface, bpp);
-        window->internal_window = SDL_SetVideoMode(width, height, bpp, SDL_RESIZABLE);
+        window->internal_window = SDL_SetVideoMode(screen_width, screen_height, BPP, flags);
 
-        window->intermediate_window = NULL;
+        SDL_Rect dstRect = window->CalculateDstRect();
+        window->intermediate_window = SDL_CreateRGBSurface(SDL_SWSURFACE, dstRect.w, dstRect.h, BPP, RMASK, GMASK, BMASK, AMASK);
+        SDL_SetAlpha( window->intermediate_window, 0, SDL_ALPHA_OPAQUE );
 
         return window;
     }
 
     void Resize(int width, int height, int bpp, Uint32 flags)
     {
-        internal_window = SDL_SetVideoMode(width, height, bpp, SDL_RESIZABLE);
-        
+        int screen_width = width;
+        int screen_height = height;
+
+        if ((flags & SDL_FULLSCREEN) == SDL_FULLSCREEN) {
+            // Resize event after we requested it, no need to set it again.
+            if ((internal_window->flags  & SDL_FULLSCREEN) == SDL_FULLSCREEN) {
+                return;
+            }
+
+            printf("Fullscreen Resize: (%d, %d)\n", gNativeWidth, gNativeHeight);
+            screen_width = gNativeWidth;
+            screen_height = gNativeHeight;
+        }
+
+        internal_window = SDL_SetVideoMode(screen_width, screen_height, BPP, flags);
+
         SDL_Rect dstRect = CalculateDstRect();
         SDL_FreeSurface(intermediate_window);
-        //intermediate_window = AnimationInfo::allocSurface(dstRect.w, dstRect.h);
         intermediate_window = SDL_CreateRGBSurface(SDL_SWSURFACE, dstRect.w, dstRect.h, BPP, RMASK, GMASK, BMASK, AMASK);
         SDL_SetAlpha( intermediate_window, 0, SDL_ALPHA_OPAQUE );
     }
-    
+
     void DisplayWindow()
     {
         const SDL_VideoInfo* info = SDL_GetVideoInfo();
         SDL_Rect dstRect = CalculateDstRect();
-
-        if (!intermediate_window) {
-            intermediate_window = SDL_CreateRGBSurface(SDL_SWSURFACE, dstRect.w, dstRect.h, BPP, RMASK, GMASK, BMASK, AMASK);
-            SDL_SetAlpha( intermediate_window, 0, SDL_ALPHA_OPAQUE );
-        }
 
         static int i = 0;
         //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
@@ -2794,7 +2819,15 @@ struct OpenGL1_1Window : public Window {
 
     static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
     {
-        SDL_Surface* window_surface = SDL_SetVideoMode(width, height, bpp, SDL_OPENGL | SDL_RESIZABLE);
+        int screen_width = width;
+        int screen_height = height;
+
+        if ((flags & SDL_FULLSCREEN) == SDL_FULLSCREEN) {
+            screen_width = gNativeWidth;
+            screen_height = gNativeHeight;
+        }
+
+        SDL_Surface* window_surface = SDL_SetVideoMode(screen_width, screen_height, bpp, SDL_OPENGL | flags);
 
         if (!window_surface) {
             return NULL;
@@ -2822,10 +2855,25 @@ struct OpenGL1_1Window : public Window {
 
     void Resize(int width, int height, int bpp, Uint32 flags)
     {
-        internal_window = SDL_SetVideoMode(width, height, BPP, SDL_OPENGL | SDL_RESIZABLE);
+        int screen_width = width;
+        int screen_height = height;
+
+        if ((flags & SDL_FULLSCREEN) == SDL_FULLSCREEN) {
+            // Resize event after we requested it, no need to set it again.
+            if ((internal_window->flags  & SDL_FULLSCREEN) == SDL_FULLSCREEN) {
+                return;
+            }
+
+            printf("Fullscreen Resize: (%d, %d)\n", gNativeWidth, gNativeHeight);
+            screen_width = gNativeWidth;
+            screen_height = gNativeHeight;
+        }
+
+        internal_window = SDL_SetVideoMode(screen_width, screen_height, BPP, SDL_OPENGL | flags);
+
         DisplayWindow();
     }
-    
+
     void DisplayWindow()
     {
         const SDL_VideoInfo* info = SDL_GetVideoInfo();
@@ -2835,16 +2883,15 @@ struct OpenGL1_1Window : public Window {
         //static int i = 0;
         //printf("%d: %d, %d; %d\n", i++, info->current_w, info->current_h, screen_bpp);
 
-        
         /* initialize viewing values  */
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(0.0, info->current_w, 0.0, info->current_h, -1.0, 1.0);
-        
+
         glEnable(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, accumulation_texture);
-        
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -2910,7 +2957,7 @@ Window* Window::CreateBestWindow(ONScripterLabel* onscripter, int width, int hei
     window = DX9Window::TryCreate(onscripter, width, height, bpp, flags);
     if (window) return window;
     #endif
-    
+
     //window = OpenGL1_1Window::TryCreate(onscripter, width, height, bpp, flags);
     //if (window) return window;
     window = BasicWindow::TryCreate(onscripter, width, height, bpp, flags);

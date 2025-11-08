@@ -2923,18 +2923,80 @@ struct OpenGL1_1Window : public Window {
 };
 
 
-#ifdef WIN32
+//#ifdef WIN32
+#include <d3d9.h>
+
 struct DX9Window : public Window {
-    DX9Window(ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp) : Window(onscripter, screen_surface, bpp) {
+    DX9Window(IDirect3D9* api, IDirect3DDevice9* device, ONScripterLabel* onscripter, SDL_Surface *screen_surface, int bpp)
+     : Window(onscripter, screen_surface, bpp), api(api), device(device)
+    {
 
     }
 
-    ~DX9Window() {
+    ~DX9Window()
+    {
 
     }
 
-    static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags) {
-        return NULL;
+    static Window* TryCreate(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)
+    {
+        // Check for support first.
+        IDirect3D9* api = Direct3DCreate9(D3D_SDK_VERSION);
+        if (api == NULL) {
+            return NULL;
+        }
+        
+        D3DPRESENT_PARAMETERS device_parameters;
+        ZeroMemory(&device_parameters, sizeof(device_parameters));
+        device_parameters.BackBufferFormat = D3DFMT_UNKNOWN;
+        device_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        device_parameters.Windowed = (internal_window->flags  & SDL_FULLSCREEN) != SDL_FULLSCREEN;
+        device_parameters.EnableAutoDepthStencil = TRUE;
+        device_parameters.AutoDepthStencilFormat = D3DFMT_UNKNOWN;
+        device_parameters.PresentationInterval = D3DPRESENT_INTERVAL_ONE; // vsync
+
+
+        int screen_width = width;
+        int screen_height = height;
+
+        if ((flags & SDL_FULLSCREEN) == SDL_FULLSCREEN) {
+            screen_width = gNativeWidth;
+            screen_height = gNativeHeight;
+        }
+
+        SDL_Surface* window_surface = SDL_SetVideoMode(screen_width, screen_height, bpp, flags);
+
+        IDirect3DDevice9* device = NULL;
+        if (api->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, 0, &device_parameters, &device) < 0) {
+            api->Release();
+            return NULL;
+        }
+
+        if (!window_surface) {
+            api->Release();
+            return NULL;
+        }
+        
+        SDL_Surface* screen_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bpp, RMASK, GMASK, BMASK, AMASK);
+        DX9Window* window = new DX9Window(api, device, onscripter, screen_surface, bpp);
+
+        return window;
+    }
+
+    IDirect3D9* api;
+    IDirect3DDevice9* device;
+    IDirect3DTexture9 *window_texture;
+
+    void RecreateTexture() {
+        HRESULT hr = device->CreateTexture(
+            screen_surface->w,
+            screen_surface->h,
+            1,
+            D3DUSAGE_DYNAMIC,
+            D3DFMT_A8R8G8B8,
+            D3DPOOL_DEFAULT,
+            &window_texture,
+            NULL);
     }
 
     void Resize(int width, int height, int bpp, Uint32 flags)
@@ -2947,7 +3009,7 @@ struct DX9Window : public Window {
 
     }
 };
-#endif
+//#endif
 
 
 Window* Window::CreateBestWindow(ONScripterLabel* onscripter, int width, int height, int bpp, Uint32 flags)

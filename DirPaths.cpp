@@ -39,9 +39,31 @@ DirPaths::DirPaths( const DirPaths& dp )
 DirPaths& DirPaths::operator =( const DirPaths &dp )
 {
     if (this != &dp){
+        clear();
         set(dp);
     }
     return *this;
+}
+
+void DirPaths::clear()
+{
+    if (paths != NULL) {
+        char **ptr = paths;
+        for (int i=0; i<num_paths; i++) {
+            if (*ptr != NULL) {
+                delete[] *ptr;
+            }
+            ptr++;
+        }
+        delete[] paths;
+        paths = NULL;
+    }
+    if (all_paths != NULL) {
+        delete[] all_paths;
+        paths = NULL;
+    }
+    
+    num_paths = 0;
 }
 
 void DirPaths::set( const DirPaths &dp )
@@ -66,19 +88,7 @@ void DirPaths::set( const DirPaths &dp )
 
 DirPaths::~DirPaths()
 {
-    if (paths != NULL) {
-        char **ptr = paths;
-        for (int i=0; i<num_paths; i++) {
-            if (*ptr != NULL) {
-                delete[] *ptr;
-            }
-            ptr++;
-        }
-        delete[] paths;
-    }
-    if (all_paths != NULL) {
-        delete[] all_paths;
-    }
+    clear();
 }
 
 void DirPaths::add( const DirPaths &dp )

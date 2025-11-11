@@ -57,6 +57,7 @@ public:
     size_t max_path_len() const;
 
 private:
+    void clear();  //called by destructor & =op
     void set( const DirPaths &dp ); //called by copy cons & =op
 
     int num_paths;

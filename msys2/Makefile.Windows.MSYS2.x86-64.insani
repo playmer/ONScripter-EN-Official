@@ -67,12 +67,12 @@ TOOL_LIBS = -Wl,--start-group \
             -ljpeg -lpng -lz \
             -L$(GNURX_DIR) -lgnurx \
             -lbz2 -Wl,--end-group
-LIBS = -static -s -Wl,--start-group \
+LIBS = -static -Wl,--start-group \
        $(shell $(SDL_CONFIG) --static-libs) \
        -lSDL_ttf \
        $(shell smpeg-config --libs) $(shell pkg-config freetype2 --libs) -ldwrite \
        -lSDL_image -ljpeg -lpng -lz \
-       -lSDL_mixer -logg -lvorbis -lvorbisfile \
+       -lSDL_mixer -logg -lvorbis -lvorbisfile -lFLAC.dll -lopengl32 \
        -lbrotlidec -lbrotlicommon -lharfbuzz -ltiff -lwebp -lmad -lgraphite2 -ljbig -lsharpyuv -lzstd -ldeflate -lLerc -llzma -liconv -ldinput -lwinmm -ldxguid -lrpcrt4 \
        -lusp10 \
        -lbz2 -Wl,--end-group
@@ -86,15 +86,15 @@ EXT_OBJS = win32rc.o graphics_mmx.o graphics_sse2.o
 .SUFFIXES: .o .cpp .h .c
 
 ifdef DEBUG
-OSCFLAGS = -O0 -g -pg -ggdb -pipe -Wpointer-arith -Wall  $(OSCFLAGSEXTRA)
+OSCFLAGS = -O0 -g -pg -ggdb -pipe -Wpointer-arith -Wall -Wextra -pedantic -Werror $(OSCFLAGSEXTRA)
 export LDFLAGS  := -pg $(LDFLAGS)
 else
-  ifdef PROF
-  OSCFLAGS = -O3 -pg -pipe -Wpointer-arith -Wall  $(OSCFLAGSEXTRA)
-  export LDFLAGS  := -pg $(LDFLAGS)
-  else
-  OSCFLAGS = -O3 -fomit-frame-pointer -pipe -Wpointer-arith -Wall  $(OSCFLAGSEXTRA)
-  endif
+	ifdef PROF
+	OSCFLAGS = -O3 -pg -s -pipe -Wpointer-arith -Wall  $(OSCFLAGSEXTRA)
+	export LDFLAGS  := -pg $(LDFLAGS)
+	else
+	OSCFLAGS = -O3 -s -fomit-frame-pointer -pipe -Wpointer-arith -Wall  $(OSCFLAGSEXTRA)
+	endif
 endif
 
 TARGET ?= onscripter-en

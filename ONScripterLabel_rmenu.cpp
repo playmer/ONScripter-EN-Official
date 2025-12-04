@@ -45,14 +45,14 @@ static const char* messages[][8] = {
       "`Quit?",
       "Yes",
       "No" },
-    { "%s%s@%sŒŽ%s“ú%sŽž%s•ª",
-      "%s%s@||||||||||||",
-      "%s%s‚ÉƒZ[ƒu‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "%s%s‚ðƒ[ƒh‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "ƒŠƒZƒbƒg‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "I—¹‚µ‚Ü‚·B‚æ‚ë‚µ‚¢‚Å‚·‚©H",
-      "‚Í‚¢",
-      "‚¢‚¢‚¦" }
+    { "%s%sã€€%sæœˆ%sæ—¥%sæ™‚%såˆ†",
+      "%s%sã€€âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’âˆ’",
+      "%s%sã«ã‚»ãƒ¼ãƒ–ã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "%s%sã‚’ãƒ­ãƒ¼ãƒ‰ã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "ãƒªã‚»ãƒƒãƒˆã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "çµ‚äº†ã—ã¾ã™ã€‚ã‚ˆã‚ã—ã„ã§ã™ã‹ï¼Ÿ",
+      "ã¯ã„",
+      "ã„ã„ãˆ" }
 };
 
 const char* ONScripterLabel::getMessageString( MessageId which )

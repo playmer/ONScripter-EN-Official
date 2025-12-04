@@ -41,52 +41,64 @@
 
 namespace ons_gfx {
 
-void imageFilterMean_Basic(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
+int imageFilterMean_Basic(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
 {
     int n = length + 1;
     BASIC_MEAN();
+    
+    return length - n;
 }
 
-void imageFilterAddTo_Basic(unsigned char *dst, unsigned char *src, int length)
+int imageFilterAddTo_Basic(unsigned char *dst, unsigned char *src, int length)
 {
     int n = length + 1;
     BASIC_ADDTO();
+    
+    return length - n;
 }
 
-void imageFilterSubFrom_Basic(unsigned char *dst, unsigned char *src, int length)
+int imageFilterSubFrom_Basic(unsigned char *dst, unsigned char *src, int length)
 {
     int n = length + 1;
     BASIC_SUBFROM();
+    
+    return length - n;
 }
 
-void imageFilterBlend_Basic(Uint32 *dst_buffer, Uint32 *src_buffer,
-                                     Uint8 *alphap, int alpha, int length)
+int imageFilterBlend_Basic(Uint32 *dst_buffer, Uint32 *src_buffer,
+                           Uint8 *alphap, int alpha, int length)
 {
     int n = length + 1;
     BASIC_BLEND();
+    
+    return length - n;
 }
 
 
-void imageFilterEffectBlend_Basic(Uint32 *dst_buffer, Uint32 *src1_buffer,
-                                           Uint32 *src2_buffer, Uint32 mask2, int length)
+int imageFilterEffectBlend_Basic(Uint32 *dst_buffer, Uint32 *src1_buffer,
+                                 Uint32 *src2_buffer, Uint32 mask2, int length)
 {
     int n = length + 1;
     while(--n > 0) {
         BLEND_EFFECT_PIXEL();
         ++dst_buffer, ++src1_buffer, ++src2_buffer;
     }
+    
+    return length - n;
 }
 
-void imageFilterEffectMaskBlend_Basic(Uint32 *dst_buffer, Uint32 *src1_buffer,
-                                               Uint32 *src2_buffer, Uint32 *mask_buffer,
-                                               Uint32 overflow_mask, Uint32 mask_value,
-                                               int length)
+int imageFilterEffectMaskBlend_Basic(Uint32 *dst_buffer, Uint32 *src1_buffer,
+                                     Uint32 *src2_buffer, Uint32 *mask_buffer,
+                                     Uint32 overflow_mask, Uint32 mask_value,
+                                     int length)
 {
     int n = length + 1;
     while(--n > 0) {
         BLEND_EFFECT_MASK_PIXEL();
         ++dst_buffer, ++src1_buffer, ++src2_buffer, ++mask_buffer;
     }
+    
+    return length - n;
 }
 
 
@@ -96,12 +108,12 @@ static unsigned int cpufuncs;
 
 #ifndef BPP16 // currently none of the fast CPU routines support 16bpp
 
-void (*imageFilterMean)(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length) = imageFilterMean_Basic;
-void (*imageFilterAddTo)(unsigned char *dst, unsigned char *src, int length) = imageFilterAddTo_Basic;
-void (*imageFilterSubFrom)(unsigned char *dst, unsigned char *src, int length) = imageFilterSubFrom_Basic;
-void (*imageFilterBlend)(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap, int alpha, int length) = imageFilterBlend_Basic;
-void (*imageFilterEffectBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 mask2, int length) = imageFilterEffectBlend_Basic;
-void (*imageFilterEffectMaskBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *mask_buffer, Uint32 overflow_mask, Uint32 mask_value, int length) = imageFilterEffectMaskBlend_Basic;
+int (*imageFilterMean)(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length) = imageFilterMean_Basic;
+int (*imageFilterAddTo)(unsigned char *dst, unsigned char *src, int length) = imageFilterAddTo_Basic;
+int (*imageFilterSubFrom)(unsigned char *dst, unsigned char *src, int length) = imageFilterSubFrom_Basic;
+int (*imageFilterBlend)(Uint32 *dst_buffer, Uint32 *src_buffer, Uint8 *alphap, int alpha, int length) = imageFilterBlend_Basic;
+int (*imageFilterEffectBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 mask2, int length) = imageFilterEffectBlend_Basic;
+int (*imageFilterEffectMaskBlend)(Uint32 *dst_buffer, Uint32 *src1_buffer, Uint32 *src2_buffer, Uint32 *mask_buffer, Uint32 overflow_mask, Uint32 mask_value, int length) = imageFilterEffectMaskBlend_Basic;
 
 #endif //!BPP16
 

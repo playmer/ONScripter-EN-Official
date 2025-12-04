@@ -28,9 +28,9 @@
 #ifdef USE_X86_GFX
 namespace ons_gfx {
 
-void imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
-void imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length);
-void imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length);
+int imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
+int imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length);
+int imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length);
 
 }
 #endif //USE_X86_GFX

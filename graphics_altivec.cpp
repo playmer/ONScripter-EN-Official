@@ -36,7 +36,7 @@
 
 namespace ons_gfx {
 
-void imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
+int imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
 {
     int n = length;
 
@@ -62,10 +62,12 @@ void imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned 
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_MEAN();
+    
+    return length - n;
 }
 
 
-void imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length)
+int imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length)
 {
     int n = length;
 
@@ -88,10 +90,12 @@ void imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_ADDTO();
+    
+    return length - n;
 }
 
 
-void imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int length)
+int imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int length)
 {
     int n = length;
 
@@ -114,6 +118,8 @@ void imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int leng
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_SUBFROM();
+    
+    return length - n;
 }
 
 }//namespace ons_gfx

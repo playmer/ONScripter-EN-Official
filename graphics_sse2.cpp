@@ -100,7 +100,7 @@ int imageFilterAddTo_SSE2(unsigned char *dst, unsigned char *src, int length)
 }
 
 
-void imageFilterSubFrom_SSE2(unsigned char *dst, unsigned char *src, int length)
+int imageFilterSubFrom_SSE2(unsigned char *dst, unsigned char *src, int length)
 {
     int n = length;
 
@@ -123,6 +123,8 @@ void imageFilterSubFrom_SSE2(unsigned char *dst, unsigned char *src, int length)
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_SUBFROM();
+
+    return length - n;
 }
 
 // basic bitmasks 0x00FF00FF, 0x000000FF

@@ -28,9 +28,9 @@
 #ifdef USE_PPC_GFX
 namespace ons_gfx {
 
-void imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
-void imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length);
-void imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int length);
+int imageFilterMean_Altivec(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length);
+int imageFilterAddTo_Altivec(unsigned char *dst, unsigned char *src, int length);
+int imageFilterSubFrom_Altivec(unsigned char *dst, unsigned char *src, int length);
 
 }
 #endif //USE_PPC_GFX

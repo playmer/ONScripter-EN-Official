@@ -38,7 +38,7 @@
 
 namespace ons_gfx {
 
-void imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
+int imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char *dst, int length)
 {
     int n = length;
 
@@ -67,10 +67,12 @@ void imageFilterMean_MMX(unsigned char *src1, unsigned char *src2, unsigned char
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_MEAN();
+
+    return length - n;
 }
 
 
-void imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length)
+int imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length)
 {
     int n = length;
 
@@ -93,10 +95,12 @@ void imageFilterAddTo_MMX(unsigned char *dst, unsigned char *src, int length)
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_ADDTO();
+    
+    return length - n;
 }
 
 
-void imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length)
+int imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length)
 {
     int n = length;
 
@@ -119,6 +123,8 @@ void imageFilterSubFrom_MMX(unsigned char *dst, unsigned char *src, int length)
     // If any bytes are left over, deal with them individually
     ++n;
     BASIC_SUBFROM();
+    
+    return length - n;
 }
 
 }//namespace ons_gfx

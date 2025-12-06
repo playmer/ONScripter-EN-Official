@@ -74,7 +74,7 @@ TEST (TestEncoding, getUTF16) {
 TEST (TestEncoding, getUTF16WithCP932) {
   Encoding enc;
   char* str = new char[8];
-  ::strncpy(str, "abc123", 6);
+  ::strncpy(str, "abc123", 7);
   unsigned short unicode = enc.getUTF16(str, Encoding::CODE_CP932);
   EXPECT_EQ(97, unicode);
   delete[] str;

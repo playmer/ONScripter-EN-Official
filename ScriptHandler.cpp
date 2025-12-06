@@ -1530,9 +1530,9 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column,
             buffer[c++] = (char)shiftjis_data::inserts::wide_dash[1];
         }
         if (code == Encoding::CODE_UTF8){
-            buffer[c++] = 0xef;
-            buffer[c++] = 0xbc;
-            buffer[c++] = 0x8d;
+            buffer[c++] = (char)0xef;
+            buffer[c++] = (char)0xbc;
+            buffer[c++] = (char)0x8d;
         }
     }
     c = (num_column-1)*n;
@@ -1542,9 +1542,9 @@ int ScriptHandler::getStringFromInteger( char *buffer, int no, int num_column,
             buffer[c+1] = (char)shiftjis_data::inserts::wide_numbers[no % 10 * 2 + 1];
         }
         if (code == Encoding::CODE_UTF8){
-            buffer[c]   = 0xef;
-            buffer[c+1] = 0xbc;
-            buffer[c+2] = 0x90 + no%10;
+            buffer[c]   = (char)0xef;
+            buffer[c+1] = (char)0xbc;
+            buffer[c+2] = (char)0x90 + no%10;
         }
         no /= 10;
         c -= n;
@@ -2381,8 +2381,8 @@ void ScriptHandler::parseStr( char **buf )
         current_variable.type |= VAR_CONST;
     }
     else{ // str alias
-        const char* fmt = "Undefined string alias '%s'";
-        char ch, alias_buf[MAX_ERRBUF_LEN - (strlen(fmt) - 2)]; // minus 2 accounts for the %s format specifier
+        const char fmt[] = "Undefined string alias '%s'";
+        char ch, alias_buf[MAX_ERRBUF_LEN - (sizeof(fmt) - 2 - 1)]; // minus 2 accounts for the %s format specifier, minus 1 for the nul terminator.
         unsigned int alias_buf_len = 0;
         bool first_flag = true;
 

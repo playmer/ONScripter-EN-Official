@@ -1500,7 +1500,6 @@ int ScriptParser::csvwriteCommand() {
 }
 
 int ScriptParser::csvreadCommand() {
-    int alreadyEOF;        // To skip reading and set var to 0/""
     unsigned char *c;      // For checking individual characters
     int isInt;             // If the type is int (1) or string (0)
     int len;               // Used for both num and str

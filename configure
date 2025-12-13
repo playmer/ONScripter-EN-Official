@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # Autoconf is ugly and complex. This is still ugly, but at least it's
 # simple, and should be good enough for most plausible build cases.
@@ -383,11 +383,11 @@ else
     $CC test.c -o ctest >/dev/null 2>&1
     case $? in
     0) OUTPUT=`./ctest`
-       OUTPUT_ARRAY=($OUTPUT)
-       CC_TYPE=${OUTPUT_ARRAY[0]}
-       CC_VER=${OUTPUT_ARRAY[1]}
-       echo "$CC_TYPE $CC_VER"
-       ;;
+        OUTPUT_ARRAY=($OUTPUT)
+        CC_TYPE=${OUTPUT_ARRAY[0]}
+        CC_VER=${OUTPUT_ARRAY[1]}
+        echo "$CC_TYPE $CC_VER"
+        ;;
     *) echo "error" >&2
         cat >&2 <<-_ERR
 

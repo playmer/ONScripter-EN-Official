@@ -252,32 +252,6 @@ if test -n "$prev"; then
   exit 2
 fi
 
-fetch_EPS() {
-    echo "Downloading EPS content..."
-    if ./fetch-eps-content.sh >/dev/null 2>&1; then
-        :
-    else
-        echo "EPS content download failed"
-        exit 1
-    fi
-
-    # If we got here, we are going to give control to the EPS config script. So, if it returns an error, please exit.
-    # NOT TESTED
-    set -e
-}
-
-# 3 ways to signal we want to use cmake
-# The first way simply allows cmake to do its thing assuming the same target as the host. NOTE Should be static.
-# The second way runs a script within the EPS repo which presents the current target options and allows the user to choose.
-# The third way allows the user to pass a specific value (the same as presented in the second way) if he knows what he wants (or is a robot. beep boop.)
-$echo_n "Checking for requested cmake usage... ${nobr}"
-case "$CMAKE" in
-    false)  echo "False"               ;;
-#   true)   echo "True - auto-detect"  ; fetch_EPS ; eps/config.sh auto ;;
-#   config) echo "True - begin config" ; fetch_EPS ; eps/config.sh config ;;
-    *)      echo "True" ; fetch_EPS ; eps/config.sh "$CMAKE" ; exit 0 ;; # We'll just handle "true" and "config" from within config.sh
-esac
-
 
 internalise_SDL() {
     INTERNAL_SDL=true	
@@ -347,77 +321,45 @@ esac
 
 # Compiler (gcc, g++, icpc)
 
-compilerver() {
-    compiler=$1
-    __COMPILERVER=
-    rm -rf .vertest
-    mkdir .vertest
-    cd .vertest
-    cat > ver.c <<-_EOF
-    #include <stdio.h>
-    int main(int argc, char** argv) {
-        int ret = 0;
-        const char* version;
-    #if defined(__clang__)
-        version = __clang_version__;
-    #elif defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER) || defined(__GNUC__)
-        version = __VERSION__;
-    #else
-        version = "unknown";
-        ret = -1;
-    #endif
-        fprintf(stdout, "%s", version);
-        return ret;
-    }
-_EOF
-    $compiler ver.c -o ver >/dev/null 2>&1
-    __COMPILERVER=`./ver | tr -d '\r\n'`
-    cd ..
-    rm -rf .vertest
+rm -rf .configtest
+mkdir .configtest
+cd .configtest
 
-    unset compiler
+cat > test.c <<-_EOF
+#include <stdio.h>
+#ifdef __cplusplus
+#include <iostream>
+#endif
+int main(int argc, char** argv) {
+  int ret = 0;
+#if defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER)
+  printf("intel %s", __VERSION__);
+#elif defined(__clang__)
+  printf("clang %s", __clang_version__);
+#elif defined(__GNUC__)
+  printf("gcc %s", __VERSION__);
+#else
+  puts("unsupported");
+  ret = -1;
+#endif
+  return ret;
 }
+_EOF
 
-# Make the script detect clang as a supported
-# compiler on OpenBSD and FreeBSD (untested
-# on FreeBSD, but it ought to work).
-# onscripter-en compiles without fail with clang. -grodzio1
-case "$POSIX" in
-OpenBSD) CC=clang ;;
-FreeBSD) CC=clang ;;
-esac
+cat test.c > test.cc
 
-if [ -z "$CC" ]; then CC=gcc; fi
+if [ -z "$CC" ]; then CC=cc; fi
 if $UNSUPPORTED_COMPILER
 then
     echo "Unsupported compiler requested; please don't complain if anything doesn't work!"
 else
     $echo_n "Checking C compiler... ${nobr}"
-    rm -rf .configtest
-    mkdir .configtest
-    cd .configtest
-    cat > test.c <<-_EOF
-    #include <stdio.h>
-    int main(int argc, char** argv) {
-      int ret = 0;
-    #if defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER)
-      fprintf(stdout, "intel");
-    #elif defined(__clang__)
-      fprintf(stdout, "clang");
-    #elif defined(__GNUC__)
-      fprintf(stdout, "gcc");
-    #else
-      fprintf(stdout, "unsupported");
-      ret = -1;
-    #endif
-      return ret;
-    }
-_EOF
     $CC test.c -o ctest >/dev/null 2>&1
     case $? in
-    0) CC_TYPE=`./ctest`
-       compilerver "$CC"
-       CC_VER=$__COMPILERVER
+    0) OUTPUT=`./ctest`
+       OUTPUT_ARRAY=($OUTPUT)
+       CC_TYPE=${OUTPUT_ARRAY[0]}
+       CC_VER=${OUTPUT_ARRAY[1]}
        echo "$CC_TYPE $CC_VER"
        ;;
     *) echo "error" >&2
@@ -429,8 +371,6 @@ _EOF
 	_ERR
         exit 1 ;;
     esac
-    cd ..
-    rm -rf .configtest
 fi
 
 if [ -z "$CXX" ]
@@ -452,31 +392,12 @@ fi
 if not $UNSUPPORTED_COMPILER 
 then
     $echo_n "Checking C++ compiler... ${nobr}"
-    rm -rf .configtest
-    mkdir .configtest
-    cd .configtest
-    cat > test.cc <<-_EOF
-    #include <iostream>
-    int main(int argc, char** argv) {
-      int ret = 0;
-    #if defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER)
-      std::cout << "intel++";
-    #elif defined(__clang__)
-      std::cout << "clang++";
-    #elif defined(__GNUC__)
-      std::cout << "g++";
-    #else
-      std::cout << "unsupported";
-      ret = -1;
-    #endif
-      return ret;
-    }
-_EOF
     $CXX test.cc -o cxxtest >/dev/null 2>&1
     case $? in
-    0) CXX_TYPE=`./cxxtest`
-       compilerver "$CXX"
-       CXX_VER=$__COMPILERVER
+    0) OUTPUT=`./cxxtest`
+       OUTPUT_ARRAY=($OUTPUT)
+       CXX_TYPE=${OUTPUT_ARRAY[0]}
+       CXX_VER=${OUTPUT_ARRAY[1]}
        echo "$CXX_TYPE $CXX_VER"
        ;;
     *)  echo "error" >&2
@@ -488,9 +409,10 @@ _EOF
 	_ERR
         exit 1 ;;
     esac
-    cd ..
-    rm -rf .configtest
 fi
+
+cd ..
+rm -rf .configtest
 
 # dependency generation
 DEPFLAGS=

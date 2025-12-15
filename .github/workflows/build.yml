@@ -106,7 +106,8 @@ jobs:
           mingw-w64-${{matrix.env}}-toolchain
           mingw-w64-${{matrix.env}}-autotools
           mingw-w64-${{matrix.env}}-flac
-          autotools
+          mingw-w64-${{matrix.env}}-autotools
+          mingw-w64-${{matrix.env}}-libtool
           make
           zip
 

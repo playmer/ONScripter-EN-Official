@@ -12,7 +12,11 @@ This will look the same no matter how you build. You'll need git, as we use subm
 
 ```
 git clone --recurse-submodules -j8 https://github.com/Galladite27/ONScripter-EN.git
+cd ONScripter-EN
+git config core.autocrlf false
 ```
+
+> NOTE: It is imperative that you turn off autocrlf for this repo, including on Windows, as the MSYS2 Makefiles and buildscripts can start mangling newlines causing baffling build breaks.
 
 # Official Instructions
 

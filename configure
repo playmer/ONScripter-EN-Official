@@ -259,9 +259,9 @@ internalise_SDL() {
     INTERNAL_SDL_MIXER=true
     INTERNAL_SDL_TTF=true
     INTERNAL_SMPEG=true
-    SDL_CONFIG=./extlib/bin/sdl-config
+    SDL_CONFIG=./build/extlib/install/bin/sdl-config
     SDLOTHERCONFIG=--disable-rpath
-    SMPEG_CONFIG=./extlib/bin/smpeg-config
+    SMPEG_CONFIG=./build/extlib/install/bin/smpeg-config
 }
 
 if $INTERNAL_LIBS
@@ -635,13 +635,13 @@ fi
 
 if $INTERNAL_SDL
 then
-    SDL_CONFIG=./extlib/bin/sdl-config
+    SDL_CONFIG=./build/extlib/install/bin/sdl-config
 else
     $echo_n "Checking for system SDL... ${nobr}"
     case "$SYS" in
         MinGW)  SDL_CONFIG=`pwd`/extlib
                 cd win_dll; make prefix=$SDL_CONFIG > /dev/null 2>&1; cd ..
-                SDL_CONFIG=`pwd`/extlib/bin/sdl-config
+                SDL_CONFIG=`pwd`/build/extlib/install/bin/sdl-config
                 DISTCLEAN_OTHER=SDL.dll $DISTCLEAN_OTHER
                 cp -p ./win_dll/SDL.dll `pwd`;;
         esac
@@ -843,7 +843,7 @@ fi
 
 if $INTERNAL_SMPEG
 then
-    SMPEG_CONFIG=./extlib/bin/smpeg-config
+    SMPEG_CONFIG=./build/extlib/install/bin/smpeg-config
 else
     $echo_n "Checking for system libsmpeg... ${nobr}"
     VER=`($SMPEG_CONFIG --version) 2>/dev/null`
@@ -851,7 +851,7 @@ else
     then echo "yes"
     else echo "no"
 	INTERNAL_SMPEG=true
-	SMPEG_CONFIG=./extlib/bin/smpeg-config
+	SMPEG_CONFIG=./build/extlib/install/bin/smpeg-config
     fi
 fi
 
@@ -884,7 +884,7 @@ fi
 if $INTERNAL_FREETYPE
 then
     INTERNAL_SDL_TTF=true
-    FREETYPE_CONFIG=./extlib/bin/freetype-config
+    FREETYPE_CONFIG=./build/extlib/install/bin/freetype-config
 elif not $INTERNAL_SDL_TTF
 then
     $echo_n "Checking for system SDL_ttf... ${nobr}"
@@ -903,16 +903,6 @@ fi
 
 cd ..
 rm -rf .configtest
-
-if $INTERNAL_FREETYPE
-then
-    # See the file itself for explaination
-    $(cd ${srcdir}; ${srcdir}/extlib/bin/freetype-config-setup --build ${builddir})
-    if [ $? -ne 0 ]; then
-        echo "Error: failed to configure internal FreeType" >&2
-        exit 1
-    fi
-fi
 
 X11_CFLAGS=
 X11_LIBS=
@@ -1000,7 +990,7 @@ require $INTERNAL_SDL_TTF   internal_sdl_ttf   SDL_ttf
 genlink() {
     if $1
     then
-        eval "LINK$2=\"extlib/lib/lib$2\\\$(LIBSUFFIX)\""
+        eval "LINK$2=\"build/extlib/install/lib/lib$2\\\$(LIBSUFFIX)\""
     else
         eval "LINK$2=-l$2"
     fi
@@ -1071,10 +1061,10 @@ INTERNAL_LIBJPEG=\$(findstring true,$INTERNAL_LIBJPEG)
 INTERNAL_OGGLIBS=\$(findstring true,$INTERNAL_OGGLIBS)
 SDL_CONFIG=$SDL_CONFIG
 
-export PATH     :=   \$(shell pwd)/extlib/bin:\$(PATH)
-export CFLAGS   := -I\$(shell pwd)/extlib/include \$(CFLAGS) $VECFLAGS
-export CPPFLAGS := -I\$(shell pwd)/extlib/include \$(CPPFLAGS) $VECFLAGS
-export LDFLAGS  := -L\$(shell pwd)/extlib/lib \$(LDFLAGS) $EXTRALDFLAGS
+export PATH     :=   \$(shell pwd)/build/extlib/install/bin:\$(PATH)
+export CFLAGS   := -I\$(shell pwd)/build/extlib/install/include \$(CFLAGS) $VECFLAGS
+export CPPFLAGS := -I\$(shell pwd)/build/extlib/install/include \$(CPPFLAGS) $VECFLAGS
+export LDFLAGS  := -L\$(shell pwd)/build/extlib/install/lib \$(LDFLAGS) $EXTRALDFLAGS
 export CSTD     := -std=c99
 export CXXSTD   := $CXXSTD
 
@@ -1089,10 +1079,10 @@ export RANLIB  := $RANLIB
 DEPFLAGS = $DEPFLAGS
 OSCFLAGSEXTRA = $CFLAGSEXTRA \$(OSCTMPFLAGS)
 SANFLAGS = $SANFLAGS
-INCS = $X11_CFLAGS -Iextlib/include \$(shell \$(SDL_CONFIG) --cflags)      \\
+INCS = $X11_CFLAGS -Ibuild/extlib/install/include \$(shell \$(SDL_CONFIG) --cflags)      \\
                         \$(shell $SMPEG_CONFIG --cflags)    \\
                         \$(shell $FREETYPE_CONFIG --cflags) \\
-       \$(shell [ -d extlib/include/SDL ] && echo -Iextlib/include/SDL)
+       \$(shell [ -d build/extlib/install/include/SDL ] && echo -Ibuild/extlib/install/include/SDL)
 _EOF
 
 
@@ -1109,12 +1099,12 @@ GNURX_DIR = tools/libgnurx
 TOOL_EXTRA_INCS = -I\$(GNURX_DIR)
 TOOL_EXTRADEPS = \$(GNURX_DIR)/libgnurx.a
 TOOL_EXTRA_CLEAN = clean_libgnurx
-TOOL_LIBS = -Lextlib/lib \\
+TOOL_LIBS = -Lbuild/extlib/install/lib \\
             -static -Wl,--start-group \\
             $LINKjpeg $LINKpng $LINKz \\
             -L\$(GNURX_DIR) -lgnurx \\
             $LINKbz2 -Wl,--end-group
-LIBS = -Lextlib/lib \\
+LIBS = -Lbuild/extlib/install/lib \\
        -static -Wl,--start-group \\
        $MY_SDL_LIBS \\
        $LINKSDL_ttf \\
@@ -1133,10 +1123,10 @@ _EOF
 MacOSX)
 cat >> Makefile <<_EOF
 
-TOOL_LIBS = -Lextlib/lib \\
+TOOL_LIBS = -Lbuild/extlib/install/lib \\
             $LINKjpeg $LINKpng \\
             $LINKbz2 -lm
-LIBS = -Lextlib/lib \\
+LIBS = -Lbuild/extlib/install/lib \\
        \$(shell \$(SDL_CONFIG) --static-libs)         \\
        \$(shell $SMPEG_CONFIG --libs)              \\
        $LINKSDL_ttf \$(shell $FREETYPE_CONFIG --libs) \\
@@ -1162,10 +1152,10 @@ Solaris) INTERNAL_LDFLAGS="-lX11 -lXext"
 esac
 cat >> Makefile <<_EOF
 
-TOOL_LIBS = -Lextlib/lib \\
+TOOL_LIBS = -Lbuild/extlib/install/lib \\
             $LINKjpeg $LINKpng $LINKz \\
             $LINKbz2
-LIBS = $X11_LIBS -Lextlib/lib \\
+LIBS = $X11_LIBS -Lbuild/extlib/install/lib \\
        $LINKSDL_image \$(if \$(findstring true,$INTERNAL_SDL_IMAGE),$LINKjpeg $LINKpng $LINKz) \\
        $LINKSDL_mixer \$(if \$(or \$(findstring true,$INTERNAL_SDL_MIXER),\$(findstring true,$EXPLICIT_OGGLIBS)),$LINKvorbisfile $LINKvorbis $LINKogg) \\
        \$(shell \$(SDL_CONFIG) --libs)      \\
@@ -1244,14 +1234,9 @@ include Makefile.extlibs
 include Makefile.onscripter
 include Makefile.unittest
 
-.PHONY: libtoolreplace
-libtoolreplace: | \$(EB)
-	@cp \$(ES)/required/freetype-config \$(EB)
-
-clean: pclean \$(CLEAN_TARGETS) libtoolreplace
+clean: pclean extlib_clean
 distclean: clean pdistclean \$(DISTCLEAN_TARGETS)
-	rm -r -f extlib/bin extlib/lib extlib/include \\
-	         extlib/share extlib/man
+	rm -r -f build/extlib
 	rm -f Makefile $DISTCLEAN_OTHER
 
 .PHONY: install* uninstall*

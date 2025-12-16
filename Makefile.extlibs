@@ -370,6 +370,21 @@ testing: $(bzip_target) $(zlib_target) $(libogg_target) $(libvorbis_target) $(li
 extlib_clean:
 	rm -rf $(EXTERNAL_PREFIX)
 
+INTERNALLY_BUILT_LIBS = \
+	$(zlib_target) \
+	$(if $(INTERNAL_BZIP2), $(bzip_target)) \
+	$(if $(INTERNAL_LIBPNG), $(libpng_target)) \
+	$(if $(INTERNAL_LIBJPEG), $(libjpeg_target)) \
+	$(if $(INTERNAL_FREETYPE), $(freetype2_target)) \
+	$(if $(INTERNAL_OGGLIBS), $(libogg_target $(libvorbis_target))) \
+	$(if $(INTERNAL_SDL), $(libsdl_target)) \
+	$(if $(INTERNAL_SDL_IMAGE), $(libsdlimage_target)) \
+	$(if $(INTERNAL_SMPEG), $(smpeg_target)) \
+	$(if $(INTERNAL_SDL_MIXER), $(libsdlmixer_target)) \
+	$(if $(INTERNAL_SDL_TTF), $(libsdlttf_target))
+
+
+
 #CLEAN_TARGETS=clean_sdl clean_sdl_image clean_sdl_mixer clean_bzip2   \
 #              clean_smpeg clean_freetype clean_sdl_ttf
 #DISTCLEAN_TARGETS=dclean_sdl dclean_sdl_image dclean_sdl_mixer        \

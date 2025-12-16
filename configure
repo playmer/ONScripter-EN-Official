@@ -359,13 +359,13 @@ cat > test.c <<-_EOF
 int main(int argc, char** argv) {
   int ret = 0;
 #if defined(__INTEL_COMPILER) || defined(__INTEL_LLVM_COMPILER)
-  printf("intel %s", __VERSION__);
+  printf("intel intel %s", __VERSION__);
 #elif defined(__clang__)
-  printf("clang %s", __clang_version__);
+  printf("clang clang++ %s", __VERSION__);
 #elif defined(__GNUC__)
-  printf("gcc %s", __VERSION__);
+  printf("gcc g++ %s", __VERSION__);
 #else
-  puts("unsupported");
+  puts("unsupported unsupported unsupported");
   ret = -1;
 #endif
   return ret;
@@ -374,7 +374,10 @@ _EOF
 
 cat test.c > test.cc
 
-if [ -z "$CC" ]; then CC=cc; fi
+if [ -z "$CC"                           ]; then CC=gcc; fi
+if [ ! command -v gcc >/dev/null 2>&1   ]; then CC=clang; fi
+if [ ! command -v clang >/dev/null 2>&1 ]; then CC=cc; fi
+if [ ! command -v cc >/dev/null 2>&1    ]; then CC=cc; fi
 if $UNSUPPORTED_COMPILER
 then
     echo "Unsupported compiler requested; please don't complain if anything doesn't work!"
@@ -385,7 +388,8 @@ else
     0) OUTPUT=`./ctest`
         OUTPUT_ARRAY=($OUTPUT)
         CC_TYPE=${OUTPUT_ARRAY[0]}
-        CC_VER=${OUTPUT_ARRAY[1]}
+        CXX_TEMP=${OUTPUT_ARRAY[1]}
+        CC_VER=${OUTPUT_ARRAY[2]}
         echo "$CC_TYPE $CC_VER"
         ;;
     *) echo "error" >&2
@@ -401,7 +405,7 @@ fi
 
 if [ -z "$CXX" ]
 then case "x$CC_TYPE" in
-xgcc | x) CXX=g++ ;;
+x) CXX=g++ ;;
 xclang) CXX=clang++ ;; # same story as with C compiler. -grodzio1
 xintel)
    if command -v icpx >/dev/null
@@ -422,8 +426,9 @@ then
     case $? in
     0) OUTPUT=`./cxxtest`
        OUTPUT_ARRAY=($OUTPUT)
-       CXX_TYPE=${OUTPUT_ARRAY[0]}
-       CXX_VER=${OUTPUT_ARRAY[1]}
+       CC_TYPE=${OUTPUT_ARRAY[0]}
+       CXX_TYPE=${OUTPUT_ARRAY[1]}
+       CXX_VER=${OUTPUT_ARRAY[2]}
        echo "$CXX_TYPE $CXX_VER"
        ;;
     *)  echo "error" >&2

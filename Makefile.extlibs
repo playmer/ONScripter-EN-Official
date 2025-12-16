@@ -376,7 +376,7 @@ INTERNALLY_BUILT_LIBS = \
 	$(if $(INTERNAL_LIBPNG), $(libpng_target)) \
 	$(if $(INTERNAL_LIBJPEG), $(libjpeg_target)) \
 	$(if $(INTERNAL_FREETYPE), $(freetype2_target)) \
-	$(if $(INTERNAL_OGGLIBS), $(libogg_target $(libvorbis_target))) \
+	$(if $(INTERNAL_OGGLIBS), $(libogg_target) $(libvorbis_target)) \
 	$(if $(INTERNAL_SDL), $(libsdl_target)) \
 	$(if $(INTERNAL_SDL_IMAGE), $(libsdlimage_target)) \
 	$(if $(INTERNAL_SMPEG), $(smpeg_target)) \

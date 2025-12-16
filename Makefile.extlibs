@@ -7,49 +7,40 @@ REDIR = >/dev/null 2>&1
 REDSO = >/dev/null
 endif
 
-#EL = extlib/lib
-#EI = extlib/include
-#EB = extlib/bin
-#ES = extlib/src
 
+# TODO: Move these variables to be in the configure/makefile.
 ROOT_DIR = $(shell pwd)
-
 EXTERNAL_SOURCE = $(ROOT_DIR)/extlib/src
-
 EXTERNAL_PREFIX = $(ROOT_DIR)/build/extlib
 EXTERNAL_INSTALL_PREFIX = $(EXTERNAL_PREFIX)/install
 EXTERNAL_INTERMEDIATE_PREFIX = $(EXTERNAL_PREFIX)/src
 
-#OUTDIRS += $(EL)
-#OUTDIRS += $(EI)
-#OUTDIRS += $(EB)
-#
-#OUTDIRS := $(OUTDIRS)
-
-#PKG_CONFIG_PATH := $(TOPSRC)/$(EL)/pkgconfig:$(PKG_CONFIG_PATH)
-#export PKG_CONFIG_PATH
-
 # NOTE: If you update one of these versions, you _MUST_ double check the file
 # list (named <libname>_target below) used as output when building them.
+#
+# They're ordered based on dependency. So things that depend on other things will
+# always be after them.
 BZIP_VER     = bzip2-1.0.8
 ZLIB_VER     = zlib-1.2.13
 PNG_VER      = libpng-1.6.39
 JPEG_VER     = jpeg-9f
 OGG_VER      = libogg-1.3.5
-SMPEG_VER    = smpeg
 VORBIS_VER   = libvorbis-1.3.7
 FREETYPE_VER = freetype-2.13.0
 SDL_VER      = SDL-1.2.15
 SDLIMAGE_VER = SDL_image-1.2.12
+SMPEG_VER    = smpeg
 SDLMIXER_VER = SDL_mixer-1.2.12
 SDLTTF_VER   = SDL_ttf-2.0.11
+
+
 
 ################################################################################
 ##-- bzip2 ---------------------------------------------------------------------
 
 ################################################################################
 ##-- zlib ----------------------------------------------------------------------
-zlib_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(ZLIB_VER)" -type f )
+zlib_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(ZLIB_VER)" -type f)
 zlib_target = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/, zconf.h zlib.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libz.a pkgconfig/zlib.pc) \
@@ -58,6 +49,7 @@ zlib_target = \
 .PHONY: zlib_clean 
 zlib_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(ZLIB_VER)
+	rm $(zlib_target)
 
 $(zlib_target): $(zlib_input_files)
 	@echo "Building $(ZLIB_VER)"
@@ -71,7 +63,7 @@ $(zlib_target): $(zlib_input_files)
 	
 ################################################################################
 ##-- png -----------------------------------------------------------------------
-libpng_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(PNG_VER)" -type f )
+libpng_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(PNG_VER)" -type f)
 libpng_target = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/bin/, libpng-config libpng16-config png-fix-itxt.exe pngfix.exe) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/libpng16/, png.h pngconf.h pnglibconf.h) \
@@ -82,6 +74,7 @@ libpng_target = \
 .PHONY: libpng_clean
 libpng_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(PNG_VER)
+	rm $(libpng_target)
 
 $(libpng_target): $(libpng_input_files) $(zlib_target)
 	@echo "Building $(PNG_VER)"
@@ -96,7 +89,7 @@ $(libpng_target): $(libpng_input_files) $(zlib_target)
 
 ################################################################################
 ##-- jpeg ----------------------------------------------------------------------
-libjpeg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(JPEG_VER)" -type f )
+libjpeg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(JPEG_VER)" -type f)
 libjpeg_target = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/bin/, cjpeg.exe djpeg.exe jpegtran.exe rdjpgcom.exe wrjpgcom.exe) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/, jconfig.h jerror.h jmorecfg.h jpeglib.h) \
@@ -107,6 +100,7 @@ libjpeg_target = \
 .PHONY: libjpeg_clean
 libjpeg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(JPEG_VER)
+	rm $(libjpeg_target)
 
 $(libjpeg_target): $(libjpeg_input_files)
 	@echo "Building $(JPEG_VER)"
@@ -121,7 +115,7 @@ $(libjpeg_target): $(libjpeg_input_files)
 
 ################################################################################
 ##-- ogg -----------------------------------------------------------------------
-libogg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(OGG_VER)" -type f )
+libogg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(OGG_VER)" -type f)
 libogg_target =  \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/ogg/, config_types.h ogg.h os_types.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libogg.a libogg.la pkgconfig/ogg.pc) \
@@ -130,6 +124,7 @@ libogg_target =  \
 .PHONY: libogg_clean
 libogg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(OGG_VER)
+	rm $(libogg_target)
 
 $(libogg_target): $(libogg_input_files)
 	@echo "Building $(OGG_VER)"
@@ -142,35 +137,10 @@ $(libogg_target): $(libogg_input_files)
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared && \
 	$(MAKE) -j && \
 	$(MAKE) install
-	
-################################################################################
-##-- smpeg ---------------------------------------------------------------------
-smpeg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SMPEG_VER)" -type f )
-smpeg_target = \
-	$(EXTERNAL_INSTALL_PREFIX)/bin/smpeg-config \
-	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/smpeg/, \
-		MPEG.h MPEGaction.h MPEGaudio.h MPEGerror.h MPEGfilter.h MPEGlist.h MPEGring.h \
-        MPEGstream.h MPEGsystem.h MPEGvideo.h smpeg.h) \
-	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libsmpeg.a libsmpeg.la) \
-	$(EXTERNAL_INSTALL_PREFIX)/share/aclocal/smpeg.m4
-
-.PHONY: smpeg_clean
-smpeg_clean:
-	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
-
-$(smpeg_target): $(smpeg_input_files)
-	@echo "Building $(SMPEG_VER)"
-	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
-	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
-	cp -r $(EXTERNAL_SOURCE)/$(SMPEG_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
-	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static && \
-	$(MAKE) -j && \
-	$(MAKE) install
 
 ################################################################################
 ##-- vorbis --------------------------------------------------------------------
-libvorbis_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(VORBIS_VER)" -type f )
+libvorbis_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(VORBIS_VER)" -type f)
 libvorbis_target = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/vorbis/, codec.h vorbisenc.h vorbisfile.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libvorbis.a libvorbis.la libvorbisenc.a libvorbisenc.la libvorbisfile.a libvorbisfile.la)  \
@@ -179,8 +149,9 @@ libvorbis_target = \
 .PHONY: libvorbis_clean
 libvorbis_clean:
 		rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER)
+		rm $(libvorbis_target)
 
-$(libvorbis_target): $(libvorbis_input_files) $(libogg_target)
+$(libvorbis_target): $(libogg_target) $(libvorbis_input_files)
 	@echo "Building $(VORBIS_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -193,7 +164,7 @@ $(libvorbis_target): $(libvorbis_input_files) $(libogg_target)
 
 ################################################################################
 ##-- freetype2 -----------------------------------------------------------------
-freetype2_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(FREETYPE_VER)" -type f )
+freetype2_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(FREETYPE_VER)" -type f)
 freetype2_target = \
 	$(EXTERNAL_INSTALL_PREFIX)/bin/freetype-config \
 	$(EXTERNAL_INSTALL_PREFIX)/include/freetype2/ft2build.h \
@@ -213,6 +184,7 @@ freetype2_target = \
 .PHONY: freetype2_clean
 freetype2_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER)
+	rm $(freetype2_target)
 
 $(freetype2_target): $(freetype2_input_files)
 	@echo "Building $(FREETYPE_VER)"
@@ -226,7 +198,7 @@ $(freetype2_target): $(freetype2_input_files)
 
 ################################################################################
 ##-- SDL -----------------------------------------------------------------------
-libsdl_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDL_VER)" -type f )
+libsdl_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDL_VER)" -type f)
 libsdl_target = \
 	$(EXTERNAL_INSTALL_PREFIX)/bin/sdl-config \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/SDL/, \
@@ -241,20 +213,30 @@ libsdl_target = \
 .PHONY: libsdl_clean
 libsdl_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER)
+	rm $(libsdl_target)
 
-$(libsdl_target): $(libsdl_input_files)
+$(libsdl_target): $(libsdl_input_files) $(if $(INTERNAL_LIBPNG), $(libpng_target))
 	@echo "Building $(SDL_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDL_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-joystick --disable-nas --disable-video-fbcon --disable-video-directfb --disable-video-svga --disable-video-vgl --disable-video-wscons --disable-video-opengl && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" \
+		--disable-shared \
+		--disable-joystick \
+		--disable-nas \
+		--disable-video-fbcon \
+		--disable-video-directfb \
+		--disable-video-svga \
+		--disable-video-vgl \
+		--disable-video-wscons \
+		--disable-video-opengl && \
 	$(MAKE) -j && \
 	$(MAKE) install
 	
 ################################################################################
 ##-- SDL_image -----------------------------------------------------------------
-libsdlimage_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLIMAGE_VER)" -type f )
+libsdlimage_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLIMAGE_VER)" -type f)
 libsdlimage_target = \
 	$(EXTERNAL_INSTALL_PREFIX)/include/SDL/SDL_image.h \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libSDL_image.a libSDL_image.la) \
@@ -263,20 +245,58 @@ libsdlimage_target = \
 .PHONY: libsdlimage_clean
 libsdlimage_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER)
+	rm $(libsdlimage_target)
 
-$(libsdlimage_target): $(libsdlimage_input_files) $(libsdl_target) $(libpng_target) $(libjpeg_target)
+$(libsdlimage_target): $(libsdlimage_input_files) $(if $(INTERNAL_SDL), $(libsdl_target)) $(if $(INTERNAL_LIBPNG), $(libpng_target)) $(if $(INTERNAL_LIBJPEG), $(libjpeg_target))
 	@echo "Building $(SDLIMAGE_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDLIMAGE_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-lbm --disable-pcx --disable-pnm --disable-tga --disable-xcf --disable-xv --disable-tif --disable-png-shared --disable-jpg-shared CFLAGS="-Wno-error=incompatible-pointer-types" && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" \
+		--disable-shared \
+		--disable-lbm \
+		--disable-pcx \
+		--disable-pnm \
+		--disable-tga \
+		--disable-xcf \
+		--disable-xv \
+		--disable-tif \
+		--disable-png-shared \
+		--disable-jpg-shared \
+		CFLAGS="-Wno-error=incompatible-pointer-types" && \
 	$(MAKE) -j && \
 	$(MAKE) install
-	
+
+################################################################################
+##-- smpeg ---------------------------------------------------------------------
+smpeg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SMPEG_VER)" -type f)
+smpeg_target = \
+	$(EXTERNAL_INSTALL_PREFIX)/bin/smpeg-config \
+	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/smpeg/, \
+		MPEG.h MPEGaction.h MPEGaudio.h MPEGerror.h MPEGfilter.h MPEGlist.h MPEGring.h \
+        MPEGstream.h MPEGsystem.h MPEGvideo.h smpeg.h) \
+	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libsmpeg.a libsmpeg.la) \
+	$(EXTERNAL_INSTALL_PREFIX)/share/aclocal/smpeg.m4
+
+.PHONY: smpeg_clean
+smpeg_clean:
+	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
+	rm $(smpeg_target)
+
+$(smpeg_target): $(smpeg_input_files) $(if $(INTERNAL_SDL), $(libsdl_target))
+	@echo "Building $(SMPEG_VER)"
+	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
+	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
+	cp -r $(EXTERNAL_SOURCE)/$(SMPEG_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
+	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER) && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static && \
+	$(MAKE) -j && \
+	$(MAKE) install
+
 ################################################################################
 #-- SDL_mixer -----------------------------------------------------------------
-libsdlmixer_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLMIXER_VER)" -type f )
+libsdlmixer_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLMIXER_VER)" -type f)
 libsdlmixer_target = \
 	$(EXTERNAL_INSTALL_PREFIX)/include/SDL/SDL_mixer.h \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libSDL_mixer.a libSDL_mixer.la) \
@@ -285,8 +305,9 @@ libsdlmixer_target = \
 .PHONY: libsdlmixer_clean
 libsdlmixer_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER)
+	rm $(libsdlmixer_target)
 
-$(libsdlmixer_target): $(libsdlmixer_input_files) $(libsdl_target) $(libogg_target) $(libvorbis_target) $(smpeg_target)
+$(libsdlmixer_target): $(libsdlmixer_input_files) $(if $(INTERNAL_SDL), $(libsdl_target)) $(if $(INTERNAL_OGGLIBS), $(libogg_target) $(libvorbis_target)) $(if $(INTERNAL_SMPEG), $(smpeg_target))
 	@echo "Building $(SDLMIXER_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -298,7 +319,7 @@ $(libsdlmixer_target): $(libsdlmixer_input_files) $(libsdl_target) $(libogg_targ
 	
 ################################################################################
 ##-- SDL_ttf -------------------------------------------------------------------
-libsdlttf_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLTTF_VER)" -type f )
+libsdlttf_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLTTF_VER)" -type f)
 libsdlttf_target = \
 	$(EXTERNAL_INSTALL_PREFIX)/include/SDL/SDL_ttf.h \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libSDL_ttf.a libSDL_ttf.la) \
@@ -307,8 +328,9 @@ libsdlttf_target = \
 .PHONY: libsdlttf_clean
 libsdlttf_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER)
+	rm $(libsdlttf_target)
 
-$(libsdlttf_target): $(libsdlttf_input_files) $(libsdl_target) $(freetype2_target) 
+$(libsdlttf_target): $(libsdlttf_input_files) $(if $(INTERNAL_SDL), $(libsdl_target)) $(if $(INTERNAL_FREETYPE), $(freetype2_target))
 	@echo "Building $(SDLTTF_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)

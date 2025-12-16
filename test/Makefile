@@ -38,11 +38,13 @@ all: test
 
 include Makefile.testlibs
 
-.cpp$(OBJSUFFIX):
-	$(CXX) $(CXXSTD) -isystem $(GTEST_INCDIR) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
+%$(OBJSUFFIX): %.cpp 
+	@mkdir -p $(TOPSRC)/build/test/.objs
+	$(CXX) $(CXXSTD) -isystem $(GTEST_INCDIR) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $(TOPSRC)/build/test/.objs/$@
 
-.cc$(OBJSUFFIX):
-	$(CXX) $(CXXSTD) -isystem $(GTEST_INCDIR) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $@
+%$(OBJSUFFIX): %.cc
+	@mkdir -p $(TOPSRC)/build/test/.objs
+	$(CXX) $(CXXSTD) -isystem $(GTEST_INCDIR) -I$(GTEST_DIR) $(CXXFLAGS) -c $< -o $(TOPSRC)/build/test/.objs/$@
 
 test_%$(EXESUFFIX): test_%.cpp $(TOPSRC)/%.cpp libgtest$(LIBSUFFIX)
 	$(Q)$(CXX) $(CXXSTD) -isystem $(GTEST_INCDIR) -I$(TOPSRC) $(CXXFLAGS) $^ -o $@

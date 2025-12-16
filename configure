@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 
 # Autoconf is ugly and complex. This is still ugly, but at least it's
 # simple, and should be good enough for most plausible build cases.
@@ -360,10 +360,9 @@ else
     $CC test.c -o ctest >/dev/null 2>&1
     case $? in
     0) OUTPUT=`./ctest`
-        OUTPUT_ARRAY=($OUTPUT)
-        CC_TYPE=${OUTPUT_ARRAY[0]}
-        CXX_TEMP=${OUTPUT_ARRAY[1]}
-        CC_VER=${OUTPUT_ARRAY[2]}
+        CC_TYPE=$(echo $OUTPUT | cut -d ' ' -f 1)
+        CXX_TEMP=$(echo $OUTPUT | cut -d ' ' -f 2)
+        CC_VER=$(echo $OUTPUT | cut -d ' ' -f 3)
         echo "$CC_TYPE $CC_VER"
         ;;
     *) echo "error" >&2
@@ -398,10 +397,9 @@ then
     $CXX test.cc -o cxxtest >/dev/null 2>&1
     case $? in
     0) OUTPUT=`./cxxtest`
-       OUTPUT_ARRAY=($OUTPUT)
-       CC_TYPE=${OUTPUT_ARRAY[0]}
-       CXX_TYPE=${OUTPUT_ARRAY[1]}
-       CXX_VER=${OUTPUT_ARRAY[2]}
+       CC_TYPE=$(echo $OUTPUT | cut -d ' ' -f 1)
+       CXX_TYPE=$(echo $OUTPUT | cut -d ' ' -f 2)
+       CXX_VER=$(echo $OUTPUT | cut -d ' ' -f 3)
        echo "$CXX_TYPE $CXX_VER, chosen: $CXX"
        ;;
     *)  echo "error" >&2

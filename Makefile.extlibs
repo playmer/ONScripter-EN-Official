@@ -48,6 +48,7 @@ bzip_files = \
 .PHONY: bzip_clean 
 bzip_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER)
+	rm bzip.sentinel
 	rm $(bzip_files)
 
 $(bzip_files): $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel ;
@@ -75,6 +76,7 @@ zlib_files = \
 .PHONY: zlib_clean 
 zlib_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(ZLIB_VER)
+	rm zlib.sentinel
 	rm $(zlib_files)
 
 $(zlib_files): $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel ;
@@ -104,6 +106,7 @@ libpng_files = \
 .PHONY: libpng_clean
 libpng_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(PNG_VER)
+	rm libpng.sentinel
 	rm $(libpng_files)
 
 $(libpng_files): $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel ;
@@ -134,6 +137,7 @@ libjpeg_files = \
 .PHONY: libjpeg_clean
 libjpeg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(JPEG_VER)
+	rm libjpeg.sentinel
 	rm $(libjpeg_files)
 
 $(libjpeg_files): $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel ;
@@ -162,6 +166,7 @@ libogg_files =  \
 .PHONY: libogg_clean
 libogg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(OGG_VER)
+	rm libogg.sentinel
 	rm $(libogg_files)
 
 $(libogg_files): $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel ;
@@ -191,6 +196,7 @@ libvorbis_files = \
 .PHONY: libvorbis_clean
 libvorbis_clean:
 		rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER)
+		rm libvorbis.sentinel
 		rm $(libvorbis_files)
 
 $(libvorbis_files): $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel ;
@@ -230,6 +236,7 @@ freetype2_files = \
 .PHONY: freetype2_clean
 freetype2_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER)
+	rm freetype2.sentinel
 	rm $(freetype2_files)
 
 $(freetype2_files): $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel ;
@@ -263,6 +270,7 @@ libsdl_files = \
 .PHONY: libsdl_clean
 libsdl_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER)
+	rm libsdl.sentinel
 	rm $(libsdl_files)
 
 $(libsdl_files): $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel ;
@@ -299,6 +307,7 @@ libsdlimage_files = \
 .PHONY: libsdlimage_clean
 libsdlimage_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER)
+	rm libsdlimage.sentinel
 	rm $(libsdlimage_files)
 
 $(libsdlimage_files): $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel ;
@@ -345,6 +354,7 @@ smpeg_files = \
 .PHONY: smpeg_clean
 smpeg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
+	rm smpeg.sentinel
 	rm $(smpeg_files)
 
 $(smpeg_files): $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel ;
@@ -372,6 +382,7 @@ libsdlmixer_files = \
 .PHONY: libsdlmixer_clean
 libsdlmixer_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER)
+	rm libsdlmixer.sentinel
 	rm $(libsdlmixer_files)
 
 $(libsdlmixer_files): $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel ;
@@ -403,6 +414,7 @@ libsdlttf_files = \
 .PHONY: libsdlttf_clean
 libsdlttf_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER)
+	rm libsdlttf.sentinel
 	rm $(libsdlttf_files)
 
 $(libsdlttf_files): $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel ;
@@ -441,6 +453,7 @@ extlib: \
 .PHONY: extlib_clean
 extlib_clean:
 	rm -rf $(EXTERNAL_PREFIX)
+	rm extlib.sentinel
 
 INTERNALLY_BUILT_LIBS = \
 	$(zlib_files) \

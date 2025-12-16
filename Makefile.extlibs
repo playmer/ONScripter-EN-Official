@@ -267,7 +267,7 @@ libsdl_clean:
 
 $(libsdl_files): $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel ;
 
-$(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel: $(libsdl_input_files) $(if $(INTERNAL_LIBPNG), $(libpng_files))
+$(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel: $(libsdl_input_files) $(if $(INTERNAL_LIBPNG), $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel)
 	@echo "Building $(SDL_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -303,7 +303,11 @@ libsdlimage_clean:
 
 $(libsdlimage_files): $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel ;
 
-$(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel: $(libsdlimage_input_files) $(if $(INTERNAL_SDL), $(libsdl_files)) $(if $(INTERNAL_LIBPNG), $(libpng_files)) $(if $(INTERNAL_LIBJPEG), $(libjpeg_files))
+$(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel: \
+		$(libsdlimage_input_files) \
+		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel) \
+		$(if $(INTERNAL_LIBPNG), $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel) \
+		$(if $(INTERNAL_LIBJPEG), $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel)
 	@echo "Building $(SDLIMAGE_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -345,7 +349,7 @@ smpeg_clean:
 
 $(smpeg_files): $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel ;
 
-$(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel: $(smpeg_input_files) $(if $(INTERNAL_SDL), $(libsdl_files))
+$(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel: $(smpeg_input_files) $(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel)
 	@echo "Building $(SMPEG_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -372,7 +376,11 @@ libsdlmixer_clean:
 
 $(libsdlmixer_files): $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel ;
 
-$(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: $(libsdlmixer_input_files) $(if $(INTERNAL_SDL), $(libsdl_files)) $(if $(INTERNAL_OGGLIBS), $(libogg_files) $(libvorbis_files)) $(if $(INTERNAL_SMPEG), $(smpeg_files))
+$(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: \
+		$(libsdlmixer_input_files) \
+		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel) \
+		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel) \
+		$(if $(INTERNAL_SMPEG), $(smpeg_files))
 	@echo "Building $(SDLMIXER_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -399,7 +407,10 @@ libsdlttf_clean:
 
 $(libsdlttf_files): $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel ;
 
-$(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: $(libsdlttf_input_files) $(if $(INTERNAL_SDL), $(libsdl_files)) $(if $(INTERNAL_FREETYPE), $(freetype2_files))
+$(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
+		$(libsdlttf_input_files) \
+		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel) \
+		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel)
 	@echo "Building $(SDLTTF_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -411,9 +422,21 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: $(libsdlttf_input_files) $(if $(INT
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
 
-##-- test ----------------------------------------------------------------------
-testing: $(bzip_files) $(zlib_files) $(libogg_files) $(libvorbis_files) $(libpng_files) $(libjpeg_files) $(freetype2_files) $(libsdl_files) $(libsdlimage_files) $(libsdlmixer_files) $(libsdlttf_files)
-	echo "Weee"
+################################################################################
+##-- extlib --------------------------------------------------------------------
+extlib: \
+		$(EXTERNAL_SENTINEL_DIR)/bzip.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/zlib.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libogg.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libpng.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel \
+		$(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel
+	echo "Extlibs built"
 
 .PHONY: extlib_clean
 extlib_clean:

@@ -12,11 +12,12 @@ endif
 ROOT_DIR = $(shell pwd)
 EXTERNAL_SOURCE = $(ROOT_DIR)/extlib/src
 EXTERNAL_PREFIX = $(ROOT_DIR)/build/extlib
+EXTERNAL_SENTINEL_DIR = $(EXTERNAL_PREFIX)/sentinel
 EXTERNAL_INSTALL_PREFIX = $(EXTERNAL_PREFIX)/install
 EXTERNAL_INTERMEDIATE_PREFIX = $(EXTERNAL_PREFIX)/src
 
 # NOTE: If you update one of these versions, you _MUST_ double check the file
-# list (named <libname>_target below) used as output when building them.
+# list (named <libname>_files below) used as output when building them.
 #
 # They're ordered based on dependency. So things that depend on other things will
 # always be after them.
@@ -34,11 +35,10 @@ SDLMIXER_VER = SDL_mixer-1.2.12
 SDLTTF_VER   = SDL_ttf-2.0.11
 
 
-
 ################################################################################
 ##-- bzip2 ---------------------------------------------------------------------
 bzip_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(BZIP_VER)" -type f)
-bzip_target = \
+bzip_files = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/bin/, bunzip2.exe bzcat.exe bzcmp bzdiff bzegrep bzfgrep \
 		bzgrep bzip2.exe bzip2recover.exe bzless bzmore) \
 	$(EXTERNAL_INSTALL_PREFIX)/include/bzlib.h \
@@ -48,21 +48,26 @@ bzip_target = \
 .PHONY: bzip_clean 
 bzip_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER)
-	rm $(bzip_target)
+	rm $(bzip_files)
 
-$(bzip_target): $(bzip_input_files)
+$(bzip_files): $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/bzip.sentinel: $(bzip_input_files)
 	@echo "Building $(BZIP_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(BZIP_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER) && \
 	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" -j && \
-	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" install
+	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
+
 
 ################################################################################
 ##-- zlib ----------------------------------------------------------------------
 zlib_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(ZLIB_VER)" -type f)
-zlib_target = \
+zlib_files = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/, zconf.h zlib.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libz.a pkgconfig/zlib.pc) \
 	$(EXTERNAL_INSTALL_PREFIX)/share/man/man3/zlib.3
@@ -70,9 +75,11 @@ zlib_target = \
 .PHONY: zlib_clean 
 zlib_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(ZLIB_VER)
-	rm $(zlib_target)
+	rm $(zlib_files)
 
-$(zlib_target): $(zlib_input_files)
+$(zlib_files): $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/zlib.sentinel: $(zlib_input_files)
 	@echo "Building $(ZLIB_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(ZLIB_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -80,12 +87,14 @@ $(zlib_target): $(zlib_input_files)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(ZLIB_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --static && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 	
 ################################################################################
 ##-- png -----------------------------------------------------------------------
 libpng_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(PNG_VER)" -type f)
-libpng_target = \
+libpng_files = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/bin/, libpng-config libpng16-config png-fix-itxt.exe pngfix.exe) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/libpng16/, png.h pngconf.h pnglibconf.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/, png.h pngconf.h pnglibconf.h) \
@@ -95,9 +104,11 @@ libpng_target = \
 .PHONY: libpng_clean
 libpng_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(PNG_VER)
-	rm $(libpng_target)
+	rm $(libpng_files)
 
-$(libpng_target): $(libpng_input_files) $(zlib_target)
+$(libpng_files): $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libpng.sentinel: $(libpng_input_files) $(zlib_files)
 	@echo "Building $(PNG_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(PNG_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -106,12 +117,14 @@ $(libpng_target): $(libpng_input_files) $(zlib_target)
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --with-zlib-prefix="$(EXTERNAL_INSTALL_PREFIX)" && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ################################################################################
 ##-- jpeg ----------------------------------------------------------------------
 libjpeg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(JPEG_VER)" -type f)
-libjpeg_target = \
+libjpeg_files = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/bin/, cjpeg.exe djpeg.exe jpegtran.exe rdjpgcom.exe wrjpgcom.exe) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/, jconfig.h jerror.h jmorecfg.h jpeglib.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libjpeg.a libjpeg.la) \
@@ -121,9 +134,11 @@ libjpeg_target = \
 .PHONY: libjpeg_clean
 libjpeg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(JPEG_VER)
-	rm $(libjpeg_target)
+	rm $(libjpeg_files)
 
-$(libjpeg_target): $(libjpeg_input_files)
+$(libjpeg_files): $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel: $(libjpeg_input_files)
 	@echo "Building $(JPEG_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(JPEG_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -132,12 +147,14 @@ $(libjpeg_target): $(libjpeg_input_files)
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ################################################################################
 ##-- ogg -----------------------------------------------------------------------
 libogg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(OGG_VER)" -type f)
-libogg_target =  \
+libogg_files =  \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/ogg/, config_types.h ogg.h os_types.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libogg.a libogg.la pkgconfig/ogg.pc) \
 	$(EXTERNAL_INSTALL_PREFIX)/share/aclocal/ogg.m4
@@ -145,9 +162,11 @@ libogg_target =  \
 .PHONY: libogg_clean
 libogg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(OGG_VER)
-	rm $(libogg_target)
+	rm $(libogg_files)
 
-$(libogg_target): $(libogg_input_files)
+$(libogg_files): $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libogg.sentinel: $(libogg_input_files)
 	@echo "Building $(OGG_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(OGG_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -157,12 +176,14 @@ $(libogg_target): $(libogg_input_files)
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ################################################################################
 ##-- vorbis --------------------------------------------------------------------
 libvorbis_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(VORBIS_VER)" -type f)
-libvorbis_target = \
+libvorbis_files = \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/vorbis/, codec.h vorbisenc.h vorbisfile.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libvorbis.a libvorbis.la libvorbisenc.a libvorbisenc.la libvorbisfile.a libvorbisfile.la)  \
 	$(EXTERNAL_INSTALL_PREFIX)/share/aclocal/vorbis.m4 \
@@ -170,9 +191,11 @@ libvorbis_target = \
 .PHONY: libvorbis_clean
 libvorbis_clean:
 		rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER)
-		rm $(libvorbis_target)
+		rm $(libvorbis_files)
 
-$(libvorbis_target): $(libogg_target) $(libvorbis_input_files)
+$(libvorbis_files): $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel: $(libogg_files) $(libvorbis_input_files)
 	@echo "Building $(VORBIS_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -181,12 +204,14 @@ $(libvorbis_target): $(libogg_target) $(libvorbis_input_files)
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ################################################################################
 ##-- freetype2 -----------------------------------------------------------------
 freetype2_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(FREETYPE_VER)" -type f)
-freetype2_target = \
+freetype2_files = \
 	$(EXTERNAL_INSTALL_PREFIX)/bin/freetype-config \
 	$(EXTERNAL_INSTALL_PREFIX)/include/freetype2/ft2build.h \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/freetype2/freetype/config/, \
@@ -205,9 +230,11 @@ freetype2_target = \
 .PHONY: freetype2_clean
 freetype2_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER)
-	rm $(freetype2_target)
+	rm $(freetype2_files)
 
-$(freetype2_target): $(freetype2_input_files)
+$(freetype2_files): $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel: $(freetype2_input_files)
 	@echo "Building $(FREETYPE_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -215,12 +242,14 @@ $(freetype2_target): $(freetype2_input_files)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --enable-freetype-config --disable-shared --enable-static --without-harfbuzz --without-brotli && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ################################################################################
 ##-- SDL -----------------------------------------------------------------------
 libsdl_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDL_VER)" -type f)
-libsdl_target = \
+libsdl_files = \
 	$(EXTERNAL_INSTALL_PREFIX)/bin/sdl-config \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/SDL/, \
 		begin_code.h close_code.h SDL.h SDL_active.h SDL_audio.h SDL_byteorder.h SDL_cdrom.h SDL_config.h SDL_cpuinfo.h \
@@ -234,9 +263,11 @@ libsdl_target = \
 .PHONY: libsdl_clean
 libsdl_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER)
-	rm $(libsdl_target)
+	rm $(libsdl_files)
 
-$(libsdl_target): $(libsdl_input_files) $(if $(INTERNAL_LIBPNG), $(libpng_target))
+$(libsdl_files): $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel: $(libsdl_input_files) $(if $(INTERNAL_LIBPNG), $(libpng_files))
 	@echo "Building $(SDL_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -253,12 +284,14 @@ $(libsdl_target): $(libsdl_input_files) $(if $(INTERNAL_LIBPNG), $(libpng_target
 		--disable-video-wscons \
 		--disable-video-opengl && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 	
 ################################################################################
 ##-- SDL_image -----------------------------------------------------------------
 libsdlimage_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLIMAGE_VER)" -type f)
-libsdlimage_target = \
+libsdlimage_files = \
 	$(EXTERNAL_INSTALL_PREFIX)/include/SDL/SDL_image.h \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libSDL_image.a libSDL_image.la) \
 	$(EXTERNAL_INSTALL_PREFIX)/lib/pkgconfig/SDL_image.pc
@@ -266,9 +299,11 @@ libsdlimage_target = \
 .PHONY: libsdlimage_clean
 libsdlimage_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER)
-	rm $(libsdlimage_target)
+	rm $(libsdlimage_files)
 
-$(libsdlimage_target): $(libsdlimage_input_files) $(if $(INTERNAL_SDL), $(libsdl_target)) $(if $(INTERNAL_LIBPNG), $(libpng_target)) $(if $(INTERNAL_LIBJPEG), $(libjpeg_target))
+$(libsdlimage_files): $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel: $(libsdlimage_input_files) $(if $(INTERNAL_SDL), $(libsdl_files)) $(if $(INTERNAL_LIBPNG), $(libpng_files)) $(if $(INTERNAL_LIBJPEG), $(libjpeg_files))
 	@echo "Building $(SDLIMAGE_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -288,12 +323,14 @@ $(libsdlimage_target): $(libsdlimage_input_files) $(if $(INTERNAL_SDL), $(libsdl
 		--disable-jpg-shared \
 		CFLAGS="-Wno-error=incompatible-pointer-types" && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ################################################################################
 ##-- smpeg ---------------------------------------------------------------------
 smpeg_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SMPEG_VER)" -type f)
-smpeg_target = \
+smpeg_files = \
 	$(EXTERNAL_INSTALL_PREFIX)/bin/smpeg-config \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/smpeg/, \
 		MPEG.h MPEGaction.h MPEGaudio.h MPEGerror.h MPEGfilter.h MPEGlist.h MPEGring.h \
@@ -304,9 +341,11 @@ smpeg_target = \
 .PHONY: smpeg_clean
 smpeg_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
-	rm $(smpeg_target)
+	rm $(smpeg_files)
 
-$(smpeg_target): $(smpeg_input_files) $(if $(INTERNAL_SDL), $(libsdl_target))
+$(smpeg_files): $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel: $(smpeg_input_files) $(if $(INTERNAL_SDL), $(libsdl_files))
 	@echo "Building $(SMPEG_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -314,12 +353,14 @@ $(smpeg_target): $(smpeg_input_files) $(if $(INTERNAL_SDL), $(libsdl_target))
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ################################################################################
 #-- SDL_mixer -----------------------------------------------------------------
 libsdlmixer_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLMIXER_VER)" -type f)
-libsdlmixer_target = \
+libsdlmixer_files = \
 	$(EXTERNAL_INSTALL_PREFIX)/include/SDL/SDL_mixer.h \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libSDL_mixer.a libSDL_mixer.la) \
 	$(EXTERNAL_INSTALL_PREFIX)/lib/pkgconfig/SDL_mixer.pc
@@ -327,9 +368,11 @@ libsdlmixer_target = \
 .PHONY: libsdlmixer_clean
 libsdlmixer_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER)
-	rm $(libsdlmixer_target)
+	rm $(libsdlmixer_files)
 
-$(libsdlmixer_target): $(libsdlmixer_input_files) $(if $(INTERNAL_SDL), $(libsdl_target)) $(if $(INTERNAL_OGGLIBS), $(libogg_target) $(libvorbis_target)) $(if $(INTERNAL_SMPEG), $(smpeg_target))
+$(libsdlmixer_files): $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: $(libsdlmixer_input_files) $(if $(INTERNAL_SDL), $(libsdl_files)) $(if $(INTERNAL_OGGLIBS), $(libogg_files) $(libvorbis_files)) $(if $(INTERNAL_SMPEG), $(smpeg_files))
 	@echo "Building $(SDLMIXER_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -337,12 +380,14 @@ $(libsdlmixer_target): $(libsdlmixer_input_files) $(if $(INTERNAL_SDL), $(libsdl
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-music-cmd --disable-music-timidity-midi && \
 	$(MAKE) -j && \
-	$(MAKE) install
-	
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
+
 ################################################################################
 ##-- SDL_ttf -------------------------------------------------------------------
 libsdlttf_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDLTTF_VER)" -type f)
-libsdlttf_target = \
+libsdlttf_files = \
 	$(EXTERNAL_INSTALL_PREFIX)/include/SDL/SDL_ttf.h \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libSDL_ttf.a libSDL_ttf.la) \
 	$(EXTERNAL_INSTALL_PREFIX)/lib/pkgconfig/SDL_ttf.pc
@@ -350,9 +395,11 @@ libsdlttf_target = \
 .PHONY: libsdlttf_clean
 libsdlttf_clean:
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER)
-	rm $(libsdlttf_target)
+	rm $(libsdlttf_files)
 
-$(libsdlttf_target): $(libsdlttf_input_files) $(if $(INTERNAL_SDL), $(libsdl_target)) $(if $(INTERNAL_FREETYPE), $(freetype2_target))
+$(libsdlttf_files): $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel ;
+
+$(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: $(libsdlttf_input_files) $(if $(INTERNAL_SDL), $(libsdl_files)) $(if $(INTERNAL_FREETYPE), $(freetype2_files))
 	@echo "Building $(SDLTTF_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -360,10 +407,12 @@ $(libsdlttf_target): $(libsdlttf_input_files) $(if $(INTERNAL_SDL), $(libsdl_tar
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared && \
 	$(MAKE) -j && \
-	$(MAKE) install
+	$(MAKE) install && \
+	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
+	touch $@
 
 ##-- test ----------------------------------------------------------------------
-testing: $(bzip_target) $(zlib_target) $(libogg_target) $(libvorbis_target) $(libpng_target) $(libjpeg_target) $(freetype2_target) $(libsdl_target) $(libsdlimage_target) $(libsdlmixer_target) $(libsdlttf_target)
+testing: $(bzip_files) $(zlib_files) $(libogg_files) $(libvorbis_files) $(libpng_files) $(libjpeg_files) $(freetype2_files) $(libsdl_files) $(libsdlimage_files) $(libsdlmixer_files) $(libsdlttf_files)
 	echo "Weee"
 
 .PHONY: extlib_clean
@@ -371,23 +420,23 @@ extlib_clean:
 	rm -rf $(EXTERNAL_PREFIX)
 
 INTERNALLY_BUILT_LIBS = \
-	$(zlib_target) \
-	$(if $(INTERNAL_BZIP2), $(bzip_target)) \
-	$(if $(INTERNAL_LIBPNG), $(libpng_target)) \
-	$(if $(INTERNAL_LIBJPEG), $(libjpeg_target)) \
-	$(if $(INTERNAL_FREETYPE), $(freetype2_target)) \
-	$(if $(INTERNAL_OGGLIBS), $(libogg_target) $(libvorbis_target)) \
-	$(if $(INTERNAL_SDL), $(libsdl_target)) \
-	$(if $(INTERNAL_SDL_IMAGE), $(libsdlimage_target)) \
-	$(if $(INTERNAL_SMPEG), $(smpeg_target)) \
-	$(if $(INTERNAL_SDL_MIXER), $(libsdlmixer_target)) \
-	$(if $(INTERNAL_SDL_TTF), $(libsdlttf_target))
+	$(zlib_files) \
+	$(if $(INTERNAL_BZIP2), $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel) \
+	$(if $(INTERNAL_LIBPNG), $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel) \
+	$(if $(INTERNAL_LIBJPEG), $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel) \
+	$(if $(INTERNAL_FREETYPE), $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel) \
+	$(if $(INTERNAL_OGGLIBS), $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel) \
+	$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel) \
+	$(if $(INTERNAL_SDL_IMAGE), $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel) \
+	$(if $(INTERNAL_SMPEG), $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel) \
+	$(if $(INTERNAL_SDL_MIXER), $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel) \
+	$(if $(INTERNAL_SDL_TTF), $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel)
 
 
 
-#CLEAN_TARGETS=clean_sdl clean_sdl_image clean_sdl_mixer clean_bzip2   \
+#CLEAN_filesS=clean_sdl clean_sdl_image clean_sdl_mixer clean_bzip2   \
 #              clean_smpeg clean_freetype clean_sdl_ttf
-#DISTCLEAN_TARGETS=dclean_sdl dclean_sdl_image dclean_sdl_mixer        \
+#DISTCLEAN_filesS=dclean_sdl dclean_sdl_image dclean_sdl_mixer        \
 #                  dclean_smpeg dclean_freetype dclean_sdl_ttf
 #
 ##-- SDL -----------------------------------------------------------------------
@@ -609,7 +658,7 @@ INTERNALLY_BUILT_LIBS = \
 #	@-if [ -h $(EI)/freetype ]; then rm -r $(EI)/freetype; fi
 #	@-if [ -f $(EI)/ft2config.h ]; then rm $(EI)/ft2config.h; fi
 #	@cp -r $(EI)/freetype2/* $(EI)
-#	@touch $@
+#	touch $@
 #
 ##-- SDL_ttf -------------------------------------------------------------------
 #

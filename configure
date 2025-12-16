@@ -1241,7 +1241,7 @@ include Makefile.onscripter
 include Makefile.unittest
 
 clean:
-	rm -r -f $(TOPSRC)/build/extlib
+	rm -r -f \$(TOPSRC)/build
 distclean: clean pdistclean \$(DISTCLEAN_TARGETS)
 	rm -r -f build/extlib
 	rm -f Makefile $DISTCLEAN_OTHER

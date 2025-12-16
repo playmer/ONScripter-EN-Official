@@ -406,7 +406,6 @@ fi
 if [ -z "$CXX" ]
 then case "x$CC_TYPE" in
 x) CXX=g++ ;;
-xclang) CXX=clang++ ;; # same story as with C compiler. -grodzio1
 xintel)
    if command -v icpx >/dev/null
    then
@@ -415,7 +414,7 @@ xintel)
      CXX=icpc
    fi
    ;;
-*) CXX=$CC ;;
+*) CXX=$CXX_TEMP ;;
 esac
 fi
 
@@ -429,7 +428,7 @@ then
        CC_TYPE=${OUTPUT_ARRAY[0]}
        CXX_TYPE=${OUTPUT_ARRAY[1]}
        CXX_VER=${OUTPUT_ARRAY[2]}
-       echo "$CXX_TYPE $CXX_VER"
+       echo "$CXX_TYPE $CXX_VER, chosen: $CXX"
        ;;
     *)  echo "error" >&2
         cat >&2 <<-_ERR

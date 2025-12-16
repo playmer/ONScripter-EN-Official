@@ -37,6 +37,27 @@ SDLTTF_VER   = SDL_ttf-2.0.11
 
 ################################################################################
 ##-- bzip2 ---------------------------------------------------------------------
+bzip_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(BZIP_VER)" -type f)
+bzip_target = \
+	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/bin/, bunzip2.exe bzcat.exe bzcmp bzdiff bzegrep bzfgrep \
+		bzgrep bzip2.exe bzip2recover.exe bzless bzmore) \
+	$(EXTERNAL_INSTALL_PREFIX)/include/bzlib.h \
+	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libbz2.a libpng.la libpng16.a libpng16.la) \
+	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/man/man1/, bzcmp.1 bzdiff.1 bzegrep.1 bzfgrep.1 bzgrep.1 bzip2.1 bzless.1 bzmore.1) 
+
+.PHONY: bzip_clean 
+bzip_clean:
+	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER)
+	rm $(bzip_target)
+
+$(bzip_target): $(bzip_input_files)
+	@echo "Building $(BZIP_VER)"
+	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER)
+	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
+	cp -r $(EXTERNAL_SOURCE)/$(BZIP_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
+	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER) && \
+	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" -j && \
+	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" install
 
 ################################################################################
 ##-- zlib ----------------------------------------------------------------------
@@ -192,7 +213,7 @@ $(freetype2_target): $(freetype2_input_files)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(FREETYPE_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --enable-freetype-config --disable-shared --enable-static && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --enable-freetype-config --disable-shared --enable-static --without-harfbuzz --without-brotli && \
 	$(MAKE) -j && \
 	$(MAKE) install
 
@@ -202,10 +223,10 @@ libsdl_input_files = $(shell find "$(EXTERNAL_SOURCE)/$(SDL_VER)" -type f)
 libsdl_target = \
 	$(EXTERNAL_INSTALL_PREFIX)/bin/sdl-config \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/SDL/, \
-        begin_code.h close_code.h SDL.h SDL_active.h SDL_audio.h SDL_byteorder.h SDL_cdrom.h SDL_config.h SDL_cpuinfo.h \
-        SDL_endian.h SDL_error.h SDL_events.h SDL_getenv.h SDL_joystick.h SDL_keyboard.h SDL_keysym.h SDL_loadso.h \
-        SDL_main.h SDL_mouse.h SDL_mutex.h SDL_name.h SDL_opengl.h SDL_platform.h SDL_quit.h SDL_rwops.h SDL_stdinc.h \
-        SDL_syswm.h SDL_thread.h SDL_timer.h SDL_types.h SDL_version.h SDL_video.h) \
+		begin_code.h close_code.h SDL.h SDL_active.h SDL_audio.h SDL_byteorder.h SDL_cdrom.h SDL_config.h SDL_cpuinfo.h \
+		SDL_endian.h SDL_error.h SDL_events.h SDL_getenv.h SDL_joystick.h SDL_keyboard.h SDL_keysym.h SDL_loadso.h \
+		SDL_main.h SDL_mouse.h SDL_mutex.h SDL_name.h SDL_opengl.h SDL_platform.h SDL_quit.h SDL_rwops.h SDL_stdinc.h \
+		SDL_syswm.h SDL_thread.h SDL_timer.h SDL_types.h SDL_version.h SDL_video.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libSDL.a libSDL.la libSDLmain.a libSDLmain.la) \
 	$(EXTERNAL_INSTALL_PREFIX)/lib/pkgconfig/sdl.pc \
 	$(EXTERNAL_INSTALL_PREFIX)/share/aclocal/sdl.m4
@@ -262,6 +283,7 @@ $(libsdlimage_target): $(libsdlimage_input_files) $(if $(INTERNAL_SDL), $(libsdl
 		--disable-xcf \
 		--disable-xv \
 		--disable-tif \
+		--disable-webp \
 		--disable-png-shared \
 		--disable-jpg-shared \
 		CFLAGS="-Wno-error=incompatible-pointer-types" && \
@@ -275,7 +297,7 @@ smpeg_target = \
 	$(EXTERNAL_INSTALL_PREFIX)/bin/smpeg-config \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/include/smpeg/, \
 		MPEG.h MPEGaction.h MPEGaudio.h MPEGerror.h MPEGfilter.h MPEGlist.h MPEGring.h \
-        MPEGstream.h MPEGsystem.h MPEGvideo.h smpeg.h) \
+		MPEGstream.h MPEGsystem.h MPEGvideo.h smpeg.h) \
 	$(addprefix $(EXTERNAL_INSTALL_PREFIX)/lib/, libsmpeg.a libsmpeg.la) \
 	$(EXTERNAL_INSTALL_PREFIX)/share/aclocal/smpeg.m4
 
@@ -341,9 +363,8 @@ $(libsdlttf_target): $(libsdlttf_input_files) $(if $(INTERNAL_SDL), $(libsdl_tar
 	$(MAKE) install
 
 ##-- test ----------------------------------------------------------------------
-testing: $(zlib_target) $(libogg_target) $(libvorbis_target) $(libpng_target) $(libjpeg_target) $(freetype2_target) $(libsdl_target) $(libsdlimage_target) $(libsdlmixer_target) $(libsdlttf_target)
+testing: $(bzip_target) $(zlib_target) $(libogg_target) $(libvorbis_target) $(libpng_target) $(libjpeg_target) $(freetype2_target) $(libsdl_target) $(libsdlimage_target) $(libsdlmixer_target) $(libsdlttf_target)
 	echo "Weee"
-
 
 .PHONY: extlib_clean
 extlib_clean:

@@ -115,6 +115,7 @@ jobs:
       name: Build
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
+        ./configure --with-internal-libs
         make -j $NCPUS VERBOSE=true
         make -j $NCPUS VERBOSE=true tools
         make check

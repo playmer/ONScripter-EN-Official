@@ -112,22 +112,6 @@ jobs:
           zip
 
     - shell: msys2 {0}
-      name: Build SMpeg extlib
-      run: |
-        NCPUS=$(getconf _NPROCESSORS_ONLN)
-        (cd extlib/src/smpeg && ./configure --disable-{shared,gtk-player,opengl-player,debug})
-        make -j $NCPUS -C extlib/src/smpeg VERBOSE=true
-        make -C extlib/src/smpeg install VERBOSE=true
-
-    - shell: msys2 {0}
-      name: Build SDL_mixer 1.2.12 extlib
-      run: |
-        NCPUS=$(getconf _NPROCESSORS_ONLN)
-        (cd extlib/src/SDL_mixer-1.2.12 && ./configure --disable-{shared,music-cmd,music-timidity-midi} CFLAGS="${CFLAGS} -Wno-error=implicit-function-declaration")
-        make -j $NCPUS -C extlib/src/SDL_mixer-1.2.12 VERBOSE=true
-        make -C extlib/src/SDL_mixer-1.2.12 install VERBOSE=true
-
-    - shell: msys2 {0}
       name: Build
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)

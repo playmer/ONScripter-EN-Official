@@ -1026,7 +1026,6 @@ _EOF
     exit
 fi
 
-
 $echo_n "Writing Makefile... ${nobr}"
 
 case "$SYS" in
@@ -1058,11 +1057,16 @@ PREFIX ?= $PREFIX
 
 # Extra handling for internal libraries.
 EXTRADEPS=$DEPS
-INTERNAL_SDL=\$(findstring true,$INTERNAL_SDL)
-INTERNAL_SMPEG=\$(findstring true,$INTERNAL_SMPEG)
+INTERNAL_BZIP2=\$(findstring true,$INTERNAL_BZIP2)
 INTERNAL_LIBPNG=\$(findstring true,$INTERNAL_LIBPNG)
 INTERNAL_LIBJPEG=\$(findstring true,$INTERNAL_LIBJPEG)
+INTERNAL_FREETYPE=\$(findstring true,$INTERNAL_FREETYPE)
 INTERNAL_OGGLIBS=\$(findstring true,$INTERNAL_OGGLIBS)
+INTERNAL_SDL=\$(findstring true,$INTERNAL_SDL)
+INTERNAL_SDL_IMAGE=\$(findstring true,$INTERNAL_SDL_IMAGE)
+INTERNAL_SMPEG=\$(findstring true,$INTERNAL_SMPEG)
+INTERNAL_SDL_MIXER=\$(findstring true,$INTERNAL_SDL_MIXER)
+INTERNAL_SDL_TTF=\$(findstring true,$INTERNAL_SDL_TTF)
 SDL_CONFIG=$SDL_CONFIG
 
 export PATH            :=   \$(shell pwd)/build/extlib/install/bin:\$(PATH)
@@ -1181,9 +1185,6 @@ fi
 
 cat >> Makefile <<_EOF
 
-.SUFFIXES:
-.SUFFIXES: $OBJ .cpp .h .c
-
 ifdef DEBUG
 OSCFLAGS = -O0 -g -pg -ggdb -pipe -Wpointer-arith $WERROR $STRICT \$(OSCFLAGSEXTRA) \$(SANFLAGS)
 export LDFLAGS  := -pg \$(LDFLAGS)
@@ -1239,7 +1240,8 @@ include Makefile.extlibs
 include Makefile.onscripter
 include Makefile.unittest
 
-clean: pclean extlib_clean
+clean:
+	rm -r -f $(TOPSRC)/build/extlib
 distclean: clean pdistclean \$(DISTCLEAN_TARGETS)
 	rm -r -f build/extlib
 	rm -f Makefile $DISTCLEAN_OTHER

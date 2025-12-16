@@ -572,7 +572,7 @@ then
         0)  echo "yes"
             GFX_MMX_FLAGS="-mmmx -DUSE_X86_GFX"
             GFX_SSE2_FLAGS="-msse2 -DUSE_X86_GFX"
-            GFX_EXT_OBJS="graphics_mmx.o graphics_sse2.o"
+            GFX_EXT_OBJS="\$(OBJDIR)graphics_mmx.o \$(OBJDIR)graphics_sse2.o"
             CFLAGSEXTRA="$CFLAGSEXTRA -DUSE_X86_GFX"
             echo "     Compiling with x86 MMX/SSE2 custom graphics routines"
             ;;
@@ -590,7 +590,7 @@ then
         case $? in
         0)  echo "yes"
             GFX_MALTIVEC_FLAGS="-maltivec -mabi=altivec -DUSE_PPC_GFX"
-            GFX_EXT_OBJS="graphics_altivec.o"
+            GFX_EXT_OBJS="\$(OBJDIR)graphics_altivec.o"
             CFLAGSEXTRA="$CFLAGSEXTRA -DUSE_PPC_GFX"
             echo "     Compiling with PPC custom graphics routines"
             ;;
@@ -1073,6 +1073,8 @@ cat > Makefile <<_EOF
 # Makefile for ONScripter-EN
 
 TOPSRC=${srcdir}
+TOBJDIR = build/tools/.objs/
+OBJDIR = build/.objs/
 
 WIN32=$W32
 OBJSUFFIX=$OBJ
@@ -1150,7 +1152,7 @@ LIBS = -Lbuild/extlib/install/lib \\
 
 # Remove -DUSE_MESSAGEBOX if you don't want Windows dialog boxes
 DEFS = -DWIN32 -DUSE_MESSAGEBOX -DUSE_OGG_VORBIS
-EXT_OBJS = win32rc.o $GFX_EXT_OBJS
+EXT_OBJS = \$(OBJDIR)win32rc.o $GFX_EXT_OBJS
 
 _EOF
 
@@ -1291,7 +1293,7 @@ cat >> Makefile <<_EOF
 RCFILE ?= onscripter.rc
 WICONFILE ?= ons-en.ico
 RCCLEAN = \$(RCFILE)
-win32rc.o: \$(RCFILE) \$(WICONFILE)
+\$(OBJDIR)win32rc.o: \$(RCFILE) \$(WICONFILE)
 	windres \$< -o \$@
 
 %.rc: %.rc.in version.h winres.h
@@ -1316,17 +1318,20 @@ if $USE_X86_GFX
 then
 cat >> Makefile <<_EOF
 
-graphics_sse2.o: graphics_sse2.cpp graphics_sse2.h graphics_common.h graphics_sum.h graphics_blend.h
+\$(OBJDIR)graphics_sse2.o: graphics_sse2.cpp graphics_sse2.h graphics_common.h graphics_sum.h graphics_blend.h \$(INTERNALLY_BUILT_LIBS)
+	@mkdir -p \$(OBJDIR)
 	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) $GFX_SSE2_FLAGS -c \$< -o \$@
 
-graphics_mmx.o: graphics_mmx.cpp graphics_mmx.h graphics_common.h graphics_sum.h
+\$(OBJDIR)graphics_mmx.o: graphics_mmx.cpp graphics_mmx.h graphics_common.h graphics_sum.h \$(INTERNALLY_BUILT_LIBS)
+	@mkdir -p \$(OBJDIR)
 	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) $GFX_MMX_FLAGS -c \$< -o \$@
 _EOF
 elif $USE_PPC_GFX
 then
 cat >> Makefile <<_EOF
 
-graphics_altivec.o: graphics_altivec.cpp graphics_altivec.h graphics_common.h graphics_sum.h
+\$(OBJDIR)graphics_altivec.o: graphics_altivec.cpp graphics_altivec.h graphics_common.h graphics_sum.h \$(INTERNALLY_BUILT_LIBS)
+	@mkdir -p \$(OBJDIR)
 	\$(CXX) \$(CXXSTD) \$(OSCFLAGS) \$(INCS) \$(DEPFLAGS) \$(DEFS) $GFX_MALTIVEC_FLAGS -c \$< -o \$@
 _EOF
 fi

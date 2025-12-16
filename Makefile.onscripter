@@ -6,8 +6,6 @@
 TARGET ?= onscripter-en
 
 TDIR = tools/
-TOBJDIR = build/tools/.objs/
-OBJDIR = build/.objs/
 TOOLBINS = $(OBJDIR)sardec$(EXESUFFIX) $(OBJDIR)nsadec$(EXESUFFIX)	\
         $(OBJDIR)ns2dec$(EXESUFFIX) $(OBJDIR)nscdec$(EXESUFFIX)	\
         $(OBJDIR)sarconv$(EXESUFFIX) $(OBJDIR)nsaconv$(EXESUFFIX)	\

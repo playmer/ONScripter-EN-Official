@@ -52,6 +52,7 @@ bzip_clean:
 	rm $(bzip_files)
 
 $(bzip_files): $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel ;
+internal_bzip2 = $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel: $(bzip_input_files)
 	@echo "Building $(BZIP_VER)"
@@ -80,6 +81,7 @@ zlib_clean:
 	rm $(zlib_files)
 
 $(zlib_files): $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel ;
+internal_z = $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel: $(zlib_input_files)
 	@echo "Building $(ZLIB_VER)"
@@ -110,8 +112,9 @@ libpng_clean:
 	rm $(libpng_files)
 
 $(libpng_files): $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel ;
+internal_png = $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel
 
-$(EXTERNAL_SENTINEL_DIR)/libpng.sentinel: $(libpng_input_files) $(zlib_files)
+$(EXTERNAL_SENTINEL_DIR)/libpng.sentinel: $(libpng_input_files) $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel
 	@echo "Building $(PNG_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(PNG_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -141,6 +144,7 @@ libjpeg_clean:
 	rm $(libjpeg_files)
 
 $(libjpeg_files): $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel ;
+internal_jpeg = $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel: $(libjpeg_input_files)
 	@echo "Building $(JPEG_VER)"
@@ -201,7 +205,10 @@ libvorbis_clean:
 
 $(libvorbis_files): $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel ;
 
-$(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel: $(libogg_files) $(libvorbis_input_files)
+# This implies both vorbis and, indirectly, ogg, matching prior behavior, shouls probably separate it out i nthe future.
+internal_ogglibs = $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel 
+
+$(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel: $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel $(libvorbis_input_files)
 	@echo "Building $(VORBIS_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -240,6 +247,7 @@ freetype2_clean:
 	rm $(freetype2_files)
 
 $(freetype2_files): $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel ;
+internal_freetype = $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel: $(freetype2_input_files)
 	@echo "Building $(FREETYPE_VER)"
@@ -274,6 +282,7 @@ libsdl_clean:
 	rm $(libsdl_files)
 
 $(libsdl_files): $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel ;
+internal_sdl = $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel: $(libsdl_input_files) $(if $(INTERNAL_LIBPNG), $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel)
 	@echo "Building $(SDL_VER)"
@@ -311,6 +320,7 @@ libsdlimage_clean:
 	rm -f $(libsdlimage_files)
 
 $(libsdlimage_files): $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel ;
+internal_sdl_image = $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel: \
 		$(libsdlimage_input_files) \
@@ -361,6 +371,7 @@ smpeg_clean:
 	rm $(smpeg_files)
 
 $(smpeg_files): $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel ;
+internal_smpeg = $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel: $(smpeg_input_files) $(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel)
 	@echo "Building $(SMPEG_VER)"
@@ -389,12 +400,13 @@ libsdlmixer_clean:
 	rm $(libsdlmixer_files)
 
 $(libsdlmixer_files): $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel ;
+internal_sdl_mixer = $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: \
 		$(libsdlmixer_input_files) \
 		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel) \
 		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel) \
-		$(if $(INTERNAL_SMPEG), $(smpeg_files))
+		$(if $(INTERNAL_SMPEG), $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel)
 	@echo "Building $(SDLMIXER_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
@@ -424,6 +436,7 @@ libsdlttf_clean:
 	rm $(libsdlttf_files)
 
 $(libsdlttf_files): $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel ;
+internal_sdl_ttf = $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel
 
 $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
 		$(libsdlttf_input_files) \

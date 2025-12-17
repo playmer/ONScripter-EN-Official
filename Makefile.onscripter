@@ -7,13 +7,13 @@ TARGET ?= onscripter-en
 
 TDIR = tools/
 TOOLS = \
-	$(TDIR)sardec$(EXESUFFIX) $(TDIR)nsadec$(EXESUFFIX) \
-	$(TDIR)ns2dec$(EXESUFFIX) $(TDIR)nscdec$(EXESUFFIX) \
-	$(TDIR)sarconv$(EXESUFFIX) $(TDIR)nsaconv$(EXESUFFIX) \
-	$(TDIR)ns2conv$(EXESUFFIX) $(TDIR)batchconv$(EXESUFFIX) \
-	$(TDIR)sarmake$(EXESUFFIX) $(TDIR)nsamake$(EXESUFFIX) \
-	$(TDIR)ns2make$(EXESUFFIX) $(TDIR)nscmake$(EXESUFFIX) \
-	$(TDIR)nbzdec$(EXESUFFIX)
+	$(TBUILDDIR)sardec$(EXESUFFIX) $(TBUILDDIR)nsadec$(EXESUFFIX) \
+	$(TBUILDDIR)ns2dec$(EXESUFFIX) $(TBUILDDIR)nscdec$(EXESUFFIX) \
+	$(TBUILDDIR)sarconv$(EXESUFFIX) $(TBUILDDIR)nsaconv$(EXESUFFIX) \
+	$(TBUILDDIR)ns2conv$(EXESUFFIX) $(TBUILDDIR)batchconv$(EXESUFFIX) \
+	$(TBUILDDIR)sarmake$(EXESUFFIX) $(TBUILDDIR)nsamake$(EXESUFFIX) \
+	$(TBUILDDIR)ns2make$(EXESUFFIX) $(TBUILDDIR)nscmake$(EXESUFFIX) \
+	$(TBUILDDIR)nbzdec$(EXESUFFIX)
 TOOL_INCS = -I`pwd` -I$(INSTALLDIR)/include $(TOOL_EXTRA_INCS)
 TOOL_DEFS = $(DEFS) -DTOOLS_BUILD
 
@@ -105,43 +105,43 @@ tools: $(TOOL_EXTRADEPS) $(TOOLS)
 
 $(TOOLS): $(EXTRADEPS)
 
-$(TDIR)sardec$(EXESUFFIX): $(SARDEC_OBJS)
+$(TBUILDDIR)sardec$(EXESUFFIX): $(SARDEC_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(SARDEC_OBJS) $(TOOL_LIBS)
 
-$(TDIR)sarconv$(EXESUFFIX): $(SARCONV_OBJS)
+$(TBUILDDIR)sarconv$(EXESUFFIX): $(SARCONV_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(SARCONV_OBJS) $(TOOL_LIBS)
 
-$(TDIR)sarmake$(EXESUFFIX): $(SARMAKE_OBJS)
+$(TBUILDDIR)sarmake$(EXESUFFIX): $(SARMAKE_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(SARMAKE_OBJS) $(TOOL_LIBS)
 
-$(TDIR)nsadec$(EXESUFFIX): $(NSADEC_OBJS)
+$(TBUILDDIR)nsadec$(EXESUFFIX): $(NSADEC_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(NSADEC_OBJS) $(TOOL_LIBS)
 
-$(TDIR)nsaconv$(EXESUFFIX): $(NSACONV_OBJS)
+$(TBUILDDIR)nsaconv$(EXESUFFIX): $(NSACONV_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(NSACONV_OBJS) $(TOOL_LIBS)
 
-$(TDIR)nsamake$(EXESUFFIX): $(NSAMAKE_OBJS)
+$(TBUILDDIR)nsamake$(EXESUFFIX): $(NSAMAKE_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(NSAMAKE_OBJS) $(TOOL_LIBS)
 
-$(TDIR)ns2dec$(EXESUFFIX): $(NS2DEC_OBJS)
+$(TBUILDDIR)ns2dec$(EXESUFFIX): $(NS2DEC_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(NS2DEC_OBJS) $(TOOL_LIBS)
 
-$(TDIR)ns2conv$(EXESUFFIX): $(NS2CONV_OBJS)
+$(TBUILDDIR)ns2conv$(EXESUFFIX): $(NS2CONV_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(NS2CONV_OBJS) $(TOOL_LIBS)
 
-$(TDIR)ns2make$(EXESUFFIX): $(NS2MAKE_OBJS)
+$(TBUILDDIR)ns2make$(EXESUFFIX): $(NS2MAKE_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(NS2MAKE_OBJS) $(TOOL_LIBS)
 
-$(TDIR)batchconv$(EXESUFFIX): $(BATCONV_OBJS)
+$(TBUILDDIR)batchconv$(EXESUFFIX): $(BATCONV_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(BATCONV_OBJS) $(TOOL_LIBS)
 
-$(TDIR)nscdec$(EXESUFFIX): $(TDIR)nscdec$(OBJSUFFIX)
+$(TBUILDDIR)nscdec$(EXESUFFIX): $(TOBJDIR)nscdec$(OBJSUFFIX)
 	$(CXX) -o $@ $(LDFLAGS) $< $(TOOL_LIBS)
 
-$(TDIR)nscmake$(EXESUFFIX): $(TDIR)nscmake$(OBJSUFFIX)
+$(TBUILDDIR)nscmake$(EXESUFFIX): $(TOBJDIR)nscmake$(OBJSUFFIX)
 	$(CXX) -o $@ $(LDFLAGS) $< $(TOOL_LIBS)
 
-$(TDIR)nbzdec$(EXESUFFIX): $(NBZDEC_OBJS)
+$(TBUILDDIR)nbzdec$(EXESUFFIX): $(NBZDEC_OBJS)
 	$(CXX) -o $@ $(LDFLAGS) $(NBZDEC_OBJS) $(TOOL_LIBS)
 
 CLEANUP += $(ONSCRIPTER_OBJS:.o=.d)
@@ -159,59 +159,59 @@ ptoolsdistclean: ptoolsclean
 	-$(RM) $(TOOLS)
 
 
-$(TOBJDIR)sardec$(OBJSUFFIX): $(TDIR)arcdec.cpp
+$(TOBJDIR)sardec$(OBJSUFFIX): $(TDIR)arcdec.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DSAR $<
 
-$(TOBJDIR)nsadec$(OBJSUFFIX): $(TDIR)arcdec.cpp
+$(TOBJDIR)nsadec$(OBJSUFFIX): $(TDIR)arcdec.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DNSA $<
 
-$(TOBJDIR)ns2dec$(OBJSUFFIX): $(TDIR)arcdec.cpp
+$(TOBJDIR)ns2dec$(OBJSUFFIX): $(TDIR)arcdec.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DNS2 $<
 
-$(TOBJDIR)sarconv$(OBJSUFFIX): $(TDIR)arcconv.cpp
+$(TOBJDIR)sarconv$(OBJSUFFIX): $(TDIR)arcconv.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DSAR $<
 
-$(TOBJDIR)nsaconv$(OBJSUFFIX): $(TDIR)arcconv.cpp
+$(TOBJDIR)nsaconv$(OBJSUFFIX): $(TDIR)arcconv.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DNSA $<
 
-$(TOBJDIR)ns2conv$(OBJSUFFIX): $(TDIR)arcconv.cpp
+$(TOBJDIR)ns2conv$(OBJSUFFIX): $(TDIR)arcconv.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DNS2 $<
 
-$(TOBJDIR)sarmake$(OBJSUFFIX): $(TDIR)arcmake.cpp
+$(TOBJDIR)sarmake$(OBJSUFFIX): $(TDIR)arcmake.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DSAR $<
 
-$(TOBJDIR)nsamake$(OBJSUFFIX): $(TDIR)arcmake.cpp
+$(TOBJDIR)nsamake$(OBJSUFFIX): $(TDIR)arcmake.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DNSA $<
 
-$(TOBJDIR)ns2make$(OBJSUFFIX): $(TDIR)arcmake.cpp
+$(TOBJDIR)ns2make$(OBJSUFFIX): $(TDIR)arcmake.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) -DNS2 $<
 
-$(TOBJDIR)%$(OBJSUFFIX): $(TDIR)%.cpp
+$(TOBJDIR)%$(OBJSUFFIX): $(TDIR)%.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) $<
 
-$(TOBJDIR)%Reader$(OBJSUFFIX): %Reader.cpp
+$(TOBJDIR)%Reader$(OBJSUFFIX): %Reader.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) $<
 
-$(TOBJDIR)DirPaths$(OBJSUFFIX): DirPaths.cpp
+$(TOBJDIR)DirPaths$(OBJSUFFIX): DirPaths.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) $<
 
-$(TOBJDIR)resize_image$(OBJSUFFIX): resize_image.cpp
+$(TOBJDIR)resize_image$(OBJSUFFIX): resize_image.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) $<
 
-$(TOBJDIR)sjis2utf16$(OBJSUFFIX): sjis2utf16.cpp
+$(TOBJDIR)sjis2utf16$(OBJSUFFIX): sjis2utf16.cpp $(EXTRADEPS)
 	@mkdir -p $(TOBJDIR)
 	$(CXX) -c -o $@ $(CXXSTD) $(OSCFLAGS) $(TOOL_INCS) $(TOOL_DEFS) $<
 

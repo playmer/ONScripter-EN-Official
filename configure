@@ -1072,6 +1072,7 @@ cat > Makefile <<_EOF
 
 TOPSRC=${srcdir}
 INSTALLDIR = \$(TOPSRC)/build/extlib/install
+TBUILDDIR = build/tools/
 TOBJDIR = build/tools/.objs/
 OBJDIR = build/.objs/
 

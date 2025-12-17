@@ -21,9 +21,9 @@ endif
 
 BZIP2_CPPFLAGS=
 
-ifneq (,$(wildcard $(TOPSRC)/extlib/lib/libbz2$(LIBSUFFIX)))
-	BZIP2_CPPFLAGS=-I$(TOPSRC)/extlib/include
-	LIBS_bz2=$(TOPSRC)/extlib/lib/libbz2$(LIBSUFFIX)
+ifneq (,$(wildcard $(TOPSRC)/build/extlib/install/lib/libbz2$(LIBSUFFIX)))
+	BZIP2_CPPFLAGS=-I$(TOPSRC)/build/extlib/install/include
+	LIBS_bz2=$(TOPSRC)/build/extlib/install/lib/libbz2$(LIBSUFFIX)
 else
 	BZIP2_CPPFLAGS=
 	LIBS_bz2=$(shell pkg-config --libs bzip2 || echo -lbz2)

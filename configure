@@ -1099,7 +1099,6 @@ SMPEG_CONFIG=$SMPEG_CONFIG
 FREETYPE_CONFIG=$FREETYPE_CONFIG
 
 export PATH            :=   \$(shell pwd)/build/extlib/install/bin:\$(PATH)
-export PKG_CONFIG_PATH :=   \$(shell pwd)/build/extlib/install/lib/pkgconfig:\$(PKG_CONFIG_PATH)
 export CFLAGS          := -I\$(shell pwd)/build/extlib/install/include \$(CFLAGS) $VECFLAGS
 export CPPFLAGS        := -I\$(shell pwd)/build/extlib/install/include \$(CPPFLAGS) $VECFLAGS
 export LDFLAGS         := -L\$(shell pwd)/build/extlib/install/lib \$(LDFLAGS) $EXTRALDFLAGS
@@ -1149,11 +1148,9 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
             $LINKbz2 -Wl,--end-group
 LIBS = -Lbuild/extlib/install/lib \\
        -static -Wl,--start-group \\
-       $LINKSDL_ttf \\
-       \$(shell \$FREETYPE_CONFIG --libs) \\
-       $LINKSDL_image \\
-       $LINKjpeg \\
-       $LINKpng $LINKz \\
+       $LINKSDL_ttf \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
+       $LINKSDL_image $LINKjpeg $LINKpng \\
+       $LINKz \\
        $LINKSDL_mixer \\
        \$(shell \$SMPEG_CONFIG --libs) \\
        $LINKogg \\
@@ -1177,7 +1174,7 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
             $LINKjpeg $LINKpng \\
             $LINKbz2 -lm
 LIBS = -Lbuild/extlib/install/lib \\
-       $LINKSDL_ttf \$(shell \$FREETYPE_CONFIG --libs) \\
+       $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
        $LINKSDL_image $LINKjpeg $LINKpng \\
        $LINKSDL_mixer $LINKogg $LINKvorbis $LINKvorbisfile \$(shell \$(SMPEG_CONFIG) --libs) \\
        \$(shell \$(SDL_CONFIG) --static-libs) \\
@@ -1208,7 +1205,7 @@ LIBS = $X11_LIBS -Lbuild/extlib/install/lib \\
        $LINKSDL_image \$(if \$(findstring true,$INTERNAL_SDL_IMAGE),$LINKjpeg $LINKpng $LINKz) \\
        $LINKSDL_mixer \$(if \$(or \$(findstring true,$INTERNAL_SDL_MIXER),\$(findstring true,$EXPLICIT_OGGLIBS)),$LINKvorbisfile $LINKvorbis $LINKogg) \\
        \$(shell \$(SMPEG_CONFIG) --libs)    \\
-       $LINKSDL_ttf \$(shell \$(FREETYPE_CONFIG) --libs) \\
+       $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
        \$(shell \$(SDL_CONFIG) --libs) \\
        $LINKbz2 \$(if \$(findstring true,$INTERNAL_SDL),$INTERNAL_LDFLAGS)
 

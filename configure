@@ -1114,10 +1114,13 @@ export RANLIB  := $RANLIB
 DEPFLAGS = $DEPFLAGS
 OSCFLAGSEXTRA = $CFLAGSEXTRA \$(OSCTMPFLAGS)
 SANFLAGS = $SANFLAGS
-INCS = $X11_CFLAGS -Ibuild/extlib/install/include \$(shell \$(SDL_CONFIG) --cflags)      \\
-                        \$(shell $SMPEG_CONFIG --cflags)    \\
-                        \$(shell $FREETYPE_CONFIG --cflags) \\
-       \$(shell [ -d build/extlib/install/include/SDL ] && echo -Ibuild/extlib/install/include/SDL)
+INCS = \\
+  $X11_CFLAGS \\
+  -Ibuild/extlib/install/include \\
+  \$(shell \$(SDL_CONFIG) --cflags) \\
+  \$(shell $SMPEG_CONFIG --cflags)    \\
+  \$(shell $FREETYPE_CONFIG --cflags) \\
+  \$(shell [ -d build/extlib/install/include/SDL ] && echo -Ibuild/extlib/install/include/SDL)
 _EOF
 
 
@@ -1136,17 +1139,26 @@ TOOL_EXTRADEPS = \$(GNURX_DIR)/libgnurx.a
 TOOL_EXTRA_CLEAN = clean_libgnurx
 TOOL_LIBS = -Lbuild/extlib/install/lib \\
             -static -Wl,--start-group \\
-            $LINKjpeg $LINKpng $LINKz \\
+            $LINKjpeg \\
+            $LINKpng \\
+            $LINKz \\
             -L\$(GNURX_DIR) -lgnurx \\
             $LINKbz2 -Wl,--end-group
 LIBS = -Lbuild/extlib/install/lib \\
        -static -Wl,--start-group \\
        $MY_SDL_LIBS \\
        $LINKSDL_ttf \\
-       \$(shell $SMPEG_CONFIG --libs) \$(shell $FREETYPE_CONFIG --libs) \\
-       $LINKSDL_image $LINKjpeg $LINKpng $LINKz \\
-       $LINKSDL_mixer $LINKogg $LINKvorbis $LINKvorbisfile \\
-       $LINKbz2 -Wl,--end-group
+       \$(shell $SMPEG_CONFIG --libs) \\
+       \$(shell $FREETYPE_CONFIG --libs) \\
+       $LINKSDL_image \\
+       $LINKjpeg \\
+       $LINKpng $LINKz \\
+       $LINKSDL_mixer \\
+       $LINKogg \\
+       $LINKvorbis \\
+       $LINKvorbisfile \\
+       $LINKbz2 \\
+       -Wl,--end-group
 
 # Remove -DUSE_MESSAGEBOX if you don't want Windows dialog boxes
 DEFS = -DWIN32 -DUSE_MESSAGEBOX -DUSE_OGG_VORBIS

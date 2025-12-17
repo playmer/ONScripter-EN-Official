@@ -1072,10 +1072,10 @@ SDL_CONFIG=$SDL_CONFIG
 SMPEG_CONFIG=$SMPEG_CONFIG
 FREETYPE_CONFIG=$FREETYPE_CONFIG
 
-export PATH            :=   \$(shell pwd)/build/extlib/install/bin:\$(PATH)
-export CFLAGS          := -I\$(shell pwd)/build/extlib/install/include \$(CFLAGS) $VECFLAGS
-export CPPFLAGS        := -I\$(shell pwd)/build/extlib/install/include \$(CPPFLAGS) $VECFLAGS
-export LDFLAGS         := -L\$(shell pwd)/build/extlib/install/lib \$(LDFLAGS) $EXTRALDFLAGS
+export PATH            :=   \$(shell pwd)/\$(INSTALLDIR)/bin:\$(PATH)
+export CFLAGS          := -I\$(shell pwd)/\$(INSTALLDIR)/include \$(CFLAGS) $VECFLAGS
+export CPPFLAGS        := -I\$(shell pwd)/\$(INSTALLDIR)/include \$(CPPFLAGS) $VECFLAGS
+export LDFLAGS         := -L\$(shell pwd)/\$(INSTALLDIR)/lib \$(LDFLAGS) $EXTRALDFLAGS
 export CSTD            := -std=c99
 export CXXSTD          := $CXXSTD
 
@@ -1092,11 +1092,11 @@ OSCFLAGSEXTRA = $CFLAGSEXTRA \$(OSCTMPFLAGS)
 SANFLAGS = $SANFLAGS
 INCS = \\
   $X11_CFLAGS \\
-  -Ibuild/extlib/install/include \\
+  -I\$(INSTALLDIR)/include \\
   \$(shell \$(SDL_CONFIG) --cflags) \\
   \$(shell \$(SMPEG_CONFIG) --cflags) \\
-  \$(shell \$(FREETYPE_CONFIG) --cflags) \\
-  \$(shell [ -d build/extlib/install/include/SDL ] && echo -Ibuild/extlib/install/include/SDL)
+  \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --cflags) \\
+  \$(shell [ -d \$(INSTALLDIR)/include/SDL ] && echo -I\$(INSTALLDIR)/include/SDL)
 _EOF
 
 
@@ -1113,14 +1113,14 @@ GNURX_DIR = tools/libgnurx
 TOOL_EXTRA_INCS = -I\$(GNURX_DIR)
 TOOL_EXTRADEPS = \$(GNURX_DIR)/libgnurx.a
 TOOL_EXTRA_CLEAN = clean_libgnurx
-TOOL_LIBS = -Lbuild/extlib/install/lib \\
+TOOL_LIBS = -L\$(INSTALLDIR)/lib \\
             -static -Wl,--start-group \\
             $LINKjpeg \\
             $LINKpng \\
             $LINKz \\
             -L\$(GNURX_DIR) -lgnurx \\
             $LINKbz2 -Wl,--end-group
-LIBS = -Lbuild/extlib/install/lib \\
+LIBS = -L\$(INSTALLDIR)/lib \\
        -static -Wl,--start-group \\
        $LINKSDL_ttf \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
        $LINKSDL_image $LINKjpeg $LINKpng \\

@@ -435,9 +435,11 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
 	cp -r $(EXTERNAL_SOURCE)/$(SDLTTF_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared \
+		--with-freetype-exec-prefix="$(EXTERNAL_INSTALL_PREFIX)" \
 		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
-		LIBS="$(shell $(SDL_CONFIG) --static-libs) $(shell $(FREETYPE_CONFIG) --libs)" && \
+		LIBS="$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs) \
+			  $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(FREETYPE_CONFIG) --libs)" && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \

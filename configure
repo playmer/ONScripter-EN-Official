@@ -992,7 +992,7 @@ require $INTERNAL_SDL_TTF   internal_sdl_ttf   SDL_ttf
 genlink() {
     if $1
     then
-        eval "LINK$2=\"$(shell pwd)/build/extlib/install/lib/lib$2\\\$(LIBSUFFIX)\""
+        eval "LINK$2=\"\\\$(INSTALLDIR)/lib/lib$2\\\$(LIBSUFFIX)\""
     else
         eval "LINK$2=-l$2"
     fi
@@ -1045,6 +1045,7 @@ cat > Makefile <<_EOF
 # Makefile for ONScripter-EN
 
 TOPSRC=${srcdir}
+INSTALLDIR = \$(TOPSRC)/build/extlib/install
 TOBJDIR = build/tools/.objs/
 OBJDIR = build/.objs/
 
@@ -1068,9 +1069,11 @@ INTERNAL_SMPEG=\$(findstring true,$INTERNAL_SMPEG)
 INTERNAL_SDL_MIXER=\$(findstring true,$INTERNAL_SDL_MIXER)
 INTERNAL_SDL_TTF=\$(findstring true,$INTERNAL_SDL_TTF)
 SDL_CONFIG=$SDL_CONFIG
+SMPEG_CONFIG=$SMPEG_CONFIG
+FREETYPE_CONFIG=$FREETYPE_CONFIG
 
 export PATH            :=   \$(shell pwd)/build/extlib/install/bin:\$(PATH)
-export PKG_CONFIG_PATH :=   \$(shell pwd)/build/extlib/install:\$(PKG_CONFIG_PATH)
+export PKG_CONFIG_PATH :=   \$(shell pwd)/build/extlib/install/lib/pkgconfig:\$(PKG_CONFIG_PATH)
 export CFLAGS          := -I\$(shell pwd)/build/extlib/install/include \$(CFLAGS) $VECFLAGS
 export CPPFLAGS        := -I\$(shell pwd)/build/extlib/install/include \$(CPPFLAGS) $VECFLAGS
 export LDFLAGS         := -L\$(shell pwd)/build/extlib/install/lib \$(LDFLAGS) $EXTRALDFLAGS
@@ -1092,8 +1095,8 @@ INCS = \\
   $X11_CFLAGS \\
   -Ibuild/extlib/install/include \\
   \$(shell \$(SDL_CONFIG) --cflags) \\
-  \$(shell $SMPEG_CONFIG --cflags)    \\
-  \$(shell $FREETYPE_CONFIG --cflags) \\
+  \$(shell \$(SMPEG_CONFIG) --cflags) \\
+  \$(shell \$(FREETYPE_CONFIG) --cflags) \\
   \$(shell [ -d build/extlib/install/include/SDL ] && echo -Ibuild/extlib/install/include/SDL)
 _EOF
 
@@ -1120,17 +1123,17 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
             $LINKbz2 -Wl,--end-group
 LIBS = -Lbuild/extlib/install/lib \\
        -static -Wl,--start-group \\
-       $MY_SDL_LIBS \\
        $LINKSDL_ttf \\
-       \$(shell $SMPEG_CONFIG --libs) \\
-       \$(shell $FREETYPE_CONFIG --libs) \\
+       \$(shell \$FREETYPE_CONFIG --libs) \\
        $LINKSDL_image \\
        $LINKjpeg \\
        $LINKpng $LINKz \\
        $LINKSDL_mixer \\
+       \$(shell \$SMPEG_CONFIG --libs) \\
        $LINKogg \\
        $LINKvorbis \\
        $LINKvorbisfile \\
+       $MY_SDL_LIBS \\
        $LINKbz2 \\
        -Wl,--end-group
 
@@ -1148,11 +1151,10 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
             $LINKjpeg $LINKpng \\
             $LINKbz2 -lm
 LIBS = -Lbuild/extlib/install/lib \\
-       \$(shell \$(SDL_CONFIG) --static-libs)         \\
-       \$(shell $SMPEG_CONFIG --libs)              \\
-       $LINKSDL_ttf \$(shell $FREETYPE_CONFIG --libs) \\
-       $LINKSDL_image $LINKjpeg $LINKpng              \\
-       $LINKSDL_mixer $LINKogg $LINKvorbis $LINKvorbisfile \\
+       $LINKSDL_ttf \$(shell \$FREETYPE_CONFIG --libs) \\
+       $LINKSDL_image $LINKjpeg $LINKpng \\
+       $LINKSDL_mixer $LINKogg $LINKvorbis $LINKvorbisfile \$(shell \$(SMPEG_CONFIG) --libs) \\
+       \$(shell \$(SDL_CONFIG) --static-libs) \\
        $LINKbz2 -lm -framework QuickTime -framework CoreFoundation
 
 DEFS = -DMACOSX -DUTF8_CAPTION -DUTF8_FILESYSTEM -DUSE_OGG_VORBIS
@@ -1179,9 +1181,9 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
 LIBS = $X11_LIBS -Lbuild/extlib/install/lib \\
        $LINKSDL_image \$(if \$(findstring true,$INTERNAL_SDL_IMAGE),$LINKjpeg $LINKpng $LINKz) \\
        $LINKSDL_mixer \$(if \$(or \$(findstring true,$INTERNAL_SDL_MIXER),\$(findstring true,$EXPLICIT_OGGLIBS)),$LINKvorbisfile $LINKvorbis $LINKogg) \\
-       \$(shell \$(SDL_CONFIG) --libs)      \\
-       \$(shell $SMPEG_CONFIG --libs)    \\
-       $LINKSDL_ttf \$(shell $FREETYPE_CONFIG --libs) \\
+       \$(shell \$(SMPEG_CONFIG) --libs)    \\
+       $LINKSDL_ttf \$(shell \$(FREETYPE_CONFIG) --libs) \\
+       \$(shell \$(SDL_CONFIG) --libs) \\
        $LINKbz2 \$(if \$(findstring true,$INTERNAL_SDL),$INTERNAL_LDFLAGS)
 
 DEFS = -DLINUX -DUSE_OGG_VORBIS -D_FILE_OFFSET_BITS=64 -D_TIME_BITS=64 $EXTRA_DEPS

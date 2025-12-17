@@ -400,7 +400,10 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: \
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDLMIXER_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-music-cmd --disable-music-timidity-midi && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-music-cmd --disable-music-timidity-midi \
+		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
+		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
+		LIBS="$(shell $(SDL_CONFIG) --static-libs) $(shell $(SMPEG_CONFIG) --static-libs)" && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -425,13 +428,16 @@ $(libsdlttf_files): $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel ;
 $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
 		$(libsdlttf_input_files) \
 		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel) \
-		$(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel)
+		$(if $(INTERNAL_FREETYPE), $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel)
 	@echo "Building $(SDLTTF_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDLTTF_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared \
+		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
+		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
+		LIBS="$(shell $(SDL_CONFIG) --static-libs) $(shell $(FREETYPE_CONFIG) --libs)" && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \

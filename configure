@@ -1094,8 +1094,8 @@ SANFLAGS = $SANFLAGS
 INCS = \\
   $X11_CFLAGS \\
   -I\$(INSTALLDIR)/include \\
-  \$(shell \$(SDL_CONFIG) --cflags) \\
-  \$(shell \$(SMPEG_CONFIG) --cflags) \\
+  \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(SDL_CONFIG) --cflags) \\
+  \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(SMPEG_CONFIG) --cflags) \\
   \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --cflags) \\
   \$(shell [ -d \$(INSTALLDIR)/include/SDL ] && echo -I\$(INSTALLDIR)/include/SDL)
 _EOF
@@ -1127,7 +1127,7 @@ LIBS = -L\$(INSTALLDIR)/lib \\
        $LINKSDL_image $LINKjpeg $LINKpng \\
        $LINKz \\
        $LINKSDL_mixer \\
-       \$(shell \$SMPEG_CONFIG --libs) \\
+       \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$SMPEG_CONFIG --libs) \\
        $LINKogg \\
        $LINKvorbis \\
        $LINKvorbisfile \\
@@ -1151,7 +1151,7 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
 LIBS = -Lbuild/extlib/install/lib \\
        $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
        $LINKSDL_image $LINKjpeg $LINKpng \\
-       $LINKSDL_mixer $LINKogg $LINKvorbis $LINKvorbisfile \$(shell \$(SMPEG_CONFIG) --libs) \\
+       $LINKSDL_mixer $LINKogg $LINKvorbis $LINKvorbisfile \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(SMPEG_CONFIG) --libs) \\
        \$(shell \$(SDL_CONFIG) --static-libs) \\
        $LINKbz2 -lm -framework QuickTime -framework CoreFoundation
 
@@ -1179,9 +1179,9 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
 LIBS = $X11_LIBS -Lbuild/extlib/install/lib \\
        $LINKSDL_image \$(if \$(findstring true,$INTERNAL_SDL_IMAGE),$LINKjpeg $LINKpng $LINKz) \\
        $LINKSDL_mixer \$(if \$(or \$(findstring true,$INTERNAL_SDL_MIXER),\$(findstring true,$EXPLICIT_OGGLIBS)),$LINKvorbisfile $LINKvorbis $LINKogg) \\
-       \$(shell \$(SMPEG_CONFIG) --libs)    \\
+       \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) &&  \$(SMPEG_CONFIG) --libs)    \\
        $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
-       \$(shell \$(SDL_CONFIG) --libs) \\
+       \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(SDL_CONFIG) --libs) \\
        $LINKbz2 \$(if \$(findstring true,$INTERNAL_SDL),$INTERNAL_LDFLAGS)
 
 DEFS = -DLINUX -DUSE_OGG_VORBIS -D_FILE_OFFSET_BITS=64 -D_TIME_BITS=64 $EXTRA_DEPS

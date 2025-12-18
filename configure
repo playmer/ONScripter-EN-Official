@@ -1203,9 +1203,10 @@ export LDFLAGS  := -pg \$(LDFLAGS)
 else
   ifdef PROF
   OSCFLAGS = -O2 -pg -pipe -Wpointer-arith $WERROR $STRICT \$(OSCFLAGSEXTRA)
-  export LDFLAGS  := -pg \$(LDFLAGS)
+  export LDFLAGS  := -pg -s \$(LDFLAGS)
   else
   OSCFLAGS = -O2 -fomit-frame-pointer -pipe -Wpointer-arith $WERROR $STRICT \$(OSCFLAGSEXTRA) \$(SANFLAGS)
+  export LDFLAGS  := -pg -s \$(LDFLAGS)
   endif
 endif
 

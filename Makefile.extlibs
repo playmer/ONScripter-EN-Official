@@ -415,7 +415,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-music-cmd --disable-music-timidity-midi \
 		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
-		LIBS="$(shell $(SDL_CONFIG) --static-libs) $(shell $(SMPEG_CONFIG) --static-libs)" && \
+		LIBS="$(shell $(SDL_CONFIG) --static-libs) $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SMPEG_CONFIG) --static-libs)" && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \

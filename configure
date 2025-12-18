@@ -1153,7 +1153,7 @@ LIBS = -L\$(INSTALLDIR)/lib \\
        $LINKSDL_image $LINKjpeg $LINKpng \\
        $LINKz \\
        $LINKSDL_mixer \\
-       \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$SMPEG_CONFIG --libs) \\
+       \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(SMPEG_CONFIG) --libs) \\
        $LINKogg \\
        $LINKvorbis \\
        $LINKvorbisfile \\

@@ -31,6 +31,10 @@ jobs:
         CXX: ${{ matrix.cpp_compiler }}
       run: |
         ./configure --with-internal-libs
+    - name: build dependencies
+      run: |
+        NCPUS=$(getconf _NPROCESSORS_ONLN)
+        make -j $NCPUS VERBOSE=true extlib
     - name: build
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
@@ -105,12 +109,17 @@ jobs:
           mingw-w64-${{matrix.env}}-libtool
           make
           zip
-
-    - shell: msys2 {0}
-      name: Build
+    - name: configure
+      run: |
+        ./configure --with-internal-libs
+    - name: build dependencies
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
-        ./configure --with-internal-libs
+        make -j $NCPUS VERBOSE=true extlib
+    - shell: msys2 {0}
+      name: build
+      run: |
+        NCPUS=$(getconf _NPROCESSORS_ONLN)
         make -j $NCPUS VERBOSE=true
         make -j $NCPUS VERBOSE=true tools
         make check

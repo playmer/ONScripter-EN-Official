@@ -89,7 +89,7 @@ $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel: $(zlib_input_files)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(ZLIB_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(ZLIB_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --static && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --static $(OTHERCONFIG) && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -121,7 +121,7 @@ $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel: $(libpng_input_files) $(EXTERNAL_SENTI
 	cp -r $(EXTERNAL_SOURCE)/$(PNG_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(PNG_VER) && \
 	autoreconf -ivf && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --with-zlib-prefix="$(EXTERNAL_INSTALL_PREFIX)" && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --with-zlib-prefix="$(EXTERNAL_INSTALL_PREFIX)" $(OTHERCONFIG) && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -153,7 +153,7 @@ $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel: $(libjpeg_input_files)
 	cp -r $(EXTERNAL_SOURCE)/$(JPEG_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(JPEG_VER) && \
 	autoreconf -ivf && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static $(OTHERCONFIG) && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -183,7 +183,7 @@ $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel: $(libogg_input_files)
 	cp -r $(EXTERNAL_SOURCE)/$(OGG_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(OGG_VER) && \
 	autoreconf -ivf && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared $(OTHERCONFIG) && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -215,7 +215,7 @@ $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel: $(EXTERNAL_SENTINEL_DIR)/libogg.sen
 	cp -r $(EXTERNAL_SOURCE)/$(VORBIS_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER) && \
 	autoreconf -ivf && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-docs $(OTHERCONFIG) && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -255,7 +255,7 @@ $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel: $(freetype2_input_files)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(FREETYPE_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --enable-freetype-config --disable-shared --enable-static --without-harfbuzz --without-brotli && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --enable-freetype-config --disable-shared --enable-static --without-harfbuzz --without-brotli $(OTHERCONFIG) && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -290,7 +290,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel: $(libsdl_input_files) $(if $(INTERNAL_
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDL_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDL_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" $(SDLOTHERCONFIG) \
 		--disable-shared \
 		--disable-joystick \
 		--disable-nas \
@@ -332,7 +332,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel: \
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDLIMAGE_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLIMAGE_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" $(OTHERCONFIG) \
 		--disable-shared \
 		--disable-lbm \
 		--disable-pcx \
@@ -373,13 +373,20 @@ smpeg_clean:
 $(smpeg_files): $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel ;
 internal_smpeg = $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel
 
+ifdef DEBUG
+	SMPEG_DEBUG=--enable-debug
+else
+	SMPEG_DEBUG=--disable-debug
+endif
+
 $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel: $(smpeg_input_files) $(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel)
 	@echo "Building $(SMPEG_VER)"
 	rm -rf $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SMPEG_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static && \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static $(SMPEG_DEBUG) $(OTHERCONFIG) \
+		--disable-gtk-player --disable-opengl-player && \
 	$(MAKE) -j && \
 	$(MAKE) install && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
@@ -412,8 +419,9 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: \
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDLMIXER_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-music-cmd --disable-music-timidity-midi \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-music-cmd --disable-music-timidity-midi $(OTHERCONFIG) \
 		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
+		CFLAGS="$(CFLAGS) -Wno-error=implicit-function-declaration" \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
 		LIBS="$(shell $(SDL_CONFIG) --static-libs) $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SMPEG_CONFIG) --static-libs)" && \
 	$(MAKE) -j && \
@@ -447,7 +455,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(SDLTTF_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER) && \
-	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared \
+	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared $(OTHERCONFIG) \
 		--with-freetype-exec-prefix="$(EXTERNAL_INSTALL_PREFIX)" \
 		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
@@ -491,276 +499,3 @@ INTERNALLY_BUILT_LIBS = \
 	$(if $(INTERNAL_SMPEG), $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel) \
 	$(if $(INTERNAL_SDL_MIXER), $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel) \
 	$(if $(INTERNAL_SDL_TTF), $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel)
-
-
-
-#CLEAN_filesS=clean_sdl clean_sdl_image clean_sdl_mixer clean_bzip2   \
-#              clean_smpeg clean_freetype clean_sdl_ttf
-#DISTCLEAN_filesS=dclean_sdl dclean_sdl_image dclean_sdl_mixer        \
-#                  dclean_smpeg dclean_freetype dclean_sdl_ttf
-#
-##-- SDL -----------------------------------------------------------------------
-#
-#.PHONY: clean_sdl dclean_sdl
-#internal_sdl = $(EB)/sdl-config
-#clean_sdl:
-#	@if [ -f $(SDLSRC)/Makefile ]; then $(MAKE) -C $(SDLSRC) uninstall; fi
-#	@if [ -f $(SDLSRC)/Makefile ]; then $(MAKE) -C $(SDLSRC) clean; fi
-#dclean_sdl: clean_sdl
-#	@if [ -f $(SDLSRC)/Makefile ]; then $(MAKE) -C $(SDLSRC) distclean; fi
-#
-#$(SDLSRC)/Makefile: $(if $(INTERNAL_LIBPNG),$(EL)/libpng$(LIBSUFFIX))
-#	@echo Configuring internal SDL...
-#	@cd $(SDLSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" $(SDLOTHERCONFIG) \
-#	    $(addprefix --disable-,shared joystick nas $(addprefix video-,fbcon directfb svga vgl wscons opengl)) \
-#	    $(REDIR)
-#	@cp $(ES)/required/libtool $(SDLSRC)/libtool # This line fixes a libtool issue by just using the copy of libtool from the old build of ONSCripter-EN. It's not pretty, but it works. -Galladite, 2022-2-9
-#
-#$(EB)/sdl-config: $(SDLSRC)/Makefile | $(EB)
-#	@echo Building internal SDL...
-#	@$(MAKE) -C $(SDLSRC) $(REDSO)
-#	@$(MAKE) -C $(SDLSRC) install $(REDSO)
-#	@if [ -n "$(WIN32)" ]; then \
-#	    mv $@ $@.tmp; \
-#	    sed -e 's/\(-lmingw32 -lSDLmain.*\)$$/\1 -lwinmm/' $@.tmp > $@; \
-#	    rm $@.tmp; \
-#	fi # Fix for annoying Windows breakage
-#	@cp -r $(EI)/SDL/* $(EI)
-#
-##-- SDL_image -----------------------------------------------------------------
-#
-#.PHONY: clean_sdl_image dclean_sdl_image
-#internal_sdl_image = $(EL)/libSDL_image$(LIBSUFFIX)
-#clean_sdl_image:
-#	@-if [ -f $(SDLISRC)/Makefile ]; then $(MAKE) -C $(SDLISRC) uninstall; fi
-#	@-if [ -f $(SDLISRC)/Makefile ]; then $(MAKE) -C $(SDLISRC) clean; fi
-#	@-if [ -f $(EL)/libz$(LIBSUFFIX) ]; then $(MAKE) -C $(ZSRC) uninstall prefix="$(INSTALL_PREFIX)"; fi
-#	@-if [ -f $(ZSRC)/libz$(LIBSUFFIX) ]; then $(MAKE) -C $(ZSRC) clean; fi
-#	@-if [ -f $(PNGSRC)/Makefile ]; then $(MAKE) -C $(PNGSRC) uninstall; fi
-#	@-if [ -f $(PNGSRC)/Makefile ]; then $(MAKE) -C $(PNGSRC) clean; fi
-#	@-if [ -f $(JPEGSRC)/Makefile ]; then \
-#	    rm -f $(EL)/libjpeg$(LIBSUFFIX) $(addprefix $(EI)/,jconfig.h jpeglib.h jmorecfg.h jerror.h); \
-#	    $(MAKE) -C $(JPEGSRC) clean; \
-#	fi
-#dclean_sdl_image:
-#	@-if [ -f $(SDLISRC)/Makefile ]; then $(MAKE) -C $(SDLISRC) distclean; fi
-#	@-if [ -f $(PNGSRC)/Makefile ]; then $(MAKE) -C $(PNGSRC) distclean; fi
-#	@-if [ -f $(JPEGSRC)/Makefile ]; then $(MAKE) -C $(JPEGSRC) distclean; fi
-#
-#$(SDLISRC)/Makefile: $(if $(INTERNAL_SDL),$(EB)/sdl-config) \
-#                     $(if $(INTERNAL_LIBPNG),$(EL)/libpng$(LIBSUFFIX)) \
-#                     $(if $(INTERNAL_LIBJPEG),$(EL)/libjpeg$(LIBSUFFIX))
-#	@echo Configuring internal SDL_image...
-#	@cd $(SDLISRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" $(OTHERCONFIG) \
-#	    $(addprefix --disable-,shared lbm pcx pnm tga xcf xv tif \
-#	    	                   $(if $(INTERNAL_LIBPNG),png-shared) \
-#                                   $(if $(INTERNAL_LIBJPEG),jpg-shared)) \
-#            CFLAGS="$(CFLAGS) -Wno-error=incompatible-pointer-types" \
-#	    $(REDIR)
-#	@if grep -q 'PNG image loading disabled' $(SDLISRC)/config.log; then \
-#	    echo "PNG error - check $(SDLISRC)/config.log for details"; \
-#	    rm Makefile; \
-#	    exit 1; \
-#	fi
-#
-#$(EL)/libSDL_image$(LIBSUFFIX): $(SDLISRC)/Makefile | $(EL) $(EI)
-#	@echo Building internal SDL_image...
-#	@$(MAKE) -C $(SDLISRC) $(REDSO)
-#	@$(MAKE) -C $(SDLISRC) install $(REDSO)
-#	@cp -r $(EI)/SDL/* $(EI)
-#
-## First build libz, libpng, and libjpeg, if required.
-#
-#internal_png = $(EL)/libpng$(LIBSUFFIX)
-#internal_jpeg = $(EL)/libjpeg$(LIBSUFFIX)
-#
-#$(PNGSRC)/Makefile: $(EL)/libz$(LIBSUFFIX)
-#	@echo Configuring internal libpng...
-#	@cd $(PNGSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" --disable-shared --disable-dependency-tracking --with-zlib-prefix="$(INSTALL_PREFIX)" $(OTHERCONFIG) $(REDIR)
-#
-#$(EL)/libpng$(LIBSUFFIX): $(PNGSRC)/Makefile | $(EL)
-#	@echo Building internal libpng...
-#	@$(MAKE) -C $(PNGSRC) $(REDSO)
-#	@$(MAKE) -C $(PNGSRC) install $(REDSO)
-#	@sed -i '/^Requires.*:/s/ zlib//' $(EL)/pkgconfig/libpng*.pc
-#
-#$(EL)/libz$(LIBSUFFIX): | $(EL)
-#	@echo Building internal zlib...
-#	@cd $(ZSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" --static $(OTHERCONFIG) $(REDIR)
-#	@$(MAKE) -C $(ZSRC) install $(REDSO)
-#
-#$(JPEGSRC)/Makefile:
-#	@echo Configuring internal libjpeg...
-#	@sed -i -e '/^bin_PROGRAMS/s/bin_/EXTRA_/' -e '/^man_MANS/s/=.*$$/=/' $(JPEGSRC)/Makefile.am
-#	@cd $(JPEGSRC) && \
-#	autoreconf -fi && \
-#	./configure --prefix="$(INSTALL_PREFIX)" --disable-shared --enable-static $(OTHERCONFIG) $(REDIR)
-#
-#$(EL)/libjpeg$(LIBSUFFIX): $(JPEGSRC)/Makefile | $(EL)
-#	@echo Building internal libjpeg...
-#	@$(MAKE) -C $(JPEGSRC) install $(REDSO)
-#
-##-- SDL_mixer -----------------------------------------------------------------
-#
-#OGGLIBS = $(EL)/libogg$(LIBSUFFIX) $(EL)/libvorbis$(LIBSUFFIX) $(EL)/libvorbisfile$(LIBSUFFIX)
-#
-#.PHONY: clean_sdl_mixer dclean_sdl_mixer
-#internal_sdl_mixer = $(EL)/libSDL_mixer$(LIBSUFFIX)
-#clean_sdl_mixer:
-#	@if [ -f $(SDLMSRC)/Makefile ]; then $(MAKE) -C $(SDLMSRC) uninstall; fi
-#	@if [ -f $(VORBSRC)/Makefile ]; then $(MAKE) -C $(VORBSRC) uninstall; fi
-#	@if [ -f $(OGGSRC)/Makefile  ]; then $(MAKE) -C $(OGGSRC)  uninstall; fi
-#	@if [ -f $(SDLMSRC)/Makefile ]; then $(MAKE) -C $(SDLMSRC) clean; fi
-#	@if [ -f $(VORBSRC)/Makefile ]; then $(MAKE) -C $(VORBSRC) clean; fi
-#	@if [ -f $(OGGSRC)/Makefile  ]; then $(MAKE) -C $(OGGSRC)  clean; fi
-#dclean_sdl_mixer:
-#	@if [ -f $(SDLMSRC)/Makefile ]; then $(MAKE) -C $(SDLMSRC) distclean; fi
-#	@if [ -f $(VORBSRC)/Makefile ]; then $(MAKE) -C $(VORBSRC) distclean; fi
-#	@if [ -f $(OGGSRC)/Makefile  ]; then $(MAKE) -C $(OGGSRC)  distclean; fi
-#
-#$(SDLMSRC)/Makefile: $(if $(INTERNAL_SDL),$(EB)/sdl-config) \
-#                     $(if $(INTERNAL_SMPEG),$(EB)/smpeg-config) \
-#                     $(if $(INTERNAL_OGGLIBS),$(OGGLIBS))
-#	@echo Configuring internal SDL_mixer...
-#	@cd $(SDLMSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" $(SDL_MIXER_FLAGS) $(OTHERCONFIG) \
-#	    $(addprefix --disable-,shared $(addprefix music-,cmd timidity-midi)) \
-#	    CFLAGS="$(CFLAGS) -Wno-error=implicit-function-declaration" \
-#	    $(REDIR)
-#
-#$(EL)/libSDL_mixer$(LIBSUFFIX): $(SDLMSRC)/Makefile | $(EL)
-#	@echo Building internal SDL_mixer...
-#	@$(MAKE) -C $(SDLMSRC) $(REDSO)
-#	@$(MAKE) -C $(SDLMSRC) install $(REDSO)
-#	@-if [ -f $(EI)/SDL_mixer.h ]; then rm $(EI)/SDL_mixer.h; fi
-#	@cp -r $(EI)/SDL/* $(EI)
-#
-## First build Ogg libs, if required.
-#
-#internal_ogglibs = $(OGGLIBS)
-#
-#$(OGGSRC)/Makefile:
-#	@echo Configuring internal libogg...
-#	@cd $(OGGSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" --disable-shared --disable-dependency-tracking $(OTHERCONFIG) $(REDIR)
-#
-#$(EL)/libogg$(LIBSUFFIX): $(OGGSRC)/Makefile | $(EL)
-#	@echo Building internal libogg...
-#	@$(MAKE) -C $(OGGSRC) $(REDSO)
-#	@$(MAKE) -C $(OGGSRC) install $(REDSO)
-#
-#$(VORBSRC)/Makefile: $(EL)/libogg$(LIBSUFFIX)
-#	@echo Configuring internal libvorbis...
-#	@cd $(VORBSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" $(addprefix --disable-,shared dependency-tracking docs) $(OTHERCONFIG) $(REDIR)
-#
-#$(EL)/libvorbisfile$(LIBSUFFIX): $(EL)/libvorbis$(LIBSUFFIX)
-#$(EL)/libvorbis$(LIBSUFFIX): $(VORBSRC)/Makefile | $(EL)
-#	@echo Building internal libvorbis...
-#	@$(MAKE) -C $(VORBSRC) $(REDSO)
-#	@$(MAKE) -C $(VORBSRC) install $(REDSO)
-#
-##-- SMPEG ---------------------------------------------------------------------
-#
-#.PHONY: clean_smpeg dclean_smpeg
-#internal_smpeg = $(EB)/smpeg-config
-#clean_smpeg:
-#	@-if [ -f $(SMPGSRC)/Makefile ]; then $(MAKE) -C $(SMPGSRC) uninstall; fi
-#	@-if [ -f $(SMPGSRC)/Makefile ]; then $(MAKE) -C $(SMPGSRC) clean; fi
-#	@-if [ -f $(EI)/smpeg.h ]; then rm $(EI)/MPEG* $(EI)/smpeg.h; fi
-#dclean_smpeg: clean_smpeg
-#	@-if [ -f $(SMPGSRC)/Makefile ]; then $(MAKE) -C $(SMPGSRC) distclean; fi
-#
-#ifdef DEBUG
-#	SMPEG_DEBUG=
-#else
-#	SMPEG_DEBUG=debug
-#endif
-#
-#$(SMPGSRC)/Makefile: $(if $(INTERNAL_SDL),$(EB)/sdl-config)
-#	@echo Configuring internal smpeg...
-#	@cd $(SMPGSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" $(OTHERCONFIG) \
-#	    $(addprefix --disable-,shared gtk-player opengl-player $(SMPEG_DEBUG)) \
-#	    $(REDIR)
-#
-#$(EB)/smpeg-config: $(SMPGSRC)/Makefile | $(EB)
-#	@echo Building internal smpeg...
-#	@$(MAKE) -C $(SMPGSRC) $(REDSO)
-#	@$(MAKE) -C $(SMPGSRC) prefix="$(INSTALL_PREFIX)" install $(REDSO)
-#	@cp -r $(EI)/smpeg/* $(EI)
-#
-##-- Freetype ------------------------------------------------------------------
-#
-#FTCONFIGURE = $(FTSRC)/builds/unix/config.status
-#
-#.PHONY: clean_freetype dclean_freetype
-#internal_freetype = $(EB)/freetype-config
-#clean_freetype:
-#	@-if [ -f $(FTCONFIGURE) ]; then $(MAKE) -C $(FTSRC) uninstall; fi
-#	@-if [ -f $(FTCONFIGURE) ]; then $(MAKE) -C $(FTSRC) clean; fi
-#dclean_freetype:
-#	@-if [ -f $(FTCONFIGURE) ]; then $(MAKE) -C $(FTSRC) distclean; fi
-#
-#$(FTCONFIGURE): $(if $(INTERNAL_LIBPNG),$(EL)/libz$(LIBSUFFIX))
-#	@echo Configuring internal Freetype...
-#	@cd $(FTSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" --disable-shared --without-harfbuzz --without-brotli $(OTHERCONFIG) $(REDIR)
-#
-#$(EB)/freetype-config: $(FTCONFIGURE) | $(EB)
-#	@echo Building internal Freetype...
-#	@$(MAKE) -C $(FTSRC) $(REDSO)
-#	@$(MAKE) -C $(FTSRC) install $(REDSO)
-#	@-if [ -h $(EI)/freetype ]; then rm -r $(EI)/freetype; fi
-#	@-if [ -f $(EI)/ft2config.h ]; then rm $(EI)/ft2config.h; fi
-#	@cp -r $(EI)/freetype2/* $(EI)
-#	touch $@
-#
-##-- SDL_ttf -------------------------------------------------------------------
-#
-#.PHONY: clean_sdl_ttf dclean_sdl_ttf
-#internal_sdl_ttf = $(EL)/libSDL_ttf$(LIBSUFFIX)
-#clean_sdl_ttf:
-#	@if [ -f $(SDLTSRC)/Makefile ]; then $(MAKE) -C $(SDLTSRC) uninstall; fi
-#	@if [ -f $(SDLTSRC)/Makefile ]; then $(MAKE) -C $(SDLTSRC) clean; fi
-#dclean_sdl_ttf: clean_sdl_ttf
-#	@if [ -f $(SDLTSRC)/Makefile ]; then $(MAKE) -C $(SDLTSRC) distclean; fi
-#
-#$(SDLTSRC)/Makefile: $(if $(INTERNAL_SDL),$(EB)/sdl-config) $(if $(INTERNAL_FREETYPE),$(EB)/freetype-config)
-#	@echo Configuring internal SDL_ttf...
-#	@cd $(SDLTSRC) && \
-#	./configure --prefix="$(INSTALL_PREFIX)" --disable-shared $(OTHERCONFIG) $(REDIR)
-#
-#$(EL)/libSDL_ttf$(LIBSUFFIX): $(SDLTSRC)/Makefile | $(EL)
-#	@echo Building internal SDL_ttf...
-#	@$(MAKE) -C $(SDLTSRC) $(REDSO)
-#	@$(MAKE) -C $(SDLTSRC) install $(REDSO)
-#	@cp -r $(EI)/SDL/* $(EI)
-#
-##-- libbzip2 ------------------------------------------------------------------
-#
-#BZOBJS = blocksort huffman crctable randtable compress decompress bzlib
-#
-#.PHONY: clean_bzip2
-#internal_bzip2 = $(EL)/libbz2$(LIBSUFFIX) $(EI)/bzlib.h
-#clean_bzip2:
-#	rm -f $(EL)/libbz2$(LIBSUFFIX) $(EI)/bzlib.h $(BZSRC)/*$(OBJSUFFIX)
-#
-#$(EL)/libbz2$(LIBSUFFIX): $(foreach fn,$(BZOBJS),$(BZSRC)/$(fn)$(OBJSUFFIX)) | $(EL)
-#	rm -f $@
-#	$(AR) cq $@ $^
-#	@if [ -f "$(RANLIB)" -o -f /usr/bin/ranlib -o \
-#	    -f /bin/ranlib -o -f /usr/ccs/bin/ranlib ]; then \
-#	    $(if $(RANLIB),$(RANLIB),ranlib) $@ ; \
-#	fi
-#
-#$(EI)/bzlib.h: $(BZSRC)/bzlib.h | $(EI)
-#	cp $< $@
-#
-#$(sort $(OUTDIRS)):
-#	mkdir -p $@
-#

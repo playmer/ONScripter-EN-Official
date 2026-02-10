@@ -375,8 +375,6 @@ internal_smpeg = $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel
 
 ifdef DEBUG
 	SMPEG_DEBUG=--enable-debug
-else
-	SMPEG_DEBUG=--disable-debug
 endif
 
 $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel: $(smpeg_input_files) $(if $(INTERNAL_SDL), $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel)

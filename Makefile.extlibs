@@ -60,7 +60,7 @@ $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel: $(bzip_input_files)
 	mkdir -p $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cp -r $(EXTERNAL_SOURCE)/$(BZIP_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(BZIP_VER) && \
-	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" -j $(REDSO) && \
+	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" $(REDSO) && \
 	$(MAKE) PREFIX="$(EXTERNAL_INSTALL_PREFIX)" install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -90,7 +90,7 @@ $(EXTERNAL_SENTINEL_DIR)/zlib.sentinel: $(zlib_input_files)
 	cp -r $(EXTERNAL_SOURCE)/$(ZLIB_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(ZLIB_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --static $(OTHERCONFIG) $(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -122,7 +122,7 @@ $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel: $(libpng_input_files) $(EXTERNAL_SENTI
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(PNG_VER) && \
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --with-zlib-prefix="$(EXTERNAL_INSTALL_PREFIX)" $(OTHERCONFIG) $(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -154,7 +154,7 @@ $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel: $(libjpeg_input_files)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(JPEG_VER) && \
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static $(OTHERCONFIG) $(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -184,7 +184,7 @@ $(EXTERNAL_SENTINEL_DIR)/libogg.sentinel: $(libogg_input_files)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(OGG_VER) && \
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared $(OTHERCONFIG) $(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -216,7 +216,7 @@ $(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel: $(EXTERNAL_SENTINEL_DIR)/libogg.sen
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(VORBIS_VER) && \
 	autoreconf -ivf && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-docs $(OTHERCONFIG) $(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -256,7 +256,7 @@ $(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel: $(freetype2_input_files)
 	cp -r $(EXTERNAL_SOURCE)/$(FREETYPE_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(FREETYPE_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --enable-freetype-config --disable-shared --enable-static --without-harfbuzz --without-brotli $(OTHERCONFIG) $(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -301,7 +301,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel: $(libsdl_input_files) $(if $(INTERNAL_
 		--disable-video-wscons \
 		--disable-video-opengl \
 		$(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -350,7 +350,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel: \
 		LIBS="$(shell $(SDL_CONFIG) --static-libs)" \
 		CFLAGS="-Wno-error=incompatible-pointer-types" \
 		$(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -387,7 +387,7 @@ $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel: $(smpeg_input_files) $(if $(INTERNAL_SD
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SMPEG_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --enable-static $(SMPEG_DEBUG) $(OTHERCONFIG) \
 		--disable-gtk-player --disable-opengl-player $(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -425,7 +425,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
 		LIBS="$(shell $(SDL_CONFIG) --static-libs) $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SMPEG_CONFIG) --static-libs)" \
 		$(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@
@@ -463,7 +463,7 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
 		LIBS="$(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs) \
 			  $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(FREETYPE_CONFIG) --libs)" \
 		$(REDIR) && \
-	$(MAKE) -j $(REDSO) && \
+	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
 	mkdir -p $(EXTERNAL_SENTINEL_DIR) && \
 	touch $@

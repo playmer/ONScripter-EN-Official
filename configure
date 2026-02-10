@@ -1149,7 +1149,7 @@ TOOL_LIBS = -L\$(INSTALLDIR)/lib \\
             $LINKbz2 -Wl,--end-group
 LIBS = -L\$(INSTALLDIR)/lib \\
        -static -Wl,--start-group \\
-       $LINKSDL_ttf \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
+       $LINKSDL_ttf \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs --static) \\
        $LINKSDL_image $LINKjpeg $LINKpng \\
        $LINKz \\
        $LINKSDL_mixer \\
@@ -1175,7 +1175,7 @@ TOOL_LIBS = -Lbuild/extlib/install/lib \\
             $LINKjpeg $LINKpng \\
             $LINKbz2 -lm
 LIBS = -Lbuild/extlib/install/lib \\
-       $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
+       $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs --static) \\
        $LINKSDL_image $LINKjpeg $LINKpng \\
        $LINKSDL_mixer $LINKogg $LINKvorbis $LINKvorbisfile \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(SMPEG_CONFIG) --libs) \\
        \$(shell \$(SDL_CONFIG) --static-libs) \\
@@ -1206,7 +1206,7 @@ LIBS = $X11_LIBS -Lbuild/extlib/install/lib \\
        $LINKSDL_image \$(if \$(findstring true,$INTERNAL_SDL_IMAGE),$LINKjpeg $LINKpng $LINKz) \\
        $LINKSDL_mixer \$(if \$(or \$(findstring true,$INTERNAL_SDL_MIXER),\$(findstring true,$EXPLICIT_OGGLIBS)),$LINKvorbisfile $LINKvorbis $LINKogg) \\
        \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) &&  \$(SMPEG_CONFIG) --libs)    \\
-       $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs) \\
+       $LINKSDL_ttf \$(shell  export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(FREETYPE_CONFIG) --libs --static) \\
        \$(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && \$(SDL_CONFIG) --libs) \\
        $LINKbz2 \$(if \$(findstring true,$INTERNAL_SDL),$INTERNAL_LDFLAGS)
 

@@ -345,9 +345,12 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel: \
 		--disable-webp \
 		--disable-png-shared \
 		--disable-jpg-shared \
-		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
+		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include \
+			$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --cflags), $(shell $(SDL_CONFIG) --cflags))" \
+		CFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include \
+			$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --cflags), $(shell $(SDL_CONFIG) --cflags))" \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
-		LIBS="$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs), $(SDL_CONFIG) --static-libs)" \
+		LIBS="$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs), $(shell $(SDL_CONFIG) --static-libs))" \
 		CFLAGS="-Wno-error=incompatible-pointer-types" \
 		$(REDIR) && \
 	$(MAKE) $(REDSO) && \
@@ -420,11 +423,15 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel: \
 	cp -r $(EXTERNAL_SOURCE)/$(SDLMIXER_VER) $(EXTERNAL_INTERMEDIATE_PREFIX)
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLMIXER_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared --disable-music-cmd --disable-music-timidity-midi $(OTHERCONFIG) \
-		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
-		CFLAGS="$(CFLAGS) -Wno-error=implicit-function-declaration" \
+		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include \
+			$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --cflags), $(shell $(SDL_CONFIG) --cflags)) \
+			$(if $(INTERNAL_SMPEG), $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SMPEG_CONFIG) --cflags), $(shell $(SMPEG_CONFIG) --cflags))" \
+		CFLAGS="$(CFLAGS) -Wno-error=implicit-function-declaration \
+			$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --cflags), $(shell $(SDL_CONFIG) --cflags)) \
+			$(if $(INTERNAL_SMPEG), $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SMPEG_CONFIG) --cflags), $(shell $(SMPEG_CONFIG) --cflags))" \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
-		LIBS="$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs), $(SDL_CONFIG) --static-libs) \
-			$(if $(INTERNAL_SMPEG), $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SMPEG_CONFIG) --static-libs), $(SMPEG_CONFIG) --static-libs))" \
+		LIBS="$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs), $(shell $(SDL_CONFIG) --static-libs)) \
+			$(if $(INTERNAL_SMPEG), $(shell export PKG_CONFIG_PATH=\$(PKG_CONFIG_PATH) && $(SMPEG_CONFIG) --static-libs), $(shell $(SMPEG_CONFIG) --static-libs))" \
 		$(REDIR) && \
 	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \
@@ -459,10 +466,15 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
 	cd $(EXTERNAL_INTERMEDIATE_PREFIX)/$(SDLTTF_VER) && \
 	./configure --prefix="$(EXTERNAL_INSTALL_PREFIX)" --disable-shared $(OTHERCONFIG) \
 		--with-freetype-exec-prefix="$(EXTERNAL_INSTALL_PREFIX)" \
-		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include" \
+		CPPFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include \
+			$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --cflags), $(shell $(SDL_CONFIG) --cflags)) \
+			$(if $(INTERNAL_FREETYPE), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(FREETYPE_CONFIG) --cflags), $(shell $(FREETYPE_CONFIG) --cflags))" \
+		CFLAGS="-I$(EXTERNAL_INSTALL_PREFIX)/include \
+			$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --cflags), $(shell $(SDL_CONFIG) --cflags)) \
+			$(if $(INTERNAL_FREETYPE), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(FREETYPE_CONFIG) --cflags), $(shell $(FREETYPE_CONFIG) --cflags))" \
 		LDFLAGS="-L$(EXTERNAL_INSTALL_PREFIX)/lib" \
-		LIBS="$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs), $(SDL_CONFIG) --static-libs) \
-			$(if $(INTERNAL_FREETYPE), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(FREETYPE_CONFIG) --libs), $(FREETYPE_CONFIG) --libs)" \
+		LIBS="$(if $(INTERNAL_SDL), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(SDL_CONFIG) --static-libs), $(shell $(SDL_CONFIG) --static-libs)) \
+			$(if $(INTERNAL_FREETYPE), $(shell export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) && $(FREETYPE_CONFIG) --libs --static), $(shell $(FREETYPE_CONFIG) --libs --static))" \
 		$(REDIR) && \
 	$(MAKE) $(REDSO) && \
 	$(MAKE) install $(REDSO) && \

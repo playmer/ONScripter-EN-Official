@@ -109,10 +109,12 @@ jobs:
           mingw-w64-${{matrix.env}}-libtool
           make
           zip
-    - name: configure
+    - shell: msys2 {0}
+      name: configure
       run: |
         ./configure --with-internal-libs
-    - name: build dependencies
+    - shell: msys2 {0}
+      name: build dependencies
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
         make -j $NCPUS VERBOSE=true extlib

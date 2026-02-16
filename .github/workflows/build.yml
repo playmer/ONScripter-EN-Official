@@ -4,44 +4,55 @@ on: [push, pull_request]
 
 jobs:
   linux:
+    name: Linux ${{ case(matrix.packages, 'Packaged Deps', 'Internal Deps') }} with ${{ matrix.compilers.c_compiler }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+        os: [ ubuntu-latest ]
+        packages: [true, false]
+        compilers:
+          - { c_compiler: gcc, cpp_compiler: g++ }
+          - { c_compiler: clang, cpp_compiler: clang++ }
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: install dependencies (Linux)
+    - name: Install dependencies (Linux)
       run: |
         sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe"
         sudo apt-get update -y -qq
         sudo apt-get install libasound2-dev libpulse-dev libwebp-dev libxrandr-dev tar autoconf libtool clang
-    - name: configure
+
+    - name: Configure with Internal Libs
+      if: ${{ !matrix.packages }}
       env:
-        CC: ${{ matrix.c_compiler }}
-        CXX: ${{ matrix.cpp_compiler }}
+        CC: ${{ matrix.compilers.c_compiler }}
+        CXX: ${{ matrix.compilers.cpp_compiler }}
       run: |
         ./configure --with-internal-libs
-    - name: build dependencies
+
+    - name: Configure with Packaged Libs
+      if: ${{ matrix.packages }}
+      env:
+        CC: ${{ matrix.compilers.c_compiler }}
+        CXX: ${{ matrix.compilers.cpp_compiler }}
+      run: |
+        ./configure
+
+    - name: Build required internal dependencies
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
         make VERBOSE=true extlib
-    - name: build
+
+    - name: Build ONScripter-EN
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
         make VERBOSE=true
         make VERBOSE=true tools
         make check
-        tar -czvf onscripter-en.Linux.${{ matrix.c_compiler }}.x86-64.tar.gz \
+        tar -czvf onscripter-en.Linux.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{ matrix.compilers.c_compiler }}.x86-64.tar.gz \
           onscripter-en \
           README.md \
           COPYING \
@@ -62,24 +73,20 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ONScripter-EN Linux x86-64 ${{ matrix.c_compiler }} Build
-        path: ${{ github.workspace }}/onscripter-en.Linux.${{ matrix.c_compiler }}.x86-64.tar.gz
+        name: ONScripter-EN Linux x86-64 ${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }} ${{ matrix.compilers.c_compiler }} Build
+        path: ${{ github.workspace }}/onscripter-en.Linux.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{ matrix.compilers.c_compiler }}.x86-64.tar.gz
 
   windows:
+    name: Windows ${{ case(matrix.packages, 'Packaged Deps', 'Internal Deps') }} on ${{ matrix.architecture.sys }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            cc: gcc
-            sys: mingw64
-            env: x86_64
-            arch: x86-64
-          - os: windows-latest
-            cc: gcc
-            sys: mingw32
-            env: i686
-            arch: i686
+        os: [ windows-latest ]
+        cc: [ gcc ]
+        packages: [true, false]
+        architecture: 
+          - { sys: mingw64, env: x86_64, arch: x86-64 }
+          - { sys: mingw32, env: i686, arch: i686 }
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -87,45 +94,69 @@ jobs:
         submodules: recursive
 
     - uses: msys2/setup-msys2@v2
+      if: ${{ !matrix.packages }}
+      name: Install toolchain
       with:
-        msystem: ${{matrix.sys}}
+        msystem: ${{matrix.architecture.sys}}
         update: true
         install:
-          mingw-w64-${{matrix.env}}-SDL
-          mingw-w64-${{matrix.env}}-SDL_ttf
-          mingw-w64-${{matrix.env}}-SDL_image
-          mingw-w64-${{matrix.env}}-bzip2
-          mingw-w64-${{matrix.env}}-libmikmod
-          mingw-w64-${{matrix.env}}-libmad
-          mingw-w64-${{matrix.env}}-libogg
-          mingw-w64-${{matrix.env}}-libvorbis
-          mingw-w64-${{matrix.env}}-freetype
-          mingw-w64-${{matrix.env}}-iconv
-          mingw-w64-${{matrix.env}}-zlib
-          mingw-w64-${{matrix.env}}-toolchain
-          mingw-w64-${{matrix.env}}-autotools
-          mingw-w64-${{matrix.env}}-flac
-          mingw-w64-${{matrix.env}}-autotools
-          mingw-w64-${{matrix.env}}-libtool
+          mingw-w64-${{matrix.architecture.env}}-toolchain
+          mingw-w64-${{matrix.architecture.env}}-autotools
+          mingw-w64-${{matrix.architecture.env}}-libtool
           make
           zip
+
+    - uses: msys2/setup-msys2@v2
+      if: ${{ matrix.packages }}
+      name: Install dependencies
+      with:
+        msystem: ${{matrix.architecture.sys}}
+        update: true
+        install:
+          mingw-w64-${{matrix.architecture.env}}-toolchain
+          mingw-w64-${{matrix.architecture.env}}-autotools
+          mingw-w64-${{matrix.architecture.env}}-libtool
+          make
+          zip
+          mingw-w64-${{matrix.architecture.env}}-SDL
+          mingw-w64-${{matrix.architecture.env}}-SDL_ttf
+          mingw-w64-${{matrix.architecture.env}}-SDL_image
+          mingw-w64-${{matrix.architecture.env}}-bzip2
+          mingw-w64-${{matrix.architecture.env}}-libmikmod
+          mingw-w64-${{matrix.architecture.env}}-libmad
+          mingw-w64-${{matrix.architecture.env}}-libogg
+          mingw-w64-${{matrix.architecture.env}}-libvorbis
+          mingw-w64-${{matrix.architecture.env}}-freetype
+          mingw-w64-${{matrix.architecture.env}}-iconv
+          mingw-w64-${{matrix.architecture.env}}-zlib
+          mingw-w64-${{matrix.architecture.env}}-flac
+
     - shell: msys2 {0}
-      name: configure
+      if: ${{ !matrix.packages }}
+      name: Configure with Internal Libs
       run: |
         ./configure --with-internal-libs
+
     - shell: msys2 {0}
-      name: build dependencies
+      name: Configure with Packaged Libs
+      if: ${{ matrix.packages }}
+      run: |
+        ./configure
+
+    - shell: msys2 {0}
+      name: Build required internal dependencies
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
         make VERBOSE=true extlib
+
     - shell: msys2 {0}
-      name: build
+      name: Build ONScripter-EN
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
         make VERBOSE=true
         make VERBOSE=true tools
         make check
-        zip onscripter-en.Windows.${{matrix.arch}}.zip \
+        zip onscripter-en.Windows.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{matrix.architecture.arch}}.zip \
           onscripter-en.exe \
           README.md \
           COPYING \
@@ -146,5 +177,5 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ONScripter-EN Windows ${{matrix.arch}} Build
-        path: ${{ github.workspace }}/onscripter-en.Windows.${{matrix.arch}}.zip
+        name: ONScripter-EN Windows ${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }} ${{matrix.architecture.arch}} Build
+        path: ${{ github.workspace }}/onscripter-en.Windows.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{matrix.architecture.arch}}.zip

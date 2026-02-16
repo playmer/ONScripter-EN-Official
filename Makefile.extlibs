@@ -483,27 +483,8 @@ $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel: \
 
 ################################################################################
 ##-- extlib --------------------------------------------------------------------
-extlib: \
-		$(EXTERNAL_SENTINEL_DIR)/bzip.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/zlib.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libogg.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libvorbis.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libpng.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/freetype2.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libsdl.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libsdlimage.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel \
-		$(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel
-	echo "Extlibs built"
-
-.PHONY: extlib_clean
-extlib_clean:
-	rm -rf $(EXTERNAL_PREFIX)
-	rm extlib.sentinel
-
 INTERNALLY_BUILT_LIBS = \
-	$(zlib_files) \
+	$(EXTERNAL_SENTINEL_DIR)/zlib.sentinel \
 	$(if $(INTERNAL_BZIP2), $(EXTERNAL_SENTINEL_DIR)/bzip.sentinel) \
 	$(if $(INTERNAL_LIBPNG), $(EXTERNAL_SENTINEL_DIR)/libpng.sentinel) \
 	$(if $(INTERNAL_LIBJPEG), $(EXTERNAL_SENTINEL_DIR)/libjpeg.sentinel) \
@@ -514,3 +495,12 @@ INTERNALLY_BUILT_LIBS = \
 	$(if $(INTERNAL_SMPEG), $(EXTERNAL_SENTINEL_DIR)/smpeg.sentinel) \
 	$(if $(INTERNAL_SDL_MIXER), $(EXTERNAL_SENTINEL_DIR)/libsdlmixer.sentinel) \
 	$(if $(INTERNAL_SDL_TTF), $(EXTERNAL_SENTINEL_DIR)/libsdlttf.sentinel)
+	
+extlib: \
+		$(INTERNALLY_BUILT_LIBS)
+	echo "Extlibs built"
+
+.PHONY: extlib_clean
+extlib_clean:
+	rm -rf $(EXTERNAL_PREFIX)
+	rm extlib.sentinel

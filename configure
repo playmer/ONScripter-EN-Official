@@ -666,13 +666,7 @@ then
     SDL_CONFIG=./build/extlib/install/bin/sdl-config
 else
     $echo_n "Checking for system SDL... ${nobr}"
-    case "$SYS" in
-        MinGW)  SDL_CONFIG=`pwd`/extlib
-                cd win_dll; make prefix=$SDL_CONFIG > /dev/null 2>&1; cd ..
-                SDL_CONFIG=`pwd`/build/extlib/install/bin/sdl-config
-                DISTCLEAN_OTHER=SDL.dll $DISTCLEAN_OTHER
-                cp -p ./win_dll/SDL.dll `pwd`;;
-        esac
+    SDL_CONFIG=sdl-config
     VER=`($SDL_CONFIG --version) 2>/dev/null`
     if [ -n "$VER" ]
     then
@@ -1284,7 +1278,6 @@ clean:
 	rm -r -f \$(TOPSRC)/build
 distclean: clean pdistclean \$(DISTCLEAN_TARGETS)
 	rm -r -f build/extlib
-	rm -f Makefile $DISTCLEAN_OTHER
 
 .PHONY: install* uninstall*
 install-bin:

@@ -19,11 +19,42 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install dependencies (Linux)
+    - name: Install toolchain
+      if: ${{ !matrix.packages }}
       run: |
         sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe"
         sudo apt-get update -y -qq
-        sudo apt-get install libasound2-dev libpulse-dev libwebp-dev libxrandr-dev tar autoconf libtool clang
+        sudo apt-get install \
+          libasound2-dev \
+          libpulse-dev \
+          libxrandr-dev \
+          tar \
+          autoconf \
+          libtool \
+          clang
+
+    - name: Install toolchain and dependencies
+      if: ${{ matrix.packages }}
+      run: |
+        sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe"
+        sudo apt-get update -y -qq
+        sudo apt-get install \
+          libasound2-dev \
+          libpulse-dev \
+          libxrandr-dev \
+          tar \
+          autoconf \
+          libtool \
+          clang \
+          libsdl1.2-compat-dev \
+          libsdl-ttf2.0-dev \
+          libsdl-image1.2-dev \
+          libsdl-mixer1.2-dev \
+          libbz2-dev \
+          libmad0-dev \
+          libogg-dev \
+          libvorbis-dev \
+          zlib1g-dev
 
     - name: Configure with Internal Libs
       if: ${{ !matrix.packages }}
@@ -108,7 +139,7 @@ jobs:
 
     - uses: msys2/setup-msys2@v2
       if: ${{ matrix.packages }}
-      name: Install dependencies
+      name: Install toolchain and dependencies
       with:
         msystem: ${{matrix.architecture.sys}}
         update: true

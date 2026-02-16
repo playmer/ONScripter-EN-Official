@@ -77,13 +77,13 @@ jobs:
     - name: Build required internal dependencies
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
-        make VERBOSE=true extlib
+        make -j $NCPUS VERBOSE=true extlib
 
     - name: Build ONScripter-EN
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
-        make VERBOSE=true
-        make VERBOSE=true tools
+        make -j $NCPUS VERBOSE=true
+        make -j $NCPUS VERBOSE=true tools
         make check
         tar -czvf onscripter-en.Linux.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{ matrix.compilers.c_compiler }}.x86-64.tar.gz \
           onscripter-en \
@@ -180,14 +180,14 @@ jobs:
       name: Build required internal dependencies
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
-        make VERBOSE=true extlib
+        make -j $NCPUS VERBOSE=true extlib
 
     - shell: msys2 {0}
       name: Build ONScripter-EN
       run: |
         NCPUS=$(getconf _NPROCESSORS_ONLN)
-        make VERBOSE=true
-        make VERBOSE=true tools
+        make -j $NCPUS VERBOSE=true
+        make -j $NCPUS VERBOSE=true tools
         make check
         zip onscripter-en.Windows.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{matrix.architecture.arch}}.zip \
           onscripter-en.exe \

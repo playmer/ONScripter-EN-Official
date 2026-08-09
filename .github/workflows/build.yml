@@ -110,19 +110,15 @@ jobs:
         path: ${{ github.workspace }}/onscripter-en.Linux.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{ matrix.compilers.c_compiler }}.x86-64.tar.gz
 
   windows:
-    name: Windows ${{ case(matrix.packages, 'Packaged Deps', 'Internal Deps') }} on ${{ matrix.architecture.sys }}
+    name: Windows ${{ case(matrix.architecture.packages, 'Packaged Deps', 'Internal Deps') }} on ${{ matrix.architecture.sys }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
-          cc: [gcc]
-          packages: [true, false]
-          architecture:
-            - { sys: mingw64, env: x86_64, arch: x86-64 }
-            - { sys: mingw32, env: i686, arch: i686 }
-          exclude:
-            - packages: true
-              architecture: { sys: mingw32, env: i686, arch: i686 }
+        os: [ windows-latest ]
+        cc: [ gcc ]
+        architecture: 
+          - { sys: mingw64, env: x86_64, arch: x86-64, packages: [true, false] }
+          - { sys: mingw32, env: i686, arch: i686, packages: false }
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -130,7 +126,7 @@ jobs:
         submodules: recursive
 
     - uses: msys2/setup-msys2@v2
-      if: ${{ !matrix.packages }}
+      if: ${{ !matrix.architecture.packages }}
       name: Install toolchain
       with:
         msystem: ${{matrix.architecture.sys}}
@@ -168,14 +164,14 @@ jobs:
           mingw-w64-${{matrix.architecture.env}}-flac
 
     - shell: msys2 {0}
-      if: ${{ !matrix.packages }}
+      if: ${{ !matrix.architecture.packages }}
       name: Configure with Internal Libs
       run: |
         ./configure --with-internal-libs
 
     - shell: msys2 {0}
       name: Configure with Packaged Libs
-      if: ${{ matrix.packages }}
+      if: ${{ matrix.architecture.packages }}
       run: |
         ./configure
 
@@ -192,7 +188,7 @@ jobs:
         make -j $NCPUS VERBOSE=true
         make -j $NCPUS VERBOSE=true tools
         make check
-        zip onscripter-en.Windows.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{matrix.architecture.arch}}.zip \
+        zip onscripter-en.Windows.${{ case(matrix.architecture.packages, 'packaged_deps', 'internal_deps') }}.${{matrix.architecture.arch}}.zip \
           onscripter-en.exe \
           README.md \
           COPYING \
@@ -213,5 +209,6 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ONScripter-EN Windows ${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }} ${{matrix.architecture.arch}} Build
-        path: ${{ github.workspace }}/onscripter-en.Windows.${{ case(matrix.packages, 'packaged_deps', 'internal_deps') }}.${{matrix.architecture.arch}}.zip
+        name: ONScripter-EN Windows ${{ case(matrix.architecture.packages, 'packaged_deps', 'internal_deps') }} ${{matrix.architecture.arch}} Build
+        path: ${{ github.workspace }}/onscripter-en.Windows.${{ case(matrix.architecture.packages, 'packaged_deps', 'internal_deps') }}.${{matrix.architecture.arch}}.zip
+

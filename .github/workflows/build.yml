@@ -139,7 +139,7 @@ jobs:
           zip
 
     - uses: msys2/setup-msys2@v2
-      if: ${{ matrix.packages }}
+      if: ${{ matrix.architecture.packages }}
       name: Install toolchain and dependencies
       with:
         msystem: ${{matrix.architecture.sys}}

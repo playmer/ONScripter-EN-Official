@@ -117,8 +117,14 @@ jobs:
         os: [ windows-latest ]
         cc: [ gcc ]
         architecture: 
-          - { sys: mingw64, env: x86_64, arch: x86-64, packages: [true, false] }
-          - { sys: mingw32, env: i686, arch: i686, packages: false }
+          - sys: mingw64
+            env: x86_64
+            arch: x86-64
+            packages: [true, false]
+          - sys: mingw32
+            env: i686
+            arch: i686
+            packages: false
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4

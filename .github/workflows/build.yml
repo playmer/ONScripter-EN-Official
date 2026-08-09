@@ -127,9 +127,9 @@ jobs:
         exclude:
           - packages: true
             architecture: 
-              - sys: mingw32
-                env: i686
-                arch: i686
+              sys: mingw32
+              env: i686
+              arch: i686
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4

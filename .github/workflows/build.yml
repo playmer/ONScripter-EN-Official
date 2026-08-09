@@ -114,16 +114,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-latest ]
-        cc: [ gcc ]
-        packages: [true, false]
-        architecture: 
-          - { sys: mingw64, env: x86_64, arch: x86-64 }
-          - { sys: mingw32, env: i686, arch: i686 }
-        exclude:
-           - architecture: 
-               - { sys: mingw32, env: i686, arch: i686 }
-             packages: true
+        os: [windows-latest]
+          cc: [gcc]
+          packages: [true, false]
+          architecture:
+            - { sys: mingw64, env: x86_64, arch: x86-64 }
+            - { sys: mingw32, env: i686, arch: i686 }
+          exclude:
+            - packages: true
+              architecture: { sys: mingw32, env: i686, arch: i686 }
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4

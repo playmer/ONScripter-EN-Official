@@ -120,6 +120,9 @@ jobs:
         architecture: 
           - { sys: mingw64, env: x86_64, arch: x86-64 }
           - { sys: mingw32, env: i686, arch: i686 }
+        exclude:
+           - sys: mingw32
+             packages: true
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
